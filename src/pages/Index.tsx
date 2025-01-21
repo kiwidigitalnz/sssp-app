@@ -11,6 +11,7 @@ import { HealthAndSafetyPolicies } from "@/components/SSSPForm/HealthAndSafetyPo
 import { SiteSafetyRules } from "@/components/SSSPForm/SiteSafetyRules";
 import { Communication } from "@/components/SSSPForm/Communication";
 import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
+import { SummaryScreen } from "@/components/SSSPForm/SummaryScreen";
 import { StepIndicator } from "@/components/SSSPForm/StepIndicator";
 import { toast } from "sonner";
 
@@ -18,7 +19,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
 
-  const totalSteps = 10; // Reduced from 11 to 10 steps
+  const totalSteps = 11; // Increased to 11 to include summary screen
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -79,6 +80,9 @@ const Index = () => {
             {currentStep === 10 && (
               <MonitoringReview formData={formData} setFormData={setFormData} />
             )}
+            {currentStep === 11 && (
+              <SummaryScreen formData={formData} setFormData={setFormData} />
+            )}
 
             <div className="flex justify-between pt-4">
               <Button
@@ -89,7 +93,7 @@ const Index = () => {
                 Previous
               </Button>
               <Button onClick={handleNext} disabled={currentStep === totalSteps}>
-                Next
+                {currentStep === totalSteps - 1 ? "Review" : "Next"}
               </Button>
             </div>
           </div>
