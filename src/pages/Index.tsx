@@ -6,6 +6,7 @@ import { ScopeOfWork } from "@/components/SSSPForm/ScopeOfWork";
 import { HealthAndSafety } from "@/components/SSSPForm/HealthAndSafety";
 import { HazardManagement } from "@/components/SSSPForm/HazardManagement";
 import { EmergencyProcedures } from "@/components/SSSPForm/EmergencyProcedures";
+import { TrainingRequirements } from "@/components/SSSPForm/TrainingRequirements";
 import { StepIndicator } from "@/components/SSSPForm/StepIndicator";
 import { toast } from "sonner";
 
@@ -13,7 +14,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
 
-  const totalSteps = 5; // Updated to include the new Emergency Procedures section
+  const totalSteps = 6;
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -58,6 +59,9 @@ const Index = () => {
             )}
             {currentStep === 5 && (
               <EmergencyProcedures formData={formData} setFormData={setFormData} />
+            )}
+            {currentStep === 6 && (
+              <TrainingRequirements formData={formData} setFormData={setFormData} />
             )}
 
             <div className="flex justify-between pt-4">
