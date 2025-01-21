@@ -11,6 +11,16 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+type MockDataKey = 1 | 2;
+interface MockSSSPData {
+  [key: number]: {
+    companyName: string;
+    address: string;
+    contactPerson: string;
+    contactEmail: string;
+  };
+}
+
 const SSSPForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -19,27 +29,27 @@ const SSSPForm = () => {
   const [formData, setFormData] = useState({});
 
   // Mock data for edit mode
-  const mockSSSPData = {
+  const mockSSSPData: MockSSSPData = {
     1: {
       companyName: "City Center Construction",
       address: "123 Main St",
       contactPerson: "John Doe",
       contactEmail: "john@example.com",
-      // ... other form fields
     },
     2: {
       companyName: "Harbor Bridge Maintenance",
       address: "456 Harbor Way",
       contactPerson: "Jane Smith",
       contactEmail: "jane@example.com",
-      // ... other form fields
     },
   };
 
   useEffect(() => {
     if (id) {
-      // Load data for edit mode
-      const ssspData = mockSSSPData[id as keyof typeof mockSSSPData];
+      // Convert string id to number and validate it's either 1 or 2
+      const numericId = parseInt(id, 10) as MockDataKey;
+      const ssspData = mockSSSPData[numericId];
+      
       if (ssspData) {
         setFormData(ssspData);
         toast({
