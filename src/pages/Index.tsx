@@ -8,7 +8,6 @@ import { HazardManagement } from "@/components/SSSPForm/HazardManagement";
 import { EmergencyProcedures } from "@/components/SSSPForm/EmergencyProcedures";
 import { TrainingRequirements } from "@/components/SSSPForm/TrainingRequirements";
 import { HealthAndSafetyPolicies } from "@/components/SSSPForm/HealthAndSafetyPolicies";
-import { VehicleEquipment } from "@/components/SSSPForm/VehicleEquipment";
 import { SiteSafetyRules } from "@/components/SSSPForm/SiteSafetyRules";
 import { Communication } from "@/components/SSSPForm/Communication";
 import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
@@ -19,7 +18,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
 
-  const totalSteps = 11;
+  const totalSteps = 10; // Reduced from 11 to 10 steps
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -72,15 +71,12 @@ const Index = () => {
               <HealthAndSafetyPolicies formData={formData} setFormData={setFormData} />
             )}
             {currentStep === 8 && (
-              <VehicleEquipment formData={formData} setFormData={setFormData} />
-            )}
-            {currentStep === 9 && (
               <SiteSafetyRules formData={formData} setFormData={setFormData} />
             )}
-            {currentStep === 10 && (
+            {currentStep === 9 && (
               <Communication formData={formData} setFormData={setFormData} />
             )}
-            {currentStep === 11 && (
+            {currentStep === 10 && (
               <MonitoringReview formData={formData} setFormData={setFormData} />
             )}
 
