@@ -1,90 +1,151 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { CompanyInfo } from "@/components/SSSPForm/CompanyInfo";
+import { ScopeOfWork } from "@/components/SSSPForm/ScopeOfWork";
+import { HealthAndSafety } from "@/components/SSSPForm/HealthAndSafety";
+import { HealthAndSafetyPolicies } from "@/components/SSSPForm/HealthAndSafetyPolicies";
+import { SiteSafetyRules } from "@/components/SSSPForm/SiteSafetyRules";
+import { TrainingRequirements } from "@/components/SSSPForm/TrainingRequirements";
+import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useNavigate } from "react-router-dom";
-import { PlusCircle } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const Index = () => {
+const SSSPForm = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState({});
 
-  // Mock data - this would typically come from your backend
-  const ssspList = [
-    {
-      id: 1,
-      projectName: "City Center Construction",
-      createdDate: "2024-03-15",
-      status: "Draft",
-      lastModified: "2024-03-16",
+  // Mock data for edit mode
+  const mockSSSPData = {
+    1: {
+      companyName: "City Center Construction",
+      address: "123 Main St",
+      contactPerson: "John Doe",
+      contactEmail: "john@example.com",
+      // ... other form fields
     },
-    {
-      id: 2,
-      projectName: "Harbor Bridge Maintenance",
-      createdDate: "2024-03-14",
-      status: "Submitted",
-      lastModified: "2024-03-14",
+    2: {
+      companyName: "Harbor Bridge Maintenance",
+      address: "456 Harbor Way",
+      contactPerson: "Jane Smith",
+      contactEmail: "jane@example.com",
+      // ... other form fields
     },
+  };
+
+  useEffect(() => {
+    if (id) {
+      // Load data for edit mode
+      const ssspData = mockSSSPData[id as keyof typeof mockSSSPData];
+      if (ssspData) {
+        setFormData(ssspData);
+        toast({
+          title: "SSSP loaded",
+          description: "The SSSP data has been loaded for editing",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "SSSP not found",
+        });
+        navigate("/");
+      }
+    }
+  }, [id, navigate, toast]);
+
+  const steps = [
+    { title: "Company Information", component: CompanyInfo },
+    { title: "Scope of Work", component: ScopeOfWork },
+    { title: "Health and Safety", component: HealthAndSafety },
+    { title: "Health and Safety Policies", component: HealthAndSafetyPolicies },
+    { title: "Site Safety Rules", component: SiteSafetyRules },
+    { title: "Training Requirements", component: TrainingRequirements },
+    { title: "Monitoring and Review", component: MonitoringReview },
   ];
 
-  return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Site-Specific Safety Plans</h1>
-        <Button onClick={() => navigate("/create-sssp")} className="gap-2">
-          <PlusCircle className="h-5 w-5" />
-          Create New SSSP
-        </Button>
-      </div>
+  const CurrentStepComponent = steps[currentStep].component;
 
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Project Name</TableHead>
-              <TableHead>Created Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Modified</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {ssspList.map((sssp) => (
-              <TableRow key={sssp.id}>
-                <TableCell className="font-medium">{sssp.projectName}</TableCell>
-                <TableCell>{sssp.createdDate}</TableCell>
-                <TableCell>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      sssp.status === "Draft"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-green-100 text-green-800"
-                    }`}
-                  >
-                    {sssp.status}
-                  </span>
-                </TableCell>
-                <TableCell>{sssp.lastModified}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(`/edit-sssp/${sssp.id}`)}
-                  >
-                    View/Edit
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+      toast({
+        title: "Progress saved",
+        description: "Your changes have been saved",
+      });
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSave = () => {
+    // Here you would typically save to your backend
+    toast({
+      title: "SSSP saved",
+      description: "Your SSSP has been saved successfully",
+    });
+    navigate("/");
+  };
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">
+          {id ? "Edit SSSP" : "Create New SSSP"}
+        </h1>
+
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-2">
+              Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}
+            </h2>
+            <div className="h-2 bg-gray-200 rounded">
+              <div
+                className="h-full bg-blue-600 rounded transition-all duration-300"
+                style={{
+                  width: `${((currentStep + 1) / steps.length) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          <CurrentStepComponent formData={formData} setFormData={setFormData} />
+
+          <div className="flex justify-between mt-8">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentStep === 0}
+            >
+              <ChevronLeft className="mr-2" />
+              Previous
+            </Button>
+
+            <div className="space-x-2">
+              <Button variant="outline" onClick={handleSave}>
+                Save
+              </Button>
+              {currentStep === steps.length - 1 ? (
+                <Button onClick={handleSave}>Submit</Button>
+              ) : (
+                <Button onClick={handleNext}>
+                  Next
+                  <ChevronRight className="ml-2" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default Index;
+export default SSSPForm;
