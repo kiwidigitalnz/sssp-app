@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 const CompanySettings = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [companyInfo, setCompanyInfo] = useState({
     name: "Demo Company",
@@ -15,12 +17,12 @@ const CompanySettings = () => {
   });
 
   const handleSave = () => {
-    // In a real app, this would save to backend/localStorage
     localStorage.setItem('companyInfo', JSON.stringify(companyInfo));
     toast({
       title: "Settings saved",
       description: "Company information has been updated successfully",
     });
+    navigate('/'); // Navigate back to the dashboard
   };
 
   return (
