@@ -8,6 +8,10 @@ import { HazardManagement } from "@/components/SSSPForm/HazardManagement";
 import { EmergencyProcedures } from "@/components/SSSPForm/EmergencyProcedures";
 import { TrainingRequirements } from "@/components/SSSPForm/TrainingRequirements";
 import { HealthAndSafetyPolicies } from "@/components/SSSPForm/HealthAndSafetyPolicies";
+import { VehicleEquipment } from "@/components/SSSPForm/VehicleEquipment";
+import { SiteSafetyRules } from "@/components/SSSPForm/SiteSafetyRules";
+import { Communication } from "@/components/SSSPForm/Communication";
+import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
 import { StepIndicator } from "@/components/SSSPForm/StepIndicator";
 import { toast } from "sonner";
 
@@ -15,7 +19,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
 
-  const totalSteps = 7;
+  const totalSteps = 11;
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -66,6 +70,18 @@ const Index = () => {
             )}
             {currentStep === 7 && (
               <HealthAndSafetyPolicies formData={formData} setFormData={setFormData} />
+            )}
+            {currentStep === 8 && (
+              <VehicleEquipment formData={formData} setFormData={setFormData} />
+            )}
+            {currentStep === 9 && (
+              <SiteSafetyRules formData={formData} setFormData={setFormData} />
+            )}
+            {currentStep === 10 && (
+              <Communication formData={formData} setFormData={setFormData} />
+            )}
+            {currentStep === 11 && (
+              <MonitoringReview formData={formData} setFormData={setFormData} />
             )}
 
             <div className="flex justify-between pt-4">
