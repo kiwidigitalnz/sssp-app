@@ -3,12 +3,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import { CompanyInfo } from "@/components/SSSPForm/CompanyInfo";
 import { ScopeOfWork } from "@/components/SSSPForm/ScopeOfWork";
 import { HealthAndSafety } from "@/components/SSSPForm/HealthAndSafety";
+import { HazardManagement } from "@/components/SSSPForm/HazardManagement";
+import { EmergencyProcedures } from "@/components/SSSPForm/EmergencyProcedures";
+import { TrainingRequirements } from "@/components/SSSPForm/TrainingRequirements";
 import { HealthAndSafetyPolicies } from "@/components/SSSPForm/HealthAndSafetyPolicies";
 import { SiteSafetyRules } from "@/components/SSSPForm/SiteSafetyRules";
-import { TrainingRequirements } from "@/components/SSSPForm/TrainingRequirements";
+import { Communication } from "@/components/SSSPForm/Communication";
 import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type MockDataKey = 1 | 2;
@@ -70,10 +73,13 @@ const SSSPForm = () => {
   const steps = [
     { title: "Company Information", component: CompanyInfo },
     { title: "Scope of Work", component: ScopeOfWork },
-    { title: "Health and Safety", component: HealthAndSafety },
+    { title: "Health and Safety Responsibilities", component: HealthAndSafety },
+    { title: "Hazard and Risk Management", component: HazardManagement },
+    { title: "Incident and Emergency Procedures", component: EmergencyProcedures },
+    { title: "Training and Competency Requirements", component: TrainingRequirements },
     { title: "Health and Safety Policies", component: HealthAndSafetyPolicies },
-    { title: "Site Safety Rules", component: SiteSafetyRules },
-    { title: "Training Requirements", component: TrainingRequirements },
+    { title: "Site-Specific Safety Rules", component: SiteSafetyRules },
+    { title: "Communication and Consultation", component: Communication },
     { title: "Monitoring and Review", component: MonitoringReview },
   ];
 
