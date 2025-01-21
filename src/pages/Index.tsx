@@ -7,6 +7,7 @@ import { HealthAndSafety } from "@/components/SSSPForm/HealthAndSafety";
 import { HazardManagement } from "@/components/SSSPForm/HazardManagement";
 import { EmergencyProcedures } from "@/components/SSSPForm/EmergencyProcedures";
 import { TrainingRequirements } from "@/components/SSSPForm/TrainingRequirements";
+import { HealthAndSafetyPolicies } from "@/components/SSSPForm/HealthAndSafetyPolicies";
 import { StepIndicator } from "@/components/SSSPForm/StepIndicator";
 import { toast } from "sonner";
 
@@ -14,7 +15,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
 
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -62,6 +63,9 @@ const Index = () => {
             )}
             {currentStep === 6 && (
               <TrainingRequirements formData={formData} setFormData={setFormData} />
+            )}
+            {currentStep === 7 && (
+              <HealthAndSafetyPolicies formData={formData} setFormData={setFormData} />
             )}
 
             <div className="flex justify-between pt-4">
