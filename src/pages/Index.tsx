@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { CompanyInfo } from "@/components/SSSPForm/CompanyInfo";
 import { ScopeOfWork } from "@/components/SSSPForm/ScopeOfWork";
 import { HealthAndSafety } from "@/components/SSSPForm/HealthAndSafety";
+import { HazardManagement } from "@/components/SSSPForm/HazardManagement";
 import { StepIndicator } from "@/components/SSSPForm/StepIndicator";
 import { toast } from "sonner";
 
@@ -11,7 +12,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
 
-  const totalSteps = 3; // Updated to include the new Health and Safety section
+  const totalSteps = 4; // Updated to include the new Hazard Management section
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -50,6 +51,9 @@ const Index = () => {
             )}
             {currentStep === 3 && (
               <HealthAndSafety formData={formData} setFormData={setFormData} />
+            )}
+            {currentStep === 4 && (
+              <HazardManagement formData={formData} setFormData={setFormData} />
             )}
 
             <div className="flex justify-between pt-4">
