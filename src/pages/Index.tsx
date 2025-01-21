@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CompanyInfo } from "@/components/SSSPForm/CompanyInfo";
 import { ScopeOfWork } from "@/components/SSSPForm/ScopeOfWork";
+import { HealthAndSafety } from "@/components/SSSPForm/HealthAndSafety";
 import { StepIndicator } from "@/components/SSSPForm/StepIndicator";
 import { toast } from "sonner";
 
@@ -10,7 +11,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
 
-  const totalSteps = 2; // We'll add more steps later
+  const totalSteps = 3; // Updated to include the new Health and Safety section
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -46,6 +47,9 @@ const Index = () => {
             )}
             {currentStep === 2 && (
               <ScopeOfWork formData={formData} setFormData={setFormData} />
+            )}
+            {currentStep === 3 && (
+              <HealthAndSafety formData={formData} setFormData={setFormData} />
             )}
 
             <div className="flex justify-between pt-4">
