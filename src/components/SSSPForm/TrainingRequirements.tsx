@@ -1,11 +1,14 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { TrainingSelection } from "./TrainingSelection";
 import { GraduationCap, BookOpen, Award, ClipboardCheck, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -16,17 +19,80 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const trainingSchema = z.object({
+  competencyRequirements: z.string()
+    .min(10, "Competency requirements must be at least 10 characters long")
+    .max(1000, "Competency requirements must not exceed 1000 characters"),
+  trainingRecords: z.string()
+    .min(10, "Training records description must be at least 10 characters long")
+    .max(1000, "Training records description must not exceed 1000 characters"),
+  requiredTraining: z.array(z.object({
+    requirement: z.string().min(1, "Training requirement is required"),
+    description: z.string().min(10, "Description must be at least 10 characters long"),
+    frequency: z.string().min(1, "Frequency is required"),
+  })).optional(),
+});
+
+type TrainingFormData = z.infer<typeof trainingSchema>;
+
 export const TrainingRequirements = ({ formData, setFormData }: any) => {
+  const { toast } = useToast();
   const [newTraining, setNewTraining] = React.useState({
     requirement: "",
     description: "",
     frequency: "",
   });
 
-  const handleAddSingleTraining = () => {
-    const updatedTraining = [...(formData.requiredTraining || []), newTraining];
-    setFormData({ ...formData, requiredTraining: updatedTraining });
-    setNewTraining({ requirement: "", description: "", frequency: "" });
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    trigger
+  } = useForm<TrainingFormData>({
+    resolver: zodResolver(trainingSchema),
+    defaultValues: {
+      competencyRequirements: formData.competencyRequirements || "",
+      trainingRecords: formData.trainingRecords || "",
+      requiredTraining: formData.requiredTraining || [],
+    }
+  });
+
+  const handleFieldChange = async (field: keyof TrainingFormData, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    setValue(field, value);
+    const result = await trigger(field);
+    if (!result && errors[field]) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errors[field]?.message
+      });
+    }
+  };
+
+  const handleAddSingleTraining = async () => {
+    if (newTraining.requirement && newTraining.description && newTraining.frequency) {
+      const updatedTraining = [...(formData.requiredTraining || []), newTraining];
+      setFormData({ ...formData, requiredTraining: updatedTraining });
+      setValue("requiredTraining", updatedTraining);
+      setNewTraining({ requirement: "", description: "", frequency: "" });
+      
+      const result = await trigger("requiredTraining");
+      if (!result) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: "Please check the training requirements"
+        });
+      }
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "All training fields are required"
+      });
+    }
   };
 
   return (
