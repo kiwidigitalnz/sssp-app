@@ -209,4 +209,4 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
       </CardContent>
     </Card>
   );
-});
+};
