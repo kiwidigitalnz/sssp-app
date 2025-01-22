@@ -26,12 +26,18 @@ interface Hazard {
 
 interface HazardTableProps {
   hazards: Hazard[];
+  previousHazards: Hazard[];
+  previousRisks: string[];
+  previousControls: string[];
   updateHazard: (index: number, field: keyof Hazard, value: string) => void;
   removeHazard: (index: number) => void;
 }
 
 export const HazardTable = ({
   hazards,
+  previousHazards,
+  previousRisks,
+  previousControls,
   updateHazard,
   removeHazard,
 }: HazardTableProps) => {
