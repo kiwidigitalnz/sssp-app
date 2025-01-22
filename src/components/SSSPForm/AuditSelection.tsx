@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface Audit {
@@ -51,12 +50,6 @@ export const AuditSelection = ({
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="mt-4">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Multiple Audits
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Select Audits from Previous Entries</DialogTitle>
