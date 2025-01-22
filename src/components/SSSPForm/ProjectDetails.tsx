@@ -4,8 +4,66 @@ import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, Calendar, MapPin, ClipboardList } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/components/ui/use-toast";
+import { useEffect } from "react";
+
+const projectDetailsSchema = z.object({
+  projectName: z.string().min(1, "Project name is required"),
+  siteAddress: z.string().min(1, "Site address is required"),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string()
+    .min(1, "End date is required")
+    .refine((date) => new Date(date) > new Date(), {
+      message: "End date must be in the future"
+    }),
+  projectDescription: z.string().min(10, "Project description must be at least 10 characters long")
+});
+
+type ProjectDetailsFormData = z.infer<typeof projectDetailsSchema>;
 
 export const ProjectDetails = ({ formData, setFormData }: any) => {
+  const { toast } = useToast();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    trigger
+  } = useForm<ProjectDetailsFormData>({
+    resolver: zodResolver(projectDetailsSchema),
+    defaultValues: {
+      projectName: formData.projectName || "",
+      siteAddress: formData.siteAddress || "",
+      startDate: formData.startDate || "",
+      endDate: formData.endDate || "",
+      projectDescription: formData.projectDescription || ""
+    }
+  });
+
+  useEffect(() => {
+    setValue("projectName", formData.projectName || "");
+    setValue("siteAddress", formData.siteAddress || "");
+    setValue("startDate", formData.startDate || "");
+    setValue("endDate", formData.endDate || "");
+    setValue("projectDescription", formData.projectDescription || "");
+  }, [formData, setValue]);
+
+  const handleFieldChange = async (field: keyof ProjectDetailsFormData, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    setValue(field, value);
+    const result = await trigger(field);
+    if (!result && errors[field]) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errors[field]?.message
+      });
+    }
+  };
+
   return (
     <Card className="shadow-md">
       <CardHeader className="space-y-2">
@@ -22,22 +80,21 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="projectName"
                 fieldName="Project Name"
-                onSelect={(value) =>
-                  setFormData({ ...formData, projectName: value })
-                }
+                onSelect={(value) => handleFieldChange("projectName", value)}
               />
             </div>
             <div className="relative">
               <Briefcase className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 id="projectName"
-                value={formData.projectName || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, projectName: e.target.value })
-                }
+                {...register("projectName")}
+                className={`pl-9 ${errors.projectName ? "border-destructive" : ""}`}
                 placeholder="Enter project name"
-                className="pl-9"
+                onChange={(e) => handleFieldChange("projectName", e.target.value)}
               />
+              {errors.projectName && (
+                <p className="text-sm text-destructive mt-1">{errors.projectName.message}</p>
+              )}
             </div>
           </div>
 
@@ -47,22 +104,21 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="siteAddress"
                 fieldName="Site Address"
-                onSelect={(value) =>
-                  setFormData({ ...formData, siteAddress: value })
-                }
+                onSelect={(value) => handleFieldChange("siteAddress", value)}
               />
             </div>
             <div className="relative">
               <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 id="siteAddress"
-                value={formData.siteAddress || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, siteAddress: e.target.value })
-                }
+                {...register("siteAddress")}
+                className={`pl-9 ${errors.siteAddress ? "border-destructive" : ""}`}
                 placeholder="Enter site address"
-                className="pl-9"
+                onChange={(e) => handleFieldChange("siteAddress", e.target.value)}
               />
+              {errors.siteAddress && (
+                <p className="text-sm text-destructive mt-1">{errors.siteAddress.message}</p>
+              )}
             </div>
           </div>
 
@@ -73,9 +129,7 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
                 <QuickFillButton
                   fieldId="startDate"
                   fieldName="Start Date"
-                  onSelect={(value) =>
-                    setFormData({ ...formData, startDate: value })
-                  }
+                  onSelect={(value) => handleFieldChange("startDate", value)}
                 />
               </div>
               <div className="relative">
@@ -83,12 +137,13 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
                 <Input
                   id="startDate"
                   type="date"
-                  value={formData.startDate || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startDate: e.target.value })
-                  }
-                  className="pl-9"
+                  {...register("startDate")}
+                  className={`pl-9 ${errors.startDate ? "border-destructive" : ""}`}
+                  onChange={(e) => handleFieldChange("startDate", e.target.value)}
                 />
+                {errors.startDate && (
+                  <p className="text-sm text-destructive mt-1">{errors.startDate.message}</p>
+                )}
               </div>
             </div>
 
@@ -98,9 +153,7 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
                 <QuickFillButton
                   fieldId="endDate"
                   fieldName="End Date"
-                  onSelect={(value) =>
-                    setFormData({ ...formData, endDate: value })
-                  }
+                  onSelect={(value) => handleFieldChange("endDate", value)}
                 />
               </div>
               <div className="relative">
@@ -108,12 +161,13 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
                 <Input
                   id="endDate"
                   type="date"
-                  value={formData.endDate || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endDate: e.target.value })
-                  }
-                  className="pl-9"
+                  {...register("endDate")}
+                  className={`pl-9 ${errors.endDate ? "border-destructive" : ""}`}
+                  onChange={(e) => handleFieldChange("endDate", e.target.value)}
                 />
+                {errors.endDate && (
+                  <p className="text-sm text-destructive mt-1">{errors.endDate.message}</p>
+                )}
               </div>
             </div>
           </div>
@@ -124,22 +178,21 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="projectDescription"
                 fieldName="Project Description"
-                onSelect={(value) =>
-                  setFormData({ ...formData, projectDescription: value })
-                }
+                onSelect={(value) => handleFieldChange("projectDescription", value)}
               />
             </div>
             <div className="relative">
               <ClipboardList className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Textarea
                 id="projectDescription"
-                value={formData.projectDescription || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, projectDescription: e.target.value })
-                }
+                {...register("projectDescription")}
+                className={`min-h-[100px] pl-9 resize-none ${errors.projectDescription ? "border-destructive" : ""}`}
                 placeholder="Enter project description"
-                className="min-h-[100px] pl-9 resize-none"
+                onChange={(e) => handleFieldChange("projectDescription", e.target.value)}
               />
+              {errors.projectDescription && (
+                <p className="text-sm text-destructive mt-1">{errors.projectDescription.message}</p>
+              )}
             </div>
           </div>
         </div>
