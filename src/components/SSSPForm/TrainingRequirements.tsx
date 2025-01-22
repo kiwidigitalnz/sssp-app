@@ -31,19 +31,19 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-md border-l-4 border-l-primary">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <GraduationCap className="h-7 w-7 text-primary" />
+      <Card className="shadow-md">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl font-semibold flex items-center gap-3">
+            <GraduationCap className="h-6 w-6 text-primary" />
             Training and Competency Requirements
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-6">
           {/* Required Training Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b pb-2">
-              <BookOpen className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">Required Training</h3>
+              <BookOpen className="h-4 w-4" />
+              <h3 className="text-base font-medium">Required Training</h3>
             </div>
             <Card className="border-dashed">
               <CardContent className="pt-6 space-y-4">

@@ -55,19 +55,19 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-md border-l-4 border-l-destructive">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <Siren className="h-7 w-7 text-destructive animate-pulse" />
+      <Card className="shadow-md">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl font-semibold flex items-center gap-3">
+            <Siren className="h-6 w-6 text-primary" />
             Incident and Emergency Procedures
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-6">
           {/* Emergency Response Plan Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b pb-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              <h3 className="text-lg font-semibold">Emergency Response Plan</h3>
+              <AlertTriangle className="h-4 w-4" />
+              <h3 className="text-base font-medium">Emergency Response Plan</h3>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">

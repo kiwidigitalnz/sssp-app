@@ -79,14 +79,14 @@ export const HazardManagement = ({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
+      <Card className="shadow-md">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl font-semibold flex items-center gap-3">
+            <Shield className="h-6 w-6 text-primary" />
             Hazard and Risk Management
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <RiskLevelGuide />
           
           <div className="space-y-6">
