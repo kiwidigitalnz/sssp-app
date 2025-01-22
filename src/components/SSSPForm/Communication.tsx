@@ -1,206 +1,97 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
-import { MeetingSelection } from "./MeetingSelection";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { MessageSquare, ClipboardList, Users } from "lucide-react";
 
-interface CommunicationProps {
-  formData: any;
-  setFormData: (data: any) => void;
-}
-
-export const Communication = ({ formData, setFormData }: CommunicationProps) => {
-  const [meetings, setMeetings] = useState(formData.meetings || []);
-  const [previousMeetings, setPreviousMeetings] = useState([]);
-
-  useEffect(() => {
-    const storedSSSPs = localStorage.getItem("sssps");
-    if (storedSSSPs) {
-      const sssps = JSON.parse(storedSSSPs);
-      const allMeetings = [];
-      
-      sssps.forEach((sssp: any) => {
-        if (sssp.meetings) {
-          allMeetings.push(...sssp.meetings);
-        }
-      });
-      
-      setPreviousMeetings(allMeetings);
-    }
-  }, []);
-
-  const addMeeting = () => {
-    const newMeetings = [...meetings, { type: "", frequency: "", attendees: "" }];
-    setMeetings(newMeetings);
-    setFormData({ ...formData, meetings: newMeetings });
-  };
-
-  const addMultipleMeetings = (selectedMeetings: any[]) => {
-    const newMeetings = [...meetings, ...selectedMeetings];
-    setMeetings(newMeetings);
-    setFormData({ ...formData, meetings: newMeetings });
-  };
-
+export const Communication = ({ formData, setFormData }: any) => {
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Communication and Consultation</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Health and Safety Meetings</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Meeting Type</TableHead>
-                  <TableHead>Frequency</TableHead>
-                  <TableHead>Required Attendees</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {meetings.map((meeting: any, index: number) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <QuickFillButton
-                            fieldId={`meeting-type-${index}`}
-                            fieldName="Meeting Type"
-                            onSelect={(value) => {
-                              const newMeetings = [...meetings];
-                              newMeetings[index].type = value;
-                              setMeetings(newMeetings);
-                              setFormData({ ...formData, meetings: newMeetings });
-                            }}
-                          />
-                        </div>
-                        <Input
-                          value={meeting.type}
-                          onChange={(e) => {
-                            const newMeetings = [...meetings];
-                            newMeetings[index].type = e.target.value;
-                            setMeetings(newMeetings);
-                            setFormData({ ...formData, meetings: newMeetings });
-                          }}
-                          placeholder="e.g., Toolbox Talk"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <QuickFillButton
-                            fieldId={`meeting-frequency-${index}`}
-                            fieldName="Meeting Frequency"
-                            onSelect={(value) => {
-                              const newMeetings = [...meetings];
-                              newMeetings[index].frequency = value;
-                              setMeetings(newMeetings);
-                              setFormData({ ...formData, meetings: newMeetings });
-                            }}
-                          />
-                        </div>
-                        <Input
-                          value={meeting.frequency}
-                          onChange={(e) => {
-                            const newMeetings = [...meetings];
-                            newMeetings[index].frequency = e.target.value;
-                            setMeetings(newMeetings);
-                            setFormData({ ...formData, meetings: newMeetings });
-                          }}
-                          placeholder="e.g., Weekly"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <QuickFillButton
-                            fieldId={`meeting-attendees-${index}`}
-                            fieldName="Required Attendees"
-                            onSelect={(value) => {
-                              const newMeetings = [...meetings];
-                              newMeetings[index].attendees = value;
-                              setMeetings(newMeetings);
-                              setFormData({ ...formData, meetings: newMeetings });
-                            }}
-                          />
-                        </div>
-                        <Input
-                          value={meeting.attendees}
-                          onChange={(e) => {
-                            const newMeetings = [...meetings];
-                            newMeetings[index].attendees = e.target.value;
-                            setMeetings(newMeetings);
-                            setFormData({ ...formData, meetings: newMeetings });
-                          }}
-                          placeholder="e.g., All site workers"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          const newMeetings = meetings.filter((_, i) => i !== index);
-                          setMeetings(newMeetings);
-                          setFormData({ ...formData, meetings: newMeetings });
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <Button onClick={addMeeting} className="mt-4">
-              <Plus className="mr-2 h-4 w-4" /> Add Meeting
-            </Button>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold">Worker Feedback Mechanisms</h3>
+    <Card className="shadow-sm">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl flex items-center gap-2">
+          <MessageSquare className="h-6 w-6 text-primary" />
+          Communication and Consultation
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="meetings" className="text-lg font-semibold flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Safety Meetings
+              </Label>
               <QuickFillButton
-                fieldId="workerFeedback"
-                fieldName="Worker Feedback"
-                onSelect={(value) => setFormData({ ...formData, workerFeedback: value })}
+                fieldId="meetings"
+                fieldName="Safety Meetings"
+                onSelect={(value) =>
+                  setFormData({ ...formData, meetings: value })
+                }
               />
             </div>
             <Textarea
-              placeholder="Document how workers can provide feedback..."
-              value={formData.workerFeedback || ""}
-              onChange={(e) => setFormData({ ...formData, workerFeedback: e.target.value })}
-              className="min-h-[100px]"
+              id="meetings"
+              value={formData.meetings || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, meetings: e.target.value })
+              }
+              placeholder="Detail safety meeting schedules and procedures..."
+              className="min-h-[100px] resize-none"
             />
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold">Procedure Change Notifications</h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="reporting" className="text-lg font-semibold flex items-center gap-2">
+                <ClipboardList className="h-4 w-4" />
+                Incident Reporting
+              </Label>
               <QuickFillButton
-                fieldId="procedureChanges"
-                fieldName="Procedure Changes"
-                onSelect={(value) => setFormData({ ...formData, procedureChanges: value })}
+                fieldId="reporting"
+                fieldName="Incident Reporting"
+                onSelect={(value) =>
+                  setFormData({ ...formData, reporting: value })
+                }
               />
             </div>
             <Textarea
-              placeholder="Document how changes in procedures are communicated..."
-              value={formData.procedureChanges || ""}
-              onChange={(e) => setFormData({ ...formData, procedureChanges: e.target.value })}
-              className="min-h-[100px]"
+              id="reporting"
+              value={formData.reporting || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, reporting: e.target.value })
+              }
+              placeholder="Outline incident reporting procedures..."
+              className="min-h-[100px] resize-none"
             />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="consultation" className="text-lg font-semibold flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Worker Consultation
+              </Label>
+              <QuickFillButton
+                fieldId="consultation"
+                fieldName="Worker Consultation"
+                onSelect={(value) =>
+                  setFormData({ ...formData, consultation: value })
+                }
+              />
+            </div>
+            <Textarea
+              id="consultation"
+              value={formData.consultation || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, consultation: e.target.value })
+              }
+              placeholder="Describe worker consultation processes..."
+              className="min-h-[100px] resize-none"
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
