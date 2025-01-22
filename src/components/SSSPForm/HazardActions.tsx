@@ -21,12 +21,12 @@ export const HazardActions = ({
   addMultipleHazards,
 }: HazardActionsProps) => {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center justify-start gap-3 mt-6">
       <Button
         type="button"
         variant="outline"
         size="sm"
-        className="shadow-sm"
+        className="shadow-sm min-w-[160px]"
         onClick={addHazard}
       >
         <Plus className="mr-2 h-4 w-4" />

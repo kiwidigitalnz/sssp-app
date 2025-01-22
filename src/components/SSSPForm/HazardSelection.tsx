@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus } from "lucide-react";
+import { Plus, ListPlus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface Hazard {
@@ -50,45 +50,59 @@ export const HazardSelection = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="mt-4">
-          <Plus className="mr-2 h-4 w-4" />
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="shadow-sm min-w-[160px]"
+        >
+          <ListPlus className="mr-2 h-4 w-4" />
           Add Multiple Hazards
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Select Hazards from Previous Entries</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+            <ListPlus className="h-5 w-5 text-primary" />
+            Select Hazards from Previous Entries
+          </DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-4">
+        <ScrollArea className="h-[400px] pr-4 mt-4">
+          <div className="space-y-3">
             {previousHazards.map((hazard, index) => (
               <div
                 key={index}
-                className="flex items-start space-x-3 border p-4 rounded-lg"
+                className="flex items-start space-x-3 border p-4 rounded-lg hover:bg-accent/50 transition-colors"
               >
                 <Checkbox
                   id={`hazard-${index}`}
                   checked={selected.has(index)}
                   onCheckedChange={() => handleToggle(index)}
+                  className="mt-1"
                 />
-                <div className="space-y-1">
-                  <Label htmlFor={`hazard-${index}`}>
-                    <div className="font-medium">{hazard.hazard}</div>
-                    <div className="text-sm text-muted-foreground">
-                      Risk: {hazard.risk}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Control Measures: {hazard.controlMeasures}
-                    </div>
+                <div className="space-y-1.5 flex-1">
+                  <Label 
+                    htmlFor={`hazard-${index}`}
+                    className="font-medium text-base"
+                  >
+                    {hazard.hazard}
                   </Label>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p><span className="font-medium">Risk:</span> {hazard.risk}</p>
+                    <p><span className="font-medium">Control Measures:</span> {hazard.controlMeasures}</p>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </ScrollArea>
-        <div className="flex justify-end">
-          <Button onClick={handleAdd} disabled={selected.size === 0}>
-            Add Selected ({selected.size})
+        <div className="flex justify-end mt-4">
+          <Button 
+            onClick={handleAdd} 
+            disabled={selected.size === 0}
+            className="min-w-[120px]"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add {selected.size > 0 ? `(${selected.size})` : ''}
           </Button>
         </div>
       </DialogContent>
