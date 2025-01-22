@@ -33,6 +33,16 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
     }
   }, []);
 
+  const updateAudit = (index: number, field: string, value: string) => {
+    const newAudits = [...audits];
+    newAudits[index] = {
+      ...newAudits[index],
+      [field]: value
+    };
+    setAudits(newAudits);
+    setFormData({ ...formData, audits: newAudits });
+  };
+
   const addAudit = () => {
     const newAudits = [...audits, { type: "", frequency: "", responsible: "", lastDate: "", nextDate: "" }];
     setAudits(newAudits);
