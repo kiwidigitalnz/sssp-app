@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 
 interface Hazard {
   hazard: string;
@@ -43,32 +44,53 @@ export const HazardManagement = ({ formData, setFormData }: any) => {
               <TableHead>Hazard</TableHead>
               <TableHead>Risk</TableHead>
               <TableHead>Control Measures</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {hazards.map((hazard: Hazard, index: number) => (
               <TableRow key={index}>
                 <TableCell>
-                  <Input
-                    value={hazard.hazard}
-                    onChange={(e) => updateHazard(index, "hazard", e.target.value)}
-                    placeholder="e.g., Fatigue"
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={hazard.hazard}
+                      onChange={(e) => updateHazard(index, "hazard", e.target.value)}
+                      placeholder="e.g., Fatigue"
+                    />
+                    <QuickFillButton
+                      fieldId={`hazard-${index}`}
+                      fieldName="Hazard"
+                      onSelect={(value) => updateHazard(index, "hazard", value)}
+                    />
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <Input
-                    value={hazard.risk}
-                    onChange={(e) => updateHazard(index, "risk", e.target.value)}
-                    placeholder="e.g., Driver drowsiness"
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={hazard.risk}
+                      onChange={(e) => updateHazard(index, "risk", e.target.value)}
+                      placeholder="e.g., Driver drowsiness"
+                    />
+                    <QuickFillButton
+                      fieldId={`risk-${index}`}
+                      fieldName="Risk"
+                      onSelect={(value) => updateHazard(index, "risk", value)}
+                    />
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <Input
-                    value={hazard.controlMeasures}
-                    onChange={(e) => updateHazard(index, "controlMeasures", e.target.value)}
-                    placeholder="e.g., Fatigue management plan"
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={hazard.controlMeasures}
+                      onChange={(e) => updateHazard(index, "controlMeasures", e.target.value)}
+                      placeholder="e.g., Fatigue management plan"
+                    />
+                    <QuickFillButton
+                      fieldId={`control-measures-${index}`}
+                      fieldName="Control Measures"
+                      onSelect={(value) => updateHazard(index, "controlMeasures", value)}
+                    />
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Button

@@ -1,5 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 
 export const HealthAndSafety = ({ formData, setFormData }: any) => {
   return (
@@ -8,7 +9,16 @@ export const HealthAndSafety = ({ formData, setFormData }: any) => {
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="pcbuDuties">PCBU Duties</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="pcbuDuties">PCBU Duties</Label>
+            <QuickFillButton
+              fieldId="pcbuDuties"
+              fieldName="PCBU Duties"
+              onSelect={(value) =>
+                setFormData({ ...formData, pcbuDuties: value })
+              }
+            />
+          </div>
           <Textarea
             id="pcbuDuties"
             value={formData.pcbuDuties || ""}
@@ -21,7 +31,16 @@ export const HealthAndSafety = ({ formData, setFormData }: any) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="workerResponsibilities">Worker Responsibilities</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="workerResponsibilities">Worker Responsibilities</Label>
+            <QuickFillButton
+              fieldId="workerResponsibilities"
+              fieldName="Worker Responsibilities"
+              onSelect={(value) =>
+                setFormData({ ...formData, workerResponsibilities: value })
+              }
+            />
+          </div>
           <Textarea
             id="workerResponsibilities"
             value={formData.workerResponsibilities || ""}
@@ -34,7 +53,16 @@ export const HealthAndSafety = ({ formData, setFormData }: any) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="contractorDuties">Contractor/Subcontractor Duties</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="contractorDuties">Contractor/Subcontractor Duties</Label>
+            <QuickFillButton
+              fieldId="contractorDuties"
+              fieldName="Contractor/Subcontractor Duties"
+              onSelect={(value) =>
+                setFormData({ ...formData, contractorDuties: value })
+              }
+            />
+          </div>
           <Textarea
             id="contractorDuties"
             value={formData.contractorDuties || ""}
@@ -47,7 +75,16 @@ export const HealthAndSafety = ({ formData, setFormData }: any) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="visitorRules">Visitor Rules</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="visitorRules">Visitor Rules</Label>
+            <QuickFillButton
+              fieldId="visitorRules"
+              fieldName="Visitor Rules"
+              onSelect={(value) =>
+                setFormData({ ...formData, visitorRules: value })
+              }
+            />
+          </div>
           <Textarea
             id="visitorRules"
             value={formData.visitorRules || ""}
