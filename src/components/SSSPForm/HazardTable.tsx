@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Trash2, ChevronDown } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -9,13 +9,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import { Input } from "@/components/ui/input";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Hazard {
   hazard: string;
@@ -25,111 +26,90 @@ interface Hazard {
 
 interface HazardTableProps {
   hazards: Hazard[];
-  previousHazards: Hazard[];
-  previousRisks: string[];
-  previousControls: string[];
   updateHazard: (index: number, field: keyof Hazard, value: string) => void;
   removeHazard: (index: number) => void;
 }
 
 export const HazardTable = ({
   hazards,
-  previousHazards,
-  previousRisks,
-  previousControls,
   updateHazard,
   removeHazard,
 }: HazardTableProps) => {
-  const renderDropdown = (
-    items: string[],
-    current: string,
-    onChange: (value: string) => void
-  ) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="w-full justify-between">
-          {current || "Select..."}
-          <ChevronDown className="h-4 w-4 opacity-50" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[200px]">
-        {items.map((item, i) => (
-          <DropdownMenuItem key={i} onSelect={() => onChange(item)}>
-            {item}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Hazard</TableHead>
-          <TableHead>Risk</TableHead>
-          <TableHead>Control Measures</TableHead>
-          <TableHead className="w-[100px]">Actions</TableHead>
+          <TableHead className="w-[25%]">Hazard/Risk Source</TableHead>
+          <TableHead className="w-[15%]">Risk Level</TableHead>
+          <TableHead className="w-[20%]">Potential Harm</TableHead>
+          <TableHead className="w-[30%]">Control Measures</TableHead>
+          <TableHead className="w-[10%]">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {hazards.map((hazard: Hazard, index: number) => (
           <TableRow key={index}>
             <TableCell>
-              <div className="flex items-center gap-2">
-                {renderDropdown(
-                  previousHazards.map((h) => h.hazard),
-                  hazard.hazard,
-                  (value) => updateHazard(index, "hazard", value)
-                )}
-                <QuickFillButton
-                  fieldId={`hazard-${index}`}
-                  fieldName="Hazard"
-                  onSelect={(value) => updateHazard(index, "hazard", value)}
-                />
-              </div>
+              <Input
+                value={hazard.hazard}
+                onChange={(e) => updateHazard(index, "hazard", e.target.value)}
+                placeholder="Describe the hazard"
+                className="w-full"
+              />
             </TableCell>
             <TableCell>
-              <div className="flex items-center gap-2">
-                {renderDropdown(
-                  previousRisks,
-                  hazard.risk,
-                  (value) => updateHazard(index, "risk", value)
-                )}
-                <QuickFillButton
-                  fieldId={`risk-${index}`}
-                  fieldName="Risk"
-                  onSelect={(value) => updateHazard(index, "risk", value)}
-                />
-              </div>
+              <Select
+                value={hazard.risk}
+                onValueChange={(value) => updateHazard(index, "risk", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select risk level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
             </TableCell>
             <TableCell>
-              <div className="flex items-center gap-2">
-                {renderDropdown(
-                  previousControls,
-                  hazard.controlMeasures,
-                  (value) => updateHazard(index, "controlMeasures", value)
-                )}
-                <QuickFillButton
-                  fieldId={`control-measures-${index}`}
-                  fieldName="Control Measures"
-                  onSelect={(value) =>
-                    updateHazard(index, "controlMeasures", value)
-                  }
-                />
-              </div>
+              <Input
+                value={hazard.risk}
+                onChange={(e) => updateHazard(index, "risk", e.target.value)}
+                placeholder="Describe potential harm"
+                className="w-full"
+              />
+            </TableCell>
+            <TableCell>
+              <Input
+                value={hazard.controlMeasures}
+                onChange={(e) =>
+                  updateHazard(index, "controlMeasures", e.target.value)
+                }
+                placeholder="List control measures (hierarchy of controls)"
+                className="w-full"
+              />
             </TableCell>
             <TableCell>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => removeHazard(index)}
+                className="hover:bg-destructive/10"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </TableCell>
           </TableRow>
         ))}
+        {hazards.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={5} className="text-center text-muted-foreground">
+              No hazards added yet. Click "Add Single Hazard" to begin.
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );
