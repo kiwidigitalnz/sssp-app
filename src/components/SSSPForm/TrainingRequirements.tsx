@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 
 export const TrainingRequirements = ({ formData, setFormData }: any) => {
   const trainings = formData.trainings || [];
@@ -45,25 +46,52 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
             {trainings.map((training: any, index: number) => (
               <TableRow key={index}>
                 <TableCell>
-                  <Input
-                    value={training.requirement}
-                    onChange={(e) => updateTraining(index, "requirement", e.target.value)}
-                    placeholder="e.g., Class 2 License"
-                  />
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <QuickFillButton
+                        fieldId={`training-requirement-${index}`}
+                        fieldName="Training Requirement"
+                        onSelect={(value) => updateTraining(index, "requirement", value)}
+                      />
+                    </div>
+                    <Input
+                      value={training.requirement}
+                      onChange={(e) => updateTraining(index, "requirement", e.target.value)}
+                      placeholder="e.g., Class 2 License"
+                    />
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <Input
-                    value={training.description}
-                    onChange={(e) => updateTraining(index, "description", e.target.value)}
-                    placeholder="e.g., Heavy vehicle operation license"
-                  />
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <QuickFillButton
+                        fieldId={`training-description-${index}`}
+                        fieldName="Training Description"
+                        onSelect={(value) => updateTraining(index, "description", value)}
+                      />
+                    </div>
+                    <Input
+                      value={training.description}
+                      onChange={(e) => updateTraining(index, "description", e.target.value)}
+                      placeholder="e.g., Heavy vehicle operation license"
+                    />
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <Input
-                    value={training.frequency}
-                    onChange={(e) => updateTraining(index, "frequency", e.target.value)}
-                    placeholder="e.g., Every 5 years"
-                  />
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <QuickFillButton
+                        fieldId={`training-frequency-${index}`}
+                        fieldName="Training Frequency"
+                        onSelect={(value) => updateTraining(index, "frequency", value)}
+                      />
+                    </div>
+                    <Input
+                      value={training.frequency}
+                      onChange={(e) => updateTraining(index, "frequency", e.target.value)}
+                      placeholder="e.g., Every 5 years"
+                    />
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Button
@@ -91,7 +119,16 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
         </Button>
 
         <div className="space-y-2">
-          <Label htmlFor="additionalNotes">Additional Notes</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="additionalNotes">Additional Notes</Label>
+            <QuickFillButton
+              fieldId="trainingNotes"
+              fieldName="Training Notes"
+              onSelect={(value) =>
+                setFormData({ ...formData, trainingNotes: value })
+              }
+            />
+          </div>
           <Textarea
             id="additionalNotes"
             value={formData.trainingNotes || ""}

@@ -2,7 +2,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Phone, AlertCircle } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 
 interface EmergencyContact {
   name: string;
@@ -43,6 +44,14 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
             {emergencyContacts.map((contact: EmergencyContact, index: number) => (
               <div key={index} className="flex items-center gap-4">
                 <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Contact Name</Label>
+                    <QuickFillButton
+                      fieldId={`emergency-contact-name-${index}`}
+                      fieldName="Emergency Contact Name"
+                      onSelect={(value) => updateContact(index, "name", value)}
+                    />
+                  </div>
                   <Input
                     value={contact.name}
                     onChange={(e) => updateContact(index, "name", e.target.value)}
@@ -50,6 +59,14 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
                   />
                 </div>
                 <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Phone Number</Label>
+                    <QuickFillButton
+                      fieldId={`emergency-contact-number-${index}`}
+                      fieldName="Emergency Contact Number"
+                      onSelect={(value) => updateContact(index, "number", value)}
+                    />
+                  </div>
                   <Input
                     value={contact.number}
                     onChange={(e) => updateContact(index, "number", e.target.value)}
@@ -58,6 +75,14 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
                   />
                 </div>
                 <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Type</Label>
+                    <QuickFillButton
+                      fieldId={`emergency-contact-type-${index}`}
+                      fieldName="Emergency Contact Type"
+                      onSelect={(value) => updateContact(index, "type", value)}
+                    />
+                  </div>
                   <Input
                     value={contact.type}
                     onChange={(e) => updateContact(index, "type", e.target.value)}
@@ -87,7 +112,16 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="accidentProcedure">Vehicle Accident Procedure</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="accidentProcedure">Vehicle Accident Procedure</Label>
+              <QuickFillButton
+                fieldId="accidentProcedure"
+                fieldName="Vehicle Accident Procedure"
+                onSelect={(value) =>
+                  setFormData({ ...formData, accidentProcedure: value })
+                }
+              />
+            </div>
             <Textarea
               id="accidentProcedure"
               value={formData.accidentProcedure || ""}
@@ -100,7 +134,16 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="medicalProcedure">Medical Emergency Procedure</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="medicalProcedure">Medical Emergency Procedure</Label>
+              <QuickFillButton
+                fieldId="medicalProcedure"
+                fieldName="Medical Emergency Procedure"
+                onSelect={(value) =>
+                  setFormData({ ...formData, medicalProcedure: value })
+                }
+              />
+            </div>
             <Textarea
               id="medicalProcedure"
               value={formData.medicalProcedure || ""}
@@ -113,7 +156,16 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="spillProcedure">Fire or Hazardous Spills Procedure</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="spillProcedure">Fire or Hazardous Spills Procedure</Label>
+              <QuickFillButton
+                fieldId="spillProcedure"
+                fieldName="Fire or Hazardous Spills Procedure"
+                onSelect={(value) =>
+                  setFormData({ ...formData, spillProcedure: value })
+                }
+              />
+            </div>
             <Textarea
               id="spillProcedure"
               value={formData.spillProcedure || ""}
@@ -126,7 +178,16 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reportingProcess">Incident Reporting Process</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="reportingProcess">Incident Reporting Process</Label>
+              <QuickFillButton
+                fieldId="reportingProcess"
+                fieldName="Incident Reporting Process"
+                onSelect={(value) =>
+                  setFormData({ ...formData, reportingProcess: value })
+                }
+              />
+            </div>
             <Textarea
               id="reportingProcess"
               value={formData.reportingProcess || ""}
