@@ -6,15 +6,24 @@ import "./App.css";
 
 function App() {
   return (
-    <Router>
+    <div className="app">
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/create-sssp" element={<SSSPForm />} />
         <Route path="/edit-sssp/:id" element={<SSSPForm />} />
         <Route path="/company-settings" element={<CompanySettings />} />
       </Routes>
+    </div>
+  );
+}
+
+// Wrap the App component with Router
+function WrappedApp() {
+  return (
+    <Router>
+      <App />
     </Router>
   );
 }
 
-export default App;
+export default WrappedApp;
