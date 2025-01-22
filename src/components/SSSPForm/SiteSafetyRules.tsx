@@ -2,23 +2,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShieldCheck, DoorOpen, Car, HardHat } from "lucide-react";
 
 export const SiteSafetyRules = ({ formData, setFormData }: any) => {
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl flex items-center gap-2">
+    <Card className="shadow-md">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-2xl font-semibold flex items-center gap-3">
           <ShieldCheck className="h-6 w-6 text-primary" />
           Site Safety Rules
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="entryExitProcedures" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="entryExitProcedures" className="text-base font-medium flex items-center gap-2">
                 <DoorOpen className="h-4 w-4" />
                 Entry/Exit Procedures
               </Label>
@@ -43,7 +42,7 @@ export const SiteSafetyRules = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="speedLimits" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="speedLimits" className="text-base font-medium flex items-center gap-2">
                 <Car className="h-4 w-4" />
                 Speed Limits
               </Label>
@@ -68,7 +67,7 @@ export const SiteSafetyRules = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="parkingRules" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="parkingRules" className="text-base font-medium flex items-center gap-2">
                 <Car className="h-4 w-4" />
                 Parking Rules
               </Label>
@@ -93,7 +92,7 @@ export const SiteSafetyRules = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="sitePPE" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="sitePPE" className="text-base font-medium flex items-center gap-2">
                 <HardHat className="h-4 w-4" />
                 Site-Specific PPE Requirements
               </Label>

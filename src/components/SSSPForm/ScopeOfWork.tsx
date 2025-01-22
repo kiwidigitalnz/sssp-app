@@ -6,18 +6,18 @@ import { Briefcase, MapPin, AlertCircle } from "lucide-react";
 
 export const ScopeOfWork = ({ formData, setFormData }: any) => {
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl flex items-center gap-2">
+    <Card className="shadow-md">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-2xl font-semibold flex items-center gap-3">
           <Briefcase className="h-6 w-6 text-primary" />
           Scope of Work
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="services" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="services" className="text-base font-medium flex items-center gap-2">
                 <Briefcase className="h-4 w-4" />
                 Services Provided
               </Label>
@@ -42,7 +42,7 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="locations" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="locations" className="text-base font-medium flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
                 Key Locations and Routes
               </Label>
@@ -67,7 +67,7 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="considerations" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="considerations" className="text-base font-medium flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
                 Special Considerations
               </Label>

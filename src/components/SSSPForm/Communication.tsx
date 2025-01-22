@@ -2,23 +2,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, ClipboardList, Users } from "lucide-react";
 
 export const Communication = ({ formData, setFormData }: any) => {
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl flex items-center gap-2">
+    <Card className="shadow-md">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-2xl font-semibold flex items-center gap-3">
           <MessageSquare className="h-6 w-6 text-primary" />
           Communication and Consultation
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="meetings" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="meetings" className="text-base font-medium flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Safety Meetings
               </Label>
@@ -43,7 +42,7 @@ export const Communication = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="reporting" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="reporting" className="text-base font-medium flex items-center gap-2">
                 <ClipboardList className="h-4 w-4" />
                 Incident Reporting
               </Label>
@@ -68,7 +67,7 @@ export const Communication = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="consultation" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="consultation" className="text-base font-medium flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Worker Consultation
               </Label>

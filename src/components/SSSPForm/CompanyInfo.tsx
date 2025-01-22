@@ -6,9 +6,9 @@ import { Building2, Mail, MapPin, User } from "lucide-react";
 
 export const CompanyInfo = ({ formData, setFormData }: any) => {
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl flex items-center gap-2">
+    <Card className="shadow-md">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-2xl font-semibold flex items-center gap-3">
           <Building2 className="h-6 w-6 text-primary" />
           Company Information
         </CardTitle>
@@ -17,7 +17,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
         <div className="grid gap-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="companyName" className="text-sm font-medium">Company Name</Label>
+              <Label htmlFor="companyName" className="text-base font-medium">Company Name</Label>
               <QuickFillButton
                 fieldId="companyName"
                 fieldName="Company Name"
@@ -42,7 +42,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="address" className="text-sm font-medium">Address</Label>
+              <Label htmlFor="address" className="text-base font-medium">Address</Label>
               <QuickFillButton
                 fieldId="address"
                 fieldName="Address"
@@ -68,7 +68,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="contactPerson" className="text-sm font-medium">Contact Person</Label>
+                <Label htmlFor="contactPerson" className="text-base font-medium">Contact Person</Label>
                 <QuickFillButton
                   fieldId="contactPerson"
                   fieldName="Contact Person"
@@ -93,7 +93,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="contactEmail" className="text-sm font-medium">Contact Email</Label>
+                <Label htmlFor="contactEmail" className="text-base font-medium">Contact Email</Label>
                 <QuickFillButton
                   fieldId="contactEmail"
                   fieldName="Contact Email"
