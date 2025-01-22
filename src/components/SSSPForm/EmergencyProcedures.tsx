@@ -85,10 +85,11 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               Emergency Contacts
             </CardTitle>
-            <div className="space-x-2">
+            <div className="flex items-center gap-2">
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="shadow-sm">
+                    <Plus className="mr-2 h-4 w-4" />
                     Import Contacts
                   </Button>
                 </DialogTrigger>
