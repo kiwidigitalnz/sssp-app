@@ -1,12 +1,12 @@
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, AlertTriangle, Phone, Users } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Plus, AlertTriangle, Phone, Users, Siren, FireExtinguisher, BellRing } from "lucide-react";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { EmergencyContactSelection } from "./EmergencyContactSelection";
+import { EmergencyContactsTable } from "./EmergencyContactsTable";
 
 export const EmergencyProcedures = ({ formData, setFormData }: any) => {
   const [contacts, setContacts] = useState(formData.emergencyContacts || []);
@@ -34,6 +34,19 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
     setFormData({ ...formData, emergencyContacts: newContacts });
   };
 
+  const updateContact = (index: number, field: string, value: string) => {
+    const newContacts = [...contacts];
+    newContacts[index] = { ...newContacts[index], [field]: value };
+    setContacts(newContacts);
+    setFormData({ ...formData, emergencyContacts: newContacts });
+  };
+
+  const deleteContact = (index: number) => {
+    const newContacts = contacts.filter((_, i) => i !== index);
+    setContacts(newContacts);
+    setFormData({ ...formData, emergencyContacts: newContacts });
+  };
+
   const addMultipleContacts = (selectedContacts: any[]) => {
     const newContacts = [...contacts, ...selectedContacts];
     setContacts(newContacts);
@@ -42,21 +55,25 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-sm">
+      <Card className="shadow-md border-l-4 border-l-destructive">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-destructive" />
-            Emergency Procedures and Contacts
+            <Siren className="h-7 w-7 text-destructive animate-pulse" />
+            Incident and Emergency Procedures
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8">
+          {/* Emergency Response Plan Section */}
           <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <h3 className="text-lg font-semibold">Emergency Response Plan</h3>
+            </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  Emergency Response Plan
-                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Document your emergency response procedures and protocols
+                </p>
                 <QuickFillButton
                   fieldId="emergencyPlan"
                   fieldName="Emergency Response Plan"
@@ -70,154 +87,54 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
                 onChange={(e) =>
                   setFormData({ ...formData, emergencyPlan: e.target.value })
                 }
-                placeholder="Document emergency response procedures..."
-                className="min-h-[100px]"
+                placeholder="Detail step-by-step emergency response procedures..."
+                className="min-h-[150px]"
               />
             </div>
+          </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Emergency Contacts
-                </h3>
-              </div>
-              <Card className="border-dashed">
-                <CardContent className="pt-6">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[30%]">Name</TableHead>
-                        <TableHead className="w-[30%]">Role</TableHead>
-                        <TableHead className="w-[30%]">Phone</TableHead>
-                        <TableHead className="w-[10%]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {contacts.map((contact: any, index: number) => (
-                        <TableRow key={index}>
-                          <TableCell>
-                            <div className="space-y-2">
-                              <QuickFillButton
-                                fieldId={`contact-name-${index}`}
-                                fieldName="Contact Name"
-                                onSelect={(value) => {
-                                  const newContacts = [...contacts];
-                                  newContacts[index].name = value;
-                                  setContacts(newContacts);
-                                  setFormData({ ...formData, emergencyContacts: newContacts });
-                                }}
-                              />
-                              <Input
-                                value={contact.name}
-                                onChange={(e) => {
-                                  const newContacts = [...contacts];
-                                  newContacts[index].name = e.target.value;
-                                  setContacts(newContacts);
-                                  setFormData({ ...formData, emergencyContacts: newContacts });
-                                }}
-                                placeholder="Contact name"
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-2">
-                              <QuickFillButton
-                                fieldId={`contact-role-${index}`}
-                                fieldName="Contact Role"
-                                onSelect={(value) => {
-                                  const newContacts = [...contacts];
-                                  newContacts[index].role = value;
-                                  setContacts(newContacts);
-                                  setFormData({ ...formData, emergencyContacts: newContacts });
-                                }}
-                              />
-                              <Input
-                                value={contact.role}
-                                onChange={(e) => {
-                                  const newContacts = [...contacts];
-                                  newContacts[index].role = e.target.value;
-                                  setContacts(newContacts);
-                                  setFormData({ ...formData, emergencyContacts: newContacts });
-                                }}
-                                placeholder="Contact role"
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-2">
-                              <QuickFillButton
-                                fieldId={`contact-phone-${index}`}
-                                fieldName="Contact Phone"
-                                onSelect={(value) => {
-                                  const newContacts = [...contacts];
-                                  newContacts[index].phone = value;
-                                  setContacts(newContacts);
-                                  setFormData({ ...formData, emergencyContacts: newContacts });
-                                }}
-                              />
-                              <Input
-                                value={contact.phone}
-                                onChange={(e) => {
-                                  const newContacts = [...contacts];
-                                  newContacts[index].phone = e.target.value;
-                                  setContacts(newContacts);
-                                  setFormData({ ...formData, emergencyContacts: newContacts });
-                                }}
-                                placeholder="Contact phone"
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                const newContacts = contacts.filter((_, i) => i !== index);
-                                setContacts(newContacts);
-                                setFormData({ ...formData, emergencyContacts: newContacts });
-                              }}
-                              className="hover:bg-destructive/10"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {contacts.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                            No emergency contacts added yet. Click "Add Contact" to begin.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-
-                  <div className="mt-4 space-x-4">
-                    <Button
-                      variant="outline"
-                      onClick={addContact}
-                      className="gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Contact
-                    </Button>
-                    <EmergencyContactSelection
-                      previousContacts={previousContacts}
-                      onSelect={addMultipleContacts}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Emergency Contacts Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Phone className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Emergency Contacts</h3>
             </div>
+            <Card className="border-dashed">
+              <CardContent className="pt-6">
+                <EmergencyContactsTable
+                  contacts={contacts}
+                  onUpdate={updateContact}
+                  onDelete={deleteContact}
+                />
+                <div className="mt-4 flex flex-wrap gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={addContact}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Contact
+                  </Button>
+                  <EmergencyContactSelection
+                    previousContacts={previousContacts}
+                    onSelect={addMultipleContacts}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
+          {/* Assembly Points Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Users className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Assembly Points</h3>
+            </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Assembly Points
-                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Specify emergency assembly points and evacuation routes
+                </p>
                 <QuickFillButton
                   fieldId="assemblyPoints"
                   fieldName="Assembly Points"
@@ -231,7 +148,67 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
                 onChange={(e) =>
                   setFormData({ ...formData, assemblyPoints: e.target.value })
                 }
-                placeholder="List emergency assembly points..."
+                placeholder="List primary and secondary assembly points..."
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+
+          {/* Emergency Equipment Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <FireExtinguisher className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Emergency Equipment</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  List available emergency equipment and their locations
+                </p>
+                <QuickFillButton
+                  fieldId="emergencyEquipment"
+                  fieldName="Emergency Equipment"
+                  onSelect={(value) =>
+                    setFormData({ ...formData, emergencyEquipment: value })
+                  }
+                />
+              </div>
+              <Textarea
+                value={formData.emergencyEquipment || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, emergencyEquipment: e.target.value })
+                }
+                placeholder="Document locations of first aid kits, fire extinguishers, etc..."
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+
+          {/* Incident Reporting Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <BellRing className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Incident Reporting</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Outline the incident reporting and notification process
+                </p>
+                <QuickFillButton
+                  fieldId="incidentReporting"
+                  fieldName="Incident Reporting"
+                  onSelect={(value) =>
+                    setFormData({ ...formData, incidentReporting: value })
+                  }
+                />
+              </div>
+              <Textarea
+                value={formData.incidentReporting || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, incidentReporting: e.target.value })
+                }
+                placeholder="Detail the steps for reporting and documenting incidents..."
                 className="min-h-[100px]"
               />
             </div>
