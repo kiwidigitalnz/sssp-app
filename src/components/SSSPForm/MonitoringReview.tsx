@@ -4,8 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import { AuditSelection } from "./AuditSelection";
 
 interface MonitoringReviewProps {
   formData: any;
@@ -14,6 +15,23 @@ interface MonitoringReviewProps {
 
 export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProps) => {
   const [audits, setAudits] = useState(formData.audits || []);
+  const [previousAudits, setPreviousAudits] = useState([]);
+
+  useEffect(() => {
+    const storedSSSPs = localStorage.getItem("sssps");
+    if (storedSSSPs) {
+      const sssps = JSON.parse(storedSSSPs);
+      const allAudits = [];
+      
+      sssps.forEach((sssp: any) => {
+        if (sssp.audits) {
+          allAudits.push(...sssp.audits);
+        }
+      });
+      
+      setPreviousAudits(allAudits);
+    }
+  }, []);
 
   const addAudit = () => {
     const newAudits = [...audits, { type: "", frequency: "", responsible: "", lastDate: "", nextDate: "" }];
@@ -21,9 +39,8 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
     setFormData({ ...formData, audits: newAudits });
   };
 
-  const updateAudit = (index: number, field: string, value: string) => {
-    const newAudits = [...audits];
-    newAudits[index] = { ...newAudits[index], [field]: value };
+  const addMultipleAudits = (selectedAudits: any[]) => {
+    const newAudits = [...audits, ...selectedAudits];
     setAudits(newAudits);
     setFormData({ ...formData, audits: newAudits });
   };
@@ -124,6 +141,10 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
             <Button onClick={addAudit} className="mt-4">
               <Plus className="mr-2 h-4 w-4" /> Add Audit
             </Button>
+            <AuditSelection
+              previousAudits={previousAudits}
+              onSelect={addMultipleAudits}
+            />
           </div>
 
           <div>

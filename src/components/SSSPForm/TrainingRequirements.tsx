@@ -5,15 +5,39 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import { useState, useEffect } from "react";
+import { TrainingSelection } from "./TrainingSelection";
 
 export const TrainingRequirements = ({ formData, setFormData }: any) => {
-  const trainings = formData.trainings || [];
+  const [trainings, setTrainings] = useState(formData.trainings || []);
+  const [previousTrainings, setPreviousTrainings] = useState([]);
+
+  useEffect(() => {
+    const storedSSSPs = localStorage.getItem("sssps");
+    if (storedSSSPs) {
+      const sssps = JSON.parse(storedSSSPs);
+      const allTrainings = [];
+      
+      sssps.forEach((sssp: any) => {
+        if (sssp.trainings) {
+          allTrainings.push(...sssp.trainings);
+        }
+      });
+      
+      setPreviousTrainings(allTrainings);
+    }
+  }, []);
 
   const addTraining = () => {
-    setFormData({
-      ...formData,
-      trainings: [...trainings, { requirement: "", description: "", frequency: "" }],
-    });
+    const newTrainings = [...trainings, { requirement: "", description: "", frequency: "" }];
+    setTrainings(newTrainings);
+    setFormData({ ...formData, trainings: newTrainings });
+  };
+
+  const addMultipleTrainings = (selectedTrainings: any[]) => {
+    const newTrainings = [...trainings, ...selectedTrainings];
+    setTrainings(newTrainings);
+    setFormData({ ...formData, trainings: newTrainings });
   };
 
   const removeTraining = (index: number) => {

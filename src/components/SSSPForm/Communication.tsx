@@ -4,8 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import { MeetingSelection } from "./MeetingSelection";
 
 interface CommunicationProps {
   formData: any;
@@ -14,9 +15,32 @@ interface CommunicationProps {
 
 export const Communication = ({ formData, setFormData }: CommunicationProps) => {
   const [meetings, setMeetings] = useState(formData.meetings || []);
+  const [previousMeetings, setPreviousMeetings] = useState([]);
+
+  useEffect(() => {
+    const storedSSSPs = localStorage.getItem("sssps");
+    if (storedSSSPs) {
+      const sssps = JSON.parse(storedSSSPs);
+      const allMeetings = [];
+      
+      sssps.forEach((sssp: any) => {
+        if (sssp.meetings) {
+          allMeetings.push(...sssp.meetings);
+        }
+      });
+      
+      setPreviousMeetings(allMeetings);
+    }
+  }, []);
 
   const addMeeting = () => {
     const newMeetings = [...meetings, { type: "", frequency: "", attendees: "" }];
+    setMeetings(newMeetings);
+    setFormData({ ...formData, meetings: newMeetings });
+  };
+
+  const addMultipleMeetings = (selectedMeetings: any[]) => {
+    const newMeetings = [...meetings, ...selectedMeetings];
     setMeetings(newMeetings);
     setFormData({ ...formData, meetings: newMeetings });
   };
