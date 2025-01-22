@@ -3,8 +3,67 @@ import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardHat, Users, UserCog, Users2 } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+
+const healthAndSafetySchema = z.object({
+  pcbuDuties: z.string()
+    .min(10, "PCBU duties description must be at least 10 characters long")
+    .max(1000, "PCBU duties description must not exceed 1000 characters"),
+  workerResponsibilities: z.string()
+    .min(10, "Worker responsibilities must be at least 10 characters long")
+    .max(1000, "Worker responsibilities must not exceed 1000 characters"),
+  contractorDuties: z.string()
+    .min(10, "Contractor duties must be at least 10 characters long")
+    .max(1000, "Contractor duties must not exceed 1000 characters"),
+  visitorRules: z.string()
+    .min(10, "Visitor rules must be at least 10 characters long")
+    .max(1000, "Visitor rules must not exceed 1000 characters")
+});
+
+type HealthAndSafetyFormData = z.infer<typeof healthAndSafetySchema>;
 
 export const HealthAndSafety = ({ formData, setFormData }: any) => {
+  const { toast } = useToast();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    trigger
+  } = useForm<HealthAndSafetyFormData>({
+    resolver: zodResolver(healthAndSafetySchema),
+    defaultValues: {
+      pcbuDuties: formData.pcbuDuties || "",
+      workerResponsibilities: formData.workerResponsibilities || "",
+      contractorDuties: formData.contractorDuties || "",
+      visitorRules: formData.visitorRules || ""
+    }
+  });
+
+  useEffect(() => {
+    setValue("pcbuDuties", formData.pcbuDuties || "");
+    setValue("workerResponsibilities", formData.workerResponsibilities || "");
+    setValue("contractorDuties", formData.contractorDuties || "");
+    setValue("visitorRules", formData.visitorRules || "");
+  }, [formData, setValue]);
+
+  const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    setValue(field, value);
+    const result = await trigger(field);
+    if (!result && errors[field]) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errors[field]?.message
+      });
+    }
+  };
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="space-y-1">
@@ -24,20 +83,19 @@ export const HealthAndSafety = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="pcbuDuties"
                 fieldName="PCBU Duties"
-                onSelect={(value) =>
-                  setFormData({ ...formData, pcbuDuties: value })
-                }
+                onSelect={(value) => handleFieldChange("pcbuDuties", value)}
               />
             </div>
             <Textarea
               id="pcbuDuties"
-              value={formData.pcbuDuties || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, pcbuDuties: e.target.value })
-              }
+              {...register("pcbuDuties")}
+              className={`min-h-[100px] resize-none ${errors.pcbuDuties ? "border-destructive" : ""}`}
               placeholder="Outline company duties under the Health and Safety at Work Act 2015"
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("pcbuDuties", e.target.value)}
             />
+            {errors.pcbuDuties && (
+              <p className="text-sm text-destructive mt-1">{errors.pcbuDuties.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -49,20 +107,19 @@ export const HealthAndSafety = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="workerResponsibilities"
                 fieldName="Worker Responsibilities"
-                onSelect={(value) =>
-                  setFormData({ ...formData, workerResponsibilities: value })
-                }
+                onSelect={(value) => handleFieldChange("workerResponsibilities", value)}
               />
             </div>
             <Textarea
               id="workerResponsibilities"
-              value={formData.workerResponsibilities || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, workerResponsibilities: e.target.value })
-              }
+              {...register("workerResponsibilities")}
+              className={`min-h-[100px] resize-none ${errors.workerResponsibilities ? "border-destructive" : ""}`}
               placeholder="List worker responsibilities (e.g., reporting hazards, following safe practices)"
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("workerResponsibilities", e.target.value)}
             />
+            {errors.workerResponsibilities && (
+              <p className="text-sm text-destructive mt-1">{errors.workerResponsibilities.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -74,20 +131,19 @@ export const HealthAndSafety = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="contractorDuties"
                 fieldName="Contractor/Subcontractor Duties"
-                onSelect={(value) =>
-                  setFormData({ ...formData, contractorDuties: value })
-                }
+                onSelect={(value) => handleFieldChange("contractorDuties", value)}
               />
             </div>
             <Textarea
               id="contractorDuties"
-              value={formData.contractorDuties || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, contractorDuties: e.target.value })
-              }
+              {...register("contractorDuties")}
+              className={`min-h-[100px] resize-none ${errors.contractorDuties ? "border-destructive" : ""}`}
               placeholder="Outline compliance requirements for contractors"
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("contractorDuties", e.target.value)}
             />
+            {errors.contractorDuties && (
+              <p className="text-sm text-destructive mt-1">{errors.contractorDuties.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -99,20 +155,19 @@ export const HealthAndSafety = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="visitorRules"
                 fieldName="Visitor Rules"
-                onSelect={(value) =>
-                  setFormData({ ...formData, visitorRules: value })
-                }
+                onSelect={(value) => handleFieldChange("visitorRules", value)}
               />
             </div>
             <Textarea
               id="visitorRules"
-              value={formData.visitorRules || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, visitorRules: e.target.value })
-              }
+              {...register("visitorRules")}
+              className={`min-h-[100px] resize-none ${errors.visitorRules ? "border-destructive" : ""}`}
               placeholder="Specify safety rules for visitors on site"
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("visitorRules", e.target.value)}
             />
+            {errors.visitorRules && (
+              <p className="text-sm text-destructive mt-1">{errors.visitorRules.message}</p>
+            )}
           </div>
         </div>
       </CardContent>
