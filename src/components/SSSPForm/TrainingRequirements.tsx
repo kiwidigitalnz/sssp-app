@@ -47,10 +47,10 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
             </div>
             <Card className="border-dashed">
               <CardContent className="pt-6 space-y-4">
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="h-9">
                         <Plus className="mr-2 h-4 w-4" />
                         Add Single Training
                       </Button>
