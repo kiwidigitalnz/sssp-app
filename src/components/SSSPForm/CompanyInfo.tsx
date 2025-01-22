@@ -3,8 +3,60 @@ import { Label } from "@/components/ui/label";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Mail, MapPin, User } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/components/ui/use-toast";
+import { useEffect } from "react";
+
+const companyInfoSchema = z.object({
+  companyName: z.string().min(1, "Company name is required"),
+  address: z.string().min(1, "Address is required"),
+  contactPerson: z.string().min(1, "Contact person is required"),
+  contactEmail: z.string().email("Invalid email address")
+});
+
+type CompanyInfoFormData = z.infer<typeof companyInfoSchema>;
 
 export const CompanyInfo = ({ formData, setFormData }: any) => {
+  const { toast } = useToast();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    trigger
+  } = useForm<CompanyInfoFormData>({
+    resolver: zodResolver(companyInfoSchema),
+    defaultValues: {
+      companyName: formData.companyName || "",
+      address: formData.address || "",
+      contactPerson: formData.contactPerson || "",
+      contactEmail: formData.contactEmail || ""
+    }
+  });
+
+  useEffect(() => {
+    // Update form when formData changes externally
+    setValue("companyName", formData.companyName || "");
+    setValue("address", formData.address || "");
+    setValue("contactPerson", formData.contactPerson || "");
+    setValue("contactEmail", formData.contactEmail || "");
+  }, [formData, setValue]);
+
+  const handleFieldChange = async (field: keyof CompanyInfoFormData, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    setValue(field, value);
+    const result = await trigger(field);
+    if (!result) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errors[field]?.message
+      });
+    }
+  };
+
   return (
     <Card className="shadow-md">
       <CardHeader className="space-y-2">
@@ -21,22 +73,21 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="companyName"
                 fieldName="Company Name"
-                onSelect={(value) =>
-                  setFormData({ ...formData, companyName: value })
-                }
+                onSelect={(value) => handleFieldChange("companyName", value)}
               />
             </div>
             <div className="relative">
               <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 id="companyName"
-                value={formData.companyName || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, companyName: e.target.value })
-                }
+                {...register("companyName")}
+                className={`pl-9 ${errors.companyName ? "border-destructive" : ""}`}
                 placeholder="Enter company name"
-                className="pl-9"
+                onChange={(e) => handleFieldChange("companyName", e.target.value)}
               />
+              {errors.companyName && (
+                <p className="text-sm text-destructive mt-1">{errors.companyName.message}</p>
+              )}
             </div>
           </div>
 
@@ -46,22 +97,21 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="address"
                 fieldName="Address"
-                onSelect={(value) =>
-                  setFormData({ ...formData, address: value })
-                }
+                onSelect={(value) => handleFieldChange("address", value)}
               />
             </div>
             <div className="relative">
               <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 id="address"
-                value={formData.address || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
-                }
+                {...register("address")}
+                className={`pl-9 ${errors.address ? "border-destructive" : ""}`}
                 placeholder="Enter company address"
-                className="pl-9"
+                onChange={(e) => handleFieldChange("address", e.target.value)}
               />
+              {errors.address && (
+                <p className="text-sm text-destructive mt-1">{errors.address.message}</p>
+              )}
             </div>
           </div>
 
@@ -72,22 +122,21 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
                 <QuickFillButton
                   fieldId="contactPerson"
                   fieldName="Contact Person"
-                  onSelect={(value) =>
-                    setFormData({ ...formData, contactPerson: value })
-                  }
+                  onSelect={(value) => handleFieldChange("contactPerson", value)}
                 />
               </div>
               <div className="relative">
                 <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="contactPerson"
-                  value={formData.contactPerson || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contactPerson: e.target.value })
-                  }
+                  {...register("contactPerson")}
+                  className={`pl-9 ${errors.contactPerson ? "border-destructive" : ""}`}
                   placeholder="Enter contact person name"
-                  className="pl-9"
+                  onChange={(e) => handleFieldChange("contactPerson", e.target.value)}
                 />
+                {errors.contactPerson && (
+                  <p className="text-sm text-destructive mt-1">{errors.contactPerson.message}</p>
+                )}
               </div>
             </div>
 
@@ -97,9 +146,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
                 <QuickFillButton
                   fieldId="contactEmail"
                   fieldName="Contact Email"
-                  onSelect={(value) =>
-                    setFormData({ ...formData, contactEmail: value })
-                  }
+                  onSelect={(value) => handleFieldChange("contactEmail", value)}
                 />
               </div>
               <div className="relative">
@@ -107,13 +154,14 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
                 <Input
                   id="contactEmail"
                   type="email"
-                  value={formData.contactEmail || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contactEmail: e.target.value })
-                  }
+                  {...register("contactEmail")}
+                  className={`pl-9 ${errors.contactEmail ? "border-destructive" : ""}`}
                   placeholder="Enter contact email"
-                  className="pl-9"
+                  onChange={(e) => handleFieldChange("contactEmail", e.target.value)}
                 />
+                {errors.contactEmail && (
+                  <p className="text-sm text-destructive mt-1">{errors.contactEmail.message}</p>
+                )}
               </div>
             </div>
           </div>
