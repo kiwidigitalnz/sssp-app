@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { TrainingSelection } from "./TrainingSelection";
-import { GraduationCap, BookOpen, Certificate, ClipboardCheck } from "lucide-react";
+import { GraduationCap, BookOpen, Award, ClipboardCheck } from "lucide-react";
 
 export const TrainingRequirements = ({ formData, setFormData }: any) => {
   return (
@@ -26,7 +26,7 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
             <Card className="border-dashed">
               <CardContent className="pt-6">
                 <TrainingSelection
-                  selectedTraining={formData.requiredTraining || []}
+                  previousTrainings={formData.requiredTraining || []}
                   onSelect={(training) =>
                     setFormData({ ...formData, requiredTraining: training })
                   }
@@ -38,7 +38,7 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
           {/* Competency Requirements Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b pb-2">
-              <Certificate className="h-5 w-5" />
+              <Award className="h-5 w-5" />
               <h3 className="text-lg font-semibold">Competency Requirements</h3>
             </div>
             <div className="space-y-2">
