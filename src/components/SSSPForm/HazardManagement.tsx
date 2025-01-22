@@ -1,9 +1,16 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from "react";
 
 interface Hazard {
   hazard: string;
@@ -13,6 +20,32 @@ interface Hazard {
 
 export const HazardManagement = ({ formData, setFormData }: any) => {
   const hazards = formData.hazards || [];
+  const [previousHazards, setPreviousHazards] = useState<string[]>([]);
+  const [previousRisks, setPreviousRisks] = useState<string[]>([]);
+  const [previousControls, setPreviousControls] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Load previous entries from localStorage
+    const storedSSSPs = localStorage.getItem("sssps");
+    if (storedSSSPs) {
+      const sssps = JSON.parse(storedSSSPs);
+      const allHazards = new Set<string>();
+      const allRisks = new Set<string>();
+      const allControls = new Set<string>();
+
+      sssps.forEach((sssp: any) => {
+        sssp.hazards?.forEach((h: Hazard) => {
+          if (h.hazard) allHazards.add(h.hazard);
+          if (h.risk) allRisks.add(h.risk);
+          if (h.controlMeasures) allControls.add(h.controlMeasures);
+        });
+      });
+
+      setPreviousHazards(Array.from(allHazards));
+      setPreviousRisks(Array.from(allRisks));
+      setPreviousControls(Array.from(allControls));
+    }
+  }, []);
 
   const addHazard = () => {
     setFormData({
@@ -33,6 +66,24 @@ export const HazardManagement = ({ formData, setFormData }: any) => {
     setFormData({ ...formData, hazards: updatedHazards });
   };
 
+  const renderDropdown = (items: string[], current: string, onChange: (value: string) => void) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="w-full justify-between">
+          {current || "Select..."}
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-full">
+        {items.map((item, i) => (
+          <DropdownMenuItem key={i} onSelect={() => onChange(item)}>
+            {item}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Hazard and Risk Management</h2>
@@ -52,11 +103,11 @@ export const HazardManagement = ({ formData, setFormData }: any) => {
               <TableRow key={index}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Input
-                      value={hazard.hazard}
-                      onChange={(e) => updateHazard(index, "hazard", e.target.value)}
-                      placeholder="e.g., Fatigue"
-                    />
+                    {renderDropdown(
+                      previousHazards,
+                      hazard.hazard,
+                      (value) => updateHazard(index, "hazard", value)
+                    )}
                     <QuickFillButton
                       fieldId={`hazard-${index}`}
                       fieldName="Hazard"
@@ -66,11 +117,11 @@ export const HazardManagement = ({ formData, setFormData }: any) => {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Input
-                      value={hazard.risk}
-                      onChange={(e) => updateHazard(index, "risk", e.target.value)}
-                      placeholder="e.g., Driver drowsiness"
-                    />
+                    {renderDropdown(
+                      previousRisks,
+                      hazard.risk,
+                      (value) => updateHazard(index, "risk", value)
+                    )}
                     <QuickFillButton
                       fieldId={`risk-${index}`}
                       fieldName="Risk"
@@ -80,11 +131,11 @@ export const HazardManagement = ({ formData, setFormData }: any) => {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Input
-                      value={hazard.controlMeasures}
-                      onChange={(e) => updateHazard(index, "controlMeasures", e.target.value)}
-                      placeholder="e.g., Fatigue management plan"
-                    />
+                    {renderDropdown(
+                      previousControls,
+                      hazard.controlMeasures,
+                      (value) => updateHazard(index, "controlMeasures", value)
+                    )}
                     <QuickFillButton
                       fieldId={`control-measures-${index}`}
                       fieldName="Control Measures"
