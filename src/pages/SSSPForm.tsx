@@ -14,7 +14,7 @@ import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
 import { SummaryScreen } from "@/components/SSSPForm/SummaryScreen";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, X } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -42,7 +42,6 @@ const SSSPForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({});
 
-  // Mock data for edit mode
   const mockSSSPData: MockSSSPData = {
     1: {
       companyName: "City Center Construction",
@@ -81,6 +80,22 @@ const SSSPForm = () => {
     }
   }, [id, navigate, toast]);
 
+  const handleSave = () => {
+    // Save to localStorage for now
+    localStorage.setItem(`sssp-${id || 'draft'}`, JSON.stringify(formData));
+    toast({
+      title: "Progress saved",
+      description: "Your SSSP has been saved successfully",
+    });
+    navigate("/"); // Navigate back to dashboard
+  };
+
+  const handleCancel = () => {
+    if (confirm("Are you sure you want to cancel? Any unsaved changes will be lost.")) {
+      navigate("/");
+    }
+  };
+
   const steps = [
     { title: "Project Details", component: ProjectDetails },
     { title: "Company Information", component: CompanyInfo },
@@ -117,9 +132,29 @@ const SSSPForm = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">
-          {id ? "Edit SSSP" : "Create New SSSP"}
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">
+            {id ? "Edit SSSP" : "Create New SSSP"}
+          </h1>
+          <div className="flex gap-4">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              className="gap-2"
+            >
+              <X className="h-4 w-4" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              variant="outline"
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Save & Exit
+            </Button>
+          </div>
+        </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="mb-8">
@@ -152,14 +187,15 @@ const SSSPForm = () => {
                 variant="outline"
                 onClick={handlePrevious}
                 disabled={currentStep === 0}
+                className="gap-2"
               >
-                <ChevronLeft className="mr-2" />
+                <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
 
-              <Button onClick={handleNext}>
+              <Button onClick={handleNext} className="gap-2">
                 Next
-                <ChevronRight className="ml-2" />
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           )}
