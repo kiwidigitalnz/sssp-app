@@ -7,6 +7,30 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { AuditSelection } from "./AuditSelection";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+
+const auditSchema = z.object({
+  type: z.string().min(1, "Audit type is required"),
+  frequency: z.string().min(1, "Frequency is required"),
+  responsible: z.string().min(1, "Responsible person is required"),
+  lastDate: z.string().min(1, "Last audit date is required"),
+  nextDate: z.string().min(1, "Next audit date is required")
+});
+
+const monitoringSchema = z.object({
+  audits: z.array(auditSchema).min(1, "At least one audit is required"),
+  correctiveActions: z.string()
+    .min(10, "Corrective actions must be at least 10 characters long")
+    .max(1000, "Corrective actions must not exceed 1000 characters"),
+  annualReview: z.string()
+    .min(10, "Annual review process must be at least 10 characters long")
+    .max(1000, "Annual review process must not exceed 1000 characters")
+});
+
+type MonitoringFormData = z.infer<typeof monitoringSchema>;
 
 interface MonitoringReviewProps {
   formData: any;
@@ -14,8 +38,24 @@ interface MonitoringReviewProps {
 }
 
 export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProps) => {
+  const { toast } = useToast();
   const [audits, setAudits] = useState(formData.audits || []);
   const [previousAudits, setPreviousAudits] = useState([]);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    trigger
+  } = useForm<MonitoringFormData>({
+    resolver: zodResolver(monitoringSchema),
+    defaultValues: {
+      audits: formData.audits || [],
+      correctiveActions: formData.correctiveActions || "",
+      annualReview: formData.annualReview || ""
+    }
+  });
 
   useEffect(() => {
     const storedSSSPs = localStorage.getItem("sssps");
@@ -33,7 +73,20 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
     }
   }, []);
 
-  const updateAudit = (index: number, field: string, value: string) => {
+  const handleFieldChange = async (field: keyof MonitoringFormData, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    setValue(field, value);
+    const result = await trigger(field);
+    if (!result && errors[field]) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errors[field]?.message
+      });
+    }
+  };
+
+  const updateAudit = async (index: number, field: string, value: string) => {
     const newAudits = [...audits];
     newAudits[index] = {
       ...newAudits[index],
@@ -41,18 +94,39 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
     };
     setAudits(newAudits);
     setFormData({ ...formData, audits: newAudits });
+    setValue("audits", newAudits);
+    
+    const result = await trigger("audits");
+    if (!result) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please check all audit fields"
+      });
+    }
   };
 
   const addAudit = () => {
     const newAudits = [...audits, { type: "", frequency: "", responsible: "", lastDate: "", nextDate: "" }];
     setAudits(newAudits);
     setFormData({ ...formData, audits: newAudits });
+    setValue("audits", newAudits);
   };
 
-  const addMultipleAudits = (selectedAudits: any[]) => {
+  const addMultipleAudits = async (selectedAudits: any[]) => {
     const newAudits = [...audits, ...selectedAudits];
     setAudits(newAudits);
     setFormData({ ...formData, audits: newAudits });
+    setValue("audits", newAudits);
+    
+    const result = await trigger("audits");
+    if (!result) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please check all audit fields"
+      });
+    }
   };
 
   return (
