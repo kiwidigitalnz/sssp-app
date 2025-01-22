@@ -7,9 +7,10 @@ import { toast } from "sonner";
 interface SummaryScreenProps {
   formData: any;
   setFormData: (data: any) => void;
+  onStepChange: (step: number) => void;
 }
 
-export const SummaryScreen = ({ formData }: SummaryScreenProps) => {
+export const SummaryScreen = ({ formData, onStepChange }: SummaryScreenProps) => {
   const handleSave = () => {
     // In a real app, this would save to a backend
     localStorage.setItem("sssp-form", JSON.stringify(formData));
@@ -27,97 +28,59 @@ export const SummaryScreen = ({ formData }: SummaryScreenProps) => {
     window.print();
   };
 
+  const sections = [
+    { title: "Project Details", data: formData.projectDetails, step: 0 },
+    { title: "Company Information", data: formData.companyInfo, step: 1 },
+    { title: "Scope of Work", data: formData.scopeOfWork, step: 2 },
+    { title: "Health and Safety", data: formData.healthAndSafety, step: 3 },
+    { title: "Hazard Management", data: formData.hazardManagement, step: 4 },
+    { title: "Emergency Procedures", data: formData.emergencyProcedures, step: 5 },
+    { title: "Training Requirements", data: formData.trainingRequirements, step: 6 },
+    { title: "Health and Safety Policies", data: formData.healthAndSafetyPolicies, step: 7 },
+    { title: "Site Safety Rules", data: formData.siteSafetyRules, step: 8 },
+    { title: "Communication", data: formData.communication, step: 9 },
+    { title: "Monitoring and Review", data: formData.monitoringReview, step: 10 }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Summary</h2>
+        <h2 className="text-2xl font-bold">Final Review</h2>
         <div className="flex gap-4">
           <Button onClick={handleSave} variant="outline">
-            <Save className="mr-2" />
+            <Save className="mr-2 h-4 w-4" />
             Save Draft
           </Button>
           <Button onClick={handleSubmit}>
-            <Send className="mr-2" />
+            <Send className="mr-2 h-4 w-4" />
             Submit
           </Button>
           <Button onClick={handlePrintPDF} variant="secondary">
-            <Printer className="mr-2" />
-            Print PDF
+            <Printer className="mr-2 h-4 w-4" />
+            Export PDF
           </Button>
         </div>
       </div>
 
       <ScrollArea className="h-[600px] rounded-md border p-4">
         <div className="space-y-6">
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Company Information</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.companyInfo, null, 2)}
-            </pre>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Scope of Work</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.scopeOfWork, null, 2)}
-            </pre>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Health and Safety</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.healthAndSafety, null, 2)}
-            </pre>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Hazard Management</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.hazardManagement, null, 2)}
-            </pre>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Emergency Procedures</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.emergencyProcedures, null, 2)}
-            </pre>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Training Requirements</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.trainingRequirements, null, 2)}
-            </pre>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Health and Safety Policies</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.healthAndSafetyPolicies, null, 2)}
-            </pre>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Site Safety Rules</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.siteSafetyRules, null, 2)}
-            </pre>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Communication</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.communication, null, 2)}
-            </pre>
-          </Card>
-
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold mb-2">Monitoring and Review</h3>
-            <pre className="whitespace-pre-wrap">
-              {JSON.stringify(formData.monitoringReview, null, 2)}
-            </pre>
-          </Card>
+          {sections.map((section, index) => (
+            <Card key={index} className="p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-semibold">{section.title}</h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => onStepChange(section.step)}
+                >
+                  Edit
+                </Button>
+              </div>
+              <pre className="whitespace-pre-wrap text-sm">
+                {JSON.stringify(section.data, null, 2)}
+              </pre>
+            </Card>
+          ))}
         </div>
       </ScrollArea>
     </div>

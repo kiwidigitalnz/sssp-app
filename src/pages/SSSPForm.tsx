@@ -11,6 +11,7 @@ import { HealthAndSafetyPolicies } from "@/components/SSSPForm/HealthAndSafetyPo
 import { SiteSafetyRules } from "@/components/SSSPForm/SiteSafetyRules";
 import { Communication } from "@/components/SSSPForm/Communication";
 import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
+import { SummaryScreen } from "@/components/SSSPForm/SummaryScreen";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -92,6 +93,7 @@ const SSSPForm = () => {
     { title: "Site-Specific Safety Rules", component: SiteSafetyRules },
     { title: "Communication and Consultation", component: Communication },
     { title: "Monitoring and Review", component: MonitoringReview },
+    { title: "Review and Submit", component: SummaryScreen }
   ];
 
   const CurrentStepComponent = steps[currentStep].component;
@@ -110,15 +112,6 @@ const SSSPForm = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
-  };
-
-  const handleSave = () => {
-    // Here you would typically save to your backend
-    toast({
-      title: "SSSP saved",
-      description: "Your SSSP has been saved successfully",
-    });
-    navigate("/");
   };
 
   return (
@@ -145,34 +138,31 @@ const SSSPForm = () => {
 
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
-              <CurrentStepComponent formData={formData} setFormData={setFormData} />
+              <CurrentStepComponent 
+                formData={formData} 
+                setFormData={setFormData}
+                onStepChange={setCurrentStep}
+              />
             </Suspense>
           </ErrorBoundary>
 
-          <div className="flex justify-between mt-8">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentStep === 0}
-            >
-              <ChevronLeft className="mr-2" />
-              Previous
-            </Button>
-
-            <div className="space-x-2">
-              <Button variant="outline" onClick={handleSave}>
-                Save
+          {currentStep < steps.length - 1 && (
+            <div className="flex justify-between mt-8">
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={currentStep === 0}
+              >
+                <ChevronLeft className="mr-2" />
+                Previous
               </Button>
-              {currentStep === steps.length - 1 ? (
-                <Button onClick={handleSave}>Submit</Button>
-              ) : (
-                <Button onClick={handleNext}>
-                  Next
-                  <ChevronRight className="ml-2" />
-                </Button>
-              )}
+
+              <Button onClick={handleNext}>
+                Next
+                <ChevronRight className="ml-2" />
+              </Button>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
