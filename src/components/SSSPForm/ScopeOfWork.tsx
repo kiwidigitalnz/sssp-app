@@ -3,8 +3,56 @@ import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, MapPin, AlertCircle } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/components/ui/use-toast";
+import { useEffect } from "react";
+
+const scopeOfWorkSchema = z.object({
+  services: z.string().min(1, "Services description is required"),
+  locations: z.string().min(1, "Key locations and routes are required"),
+  considerations: z.string().min(1, "Special considerations are required")
+});
+
+type ScopeOfWorkFormData = z.infer<typeof scopeOfWorkSchema>;
 
 export const ScopeOfWork = ({ formData, setFormData }: any) => {
+  const { toast } = useToast();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    trigger
+  } = useForm<ScopeOfWorkFormData>({
+    resolver: zodResolver(scopeOfWorkSchema),
+    defaultValues: {
+      services: formData.services || "",
+      locations: formData.locations || "",
+      considerations: formData.considerations || ""
+    }
+  });
+
+  useEffect(() => {
+    setValue("services", formData.services || "");
+    setValue("locations", formData.locations || "");
+    setValue("considerations", formData.considerations || "");
+  }, [formData, setValue]);
+
+  const handleFieldChange = async (field: keyof ScopeOfWorkFormData, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    setValue(field, value);
+    const result = await trigger(field);
+    if (!result && errors[field]) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errors[field]?.message
+      });
+    }
+  };
+
   return (
     <Card className="shadow-md">
       <CardHeader className="space-y-2">
@@ -24,20 +72,19 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="services"
                 fieldName="Services Provided"
-                onSelect={(value) =>
-                  setFormData({ ...formData, services: value })
-                }
+                onSelect={(value) => handleFieldChange("services", value)}
               />
             </div>
             <Textarea
               id="services"
-              value={formData.services || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, services: e.target.value })
-              }
+              {...register("services")}
+              className={`min-h-[100px] resize-none ${errors.services ? "border-destructive" : ""}`}
               placeholder="Describe the trucking services provided"
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("services", e.target.value)}
             />
+            {errors.services && (
+              <p className="text-sm text-destructive mt-1">{errors.services.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -49,20 +96,19 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="locations"
                 fieldName="Key Locations and Routes"
-                onSelect={(value) =>
-                  setFormData({ ...formData, locations: value })
-                }
+                onSelect={(value) => handleFieldChange("locations", value)}
               />
             </div>
             <Textarea
               id="locations"
-              value={formData.locations || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, locations: e.target.value })
-              }
+              {...register("locations")}
+              className={`min-h-[100px] resize-none ${errors.locations ? "border-destructive" : ""}`}
               placeholder="List key locations and routes covered"
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("locations", e.target.value)}
             />
+            {errors.locations && (
+              <p className="text-sm text-destructive mt-1">{errors.locations.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -74,20 +120,19 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="considerations"
                 fieldName="Special Considerations"
-                onSelect={(value) =>
-                  setFormData({ ...formData, considerations: value })
-                }
+                onSelect={(value) => handleFieldChange("considerations", value)}
               />
             </div>
             <Textarea
               id="considerations"
-              value={formData.considerations || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, considerations: e.target.value })
-              }
+              {...register("considerations")}
+              className={`min-h-[100px] resize-none ${errors.considerations ? "border-destructive" : ""}`}
               placeholder="Note any special considerations (e.g., hazardous goods transport)"
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("considerations", e.target.value)}
             />
+            {errors.considerations && (
+              <p className="text-sm text-destructive mt-1">{errors.considerations.message}</p>
+            )}
           </div>
         </div>
       </CardContent>
