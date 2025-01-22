@@ -14,19 +14,25 @@ import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
 import { SummaryScreen } from "@/components/SSSPForm/SummaryScreen";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, Save, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, X, HelpCircle } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type MockDataKey = 1 | 2;
-interface MockSSSPData {
-  [key: number]: {
-    companyName: string;
-    address: string;
-    contactPerson: string;
-    contactEmail: string;
-  };
-}
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const LoadingFallback = () => (
   <div className="space-y-4">
@@ -41,8 +47,10 @@ const SSSPForm = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const mockSSSPData: MockSSSPData = {
+  const mockSSSPData = {
     1: {
       companyName: "City Center Construction",
       address: "123 Main St",
@@ -59,8 +67,7 @@ const SSSPForm = () => {
 
   useEffect(() => {
     if (id) {
-      // Convert string id to number and validate it's either 1 or 2
-      const numericId = parseInt(id, 10) as MockDataKey;
+      const numericId = parseInt(id, 10);
       const ssspData = mockSSSPData[numericId];
       
       if (ssspData) {
@@ -80,20 +87,32 @@ const SSSPForm = () => {
     }
   }, [id, navigate, toast]);
 
-  const handleSave = () => {
-    // Save to localStorage for now
-    localStorage.setItem(`sssp-${id || 'draft'}`, JSON.stringify(formData));
-    toast({
-      title: "Progress saved",
-      description: "Your SSSP has been saved successfully",
-    });
-    navigate("/"); // Navigate back to dashboard
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      localStorage.setItem(`sssp-${id || 'draft'}`, JSON.stringify(formData));
+      toast({
+        title: "Progress saved",
+        description: "Your SSSP has been saved successfully",
+      });
+      navigate("/");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error saving",
+        description: "There was an error saving your progress",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
-    if (confirm("Are you sure you want to cancel? Any unsaved changes will be lost.")) {
-      navigate("/");
-    }
+    setShowCancelDialog(true);
+  };
+
+  const confirmCancel = () => {
+    navigate("/");
   };
 
   const steps = [
@@ -113,13 +132,25 @@ const SSSPForm = () => {
 
   const CurrentStepComponent = steps[currentStep].component;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-      toast({
-        title: "Progress saved",
-        description: "Your changes have been saved",
-      });
+      setIsLoading(true);
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setCurrentStep(currentStep + 1);
+        toast({
+          title: "Progress saved",
+          description: "Your changes have been saved",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "There was an error saving your progress",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -132,7 +163,7 @@ const SSSPForm = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <h1 className="text-3xl font-bold">
             {id ? "Edit SSSP" : "Create New SSSP"}
           </h1>
@@ -141,6 +172,7 @@ const SSSPForm = () => {
               variant="outline"
               onClick={handleCancel}
               className="gap-2"
+              disabled={isLoading}
             >
               <X className="h-4 w-4" />
               Cancel
@@ -149,18 +181,33 @@ const SSSPForm = () => {
               onClick={handleSave}
               variant="outline"
               className="gap-2"
+              disabled={isLoading}
             >
               <Save className="h-4 w-4" />
-              Save & Exit
+              {isLoading ? "Saving..." : "Save & Exit"}
             </Button>
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-2">
-              Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}
-            </h2>
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-xl font-semibold">
+                Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}
+              </h2>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <HelpCircle className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Fill out this section with relevant information for your SSSP</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <div className="h-2 bg-gray-200 rounded">
               <div
                 className="h-full bg-blue-600 rounded transition-all duration-300"
@@ -177,6 +224,7 @@ const SSSPForm = () => {
                 formData={formData} 
                 setFormData={setFormData}
                 onStepChange={setCurrentStep}
+                isLoading={isLoading}
               />
             </Suspense>
           </ErrorBoundary>
@@ -186,21 +234,42 @@ const SSSPForm = () => {
               <Button
                 variant="outline"
                 onClick={handlePrevious}
-                disabled={currentStep === 0}
+                disabled={currentStep === 0 || isLoading}
                 className="gap-2"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
 
-              <Button onClick={handleNext} className="gap-2">
-                Next
+              <Button 
+                onClick={handleNext} 
+                className="gap-2"
+                disabled={isLoading}
+              >
+                {isLoading ? "Saving..." : "Next"}
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           )}
         </div>
       </div>
+
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Any unsaved changes will be lost. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancel}>
+              Yes, Cancel
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
