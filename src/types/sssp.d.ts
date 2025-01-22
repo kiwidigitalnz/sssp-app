@@ -1,5 +1,10 @@
 export interface SSSP {
   id: string;
+  projectName: string;
+  projectDescription: string;
+  siteAddress: string;
+  startDate: string;
+  endDate: string;
   companyName: string;
   address: string;
   contactPerson: string;

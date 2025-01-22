@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ProjectDetails } from "@/components/SSSPForm/ProjectDetails";
 import { CompanyInfo } from "@/components/SSSPForm/CompanyInfo";
 import { ScopeOfWork } from "@/components/SSSPForm/ScopeOfWork";
 import { HealthAndSafety } from "@/components/SSSPForm/HealthAndSafety";
@@ -71,6 +72,7 @@ const SSSPForm = () => {
   }, [id, navigate, toast]);
 
   const steps = [
+    { title: "Project Details", component: ProjectDetails },
     { title: "Company Information", component: CompanyInfo },
     { title: "Scope of Work", component: ScopeOfWork },
     { title: "Health and Safety Responsibilities", component: HealthAndSafety },
