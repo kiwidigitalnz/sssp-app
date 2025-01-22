@@ -1,9 +1,12 @@
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import { EmergencyContactSelection } from "./EmergencyContactSelection";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 interface EmergencyContact {
   name: string;
@@ -13,6 +16,20 @@ interface EmergencyContact {
 
 export const EmergencyProcedures = ({ formData, setFormData }: any) => {
   const emergencyContacts = formData.emergencyContacts || [];
+  const [previousContacts, setPreviousContacts] = useState<EmergencyContact[]>([]);
+
+  useEffect(() => {
+    // Load previous emergency contacts from localStorage
+    const storedSSSPs = localStorage.getItem("sssps");
+    if (storedSSSPs) {
+      const sssps = JSON.parse(storedSSSPs);
+      const allContacts = sssps
+        .map((sssp: any) => sssp.emergencyContacts || [])
+        .flat()
+        .filter((contact: EmergencyContact) => contact.name && contact.number && contact.type);
+      setPreviousContacts(allContacts);
+    }
+  }, []);
 
   const addContact = () => {
     setFormData({
@@ -33,13 +50,47 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
     setFormData({ ...formData, emergencyContacts: updatedContacts });
   };
 
+  const handleAddSelectedContacts = (selectedContacts: EmergencyContact[]) => {
+    setFormData({
+      ...formData,
+      emergencyContacts: [...emergencyContacts, ...selectedContacts],
+    });
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Incident and Emergency Procedures</h2>
       
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold mb-4">Emergency Contacts</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Emergency Contacts</h3>
+            <div className="space-x-2">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Add from Previous
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <EmergencyContactSelection
+                    previousContacts={previousContacts}
+                    onSelect={handleAddSelectedContacts}
+                  />
+                </DialogContent>
+              </Dialog>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addContact}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Contact
+              </Button>
+            </div>
+          </div>
+
           <div className="space-y-4">
             {emergencyContacts.map((contact: EmergencyContact, index: number) => (
               <div key={index} className="flex items-center gap-4">
@@ -98,15 +149,6 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
                 </Button>
               </div>
             ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addContact}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Emergency Contact
-            </Button>
           </div>
         </div>
 
