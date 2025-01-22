@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { HazardTable } from "./HazardTable";
 import { HazardActions } from "./HazardActions";
+import { RiskLevelGuide } from "./RiskLevelGuide";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield } from "lucide-react";
 
 interface Hazard {
   hazard: string;
@@ -76,24 +79,40 @@ export const HazardManagement = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Hazard and Risk Management</h2>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Hazard and Risk Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RiskLevelGuide />
+          
+          <div className="space-y-6">
+            <Card className="border-dashed">
+              <CardContent className="pt-6">
+                <HazardTable
+                  hazards={hazards}
+                  previousHazards={previousHazards}
+                  previousRisks={previousRisks}
+                  previousControls={previousControls}
+                  updateHazard={updateHazard}
+                  removeHazard={removeHazard}
+                />
 
-      <div className="space-y-4">
-        <HazardTable
-          hazards={hazards}
-          previousHazards={previousHazards}
-          previousRisks={previousRisks}
-          previousControls={previousControls}
-          updateHazard={updateHazard}
-          removeHazard={removeHazard}
-        />
-
-        <HazardActions
-          previousHazards={previousHazards}
-          addHazard={addHazard}
-          addMultipleHazards={addMultipleHazards}
-        />
-      </div>
+                <div className="mt-4">
+                  <HazardActions
+                    previousHazards={previousHazards}
+                    addHazard={addHazard}
+                    addMultipleHazards={addMultipleHazards}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
