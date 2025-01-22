@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 
 interface CommunicationProps {
   formData: any;
@@ -42,37 +43,82 @@ export const Communication = ({ formData, setFormData }: CommunicationProps) => 
                 {meetings.map((meeting: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell>
-                      <Input
-                        value={meeting.type}
-                        onChange={(e) => {
-                          const newMeetings = [...meetings];
-                          newMeetings[index].type = e.target.value;
-                          setMeetings(newMeetings);
-                          setFormData({ ...formData, meetings: newMeetings });
-                        }}
-                      />
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <QuickFillButton
+                            fieldId={`meeting-type-${index}`}
+                            fieldName="Meeting Type"
+                            onSelect={(value) => {
+                              const newMeetings = [...meetings];
+                              newMeetings[index].type = value;
+                              setMeetings(newMeetings);
+                              setFormData({ ...formData, meetings: newMeetings });
+                            }}
+                          />
+                        </div>
+                        <Input
+                          value={meeting.type}
+                          onChange={(e) => {
+                            const newMeetings = [...meetings];
+                            newMeetings[index].type = e.target.value;
+                            setMeetings(newMeetings);
+                            setFormData({ ...formData, meetings: newMeetings });
+                          }}
+                          placeholder="e.g., Toolbox Talk"
+                        />
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        value={meeting.frequency}
-                        onChange={(e) => {
-                          const newMeetings = [...meetings];
-                          newMeetings[index].frequency = e.target.value;
-                          setMeetings(newMeetings);
-                          setFormData({ ...formData, meetings: newMeetings });
-                        }}
-                      />
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <QuickFillButton
+                            fieldId={`meeting-frequency-${index}`}
+                            fieldName="Meeting Frequency"
+                            onSelect={(value) => {
+                              const newMeetings = [...meetings];
+                              newMeetings[index].frequency = value;
+                              setMeetings(newMeetings);
+                              setFormData({ ...formData, meetings: newMeetings });
+                            }}
+                          />
+                        </div>
+                        <Input
+                          value={meeting.frequency}
+                          onChange={(e) => {
+                            const newMeetings = [...meetings];
+                            newMeetings[index].frequency = e.target.value;
+                            setMeetings(newMeetings);
+                            setFormData({ ...formData, meetings: newMeetings });
+                          }}
+                          placeholder="e.g., Weekly"
+                        />
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        value={meeting.attendees}
-                        onChange={(e) => {
-                          const newMeetings = [...meetings];
-                          newMeetings[index].attendees = e.target.value;
-                          setMeetings(newMeetings);
-                          setFormData({ ...formData, meetings: newMeetings });
-                        }}
-                      />
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <QuickFillButton
+                            fieldId={`meeting-attendees-${index}`}
+                            fieldName="Required Attendees"
+                            onSelect={(value) => {
+                              const newMeetings = [...meetings];
+                              newMeetings[index].attendees = value;
+                              setMeetings(newMeetings);
+                              setFormData({ ...formData, meetings: newMeetings });
+                            }}
+                          />
+                        </div>
+                        <Input
+                          value={meeting.attendees}
+                          onChange={(e) => {
+                            const newMeetings = [...meetings];
+                            newMeetings[index].attendees = e.target.value;
+                            setMeetings(newMeetings);
+                            setFormData({ ...formData, meetings: newMeetings });
+                          }}
+                          placeholder="e.g., All site workers"
+                        />
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -97,7 +143,14 @@ export const Communication = ({ formData, setFormData }: CommunicationProps) => 
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Worker Feedback Mechanisms</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Worker Feedback Mechanisms</h3>
+              <QuickFillButton
+                fieldId="workerFeedback"
+                fieldName="Worker Feedback"
+                onSelect={(value) => setFormData({ ...formData, workerFeedback: value })}
+              />
+            </div>
             <Textarea
               placeholder="Document how workers can provide feedback..."
               value={formData.workerFeedback || ""}
@@ -107,7 +160,14 @@ export const Communication = ({ formData, setFormData }: CommunicationProps) => 
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Procedure Change Notifications</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Procedure Change Notifications</h3>
+              <QuickFillButton
+                fieldId="procedureChanges"
+                fieldName="Procedure Changes"
+                onSelect={(value) => setFormData({ ...formData, procedureChanges: value })}
+              />
+            </div>
             <Textarea
               placeholder="Document how changes in procedures are communicated..."
               value={formData.procedureChanges || ""}
