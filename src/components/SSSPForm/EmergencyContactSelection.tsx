@@ -3,6 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
 
 interface EmergencyContact {
   name: string;
@@ -35,30 +43,54 @@ export const EmergencyContactSelection = ({
   };
 
   return (
-    <Card className="p-4">
-      <h3 className="text-lg font-semibold mb-4">Previous Emergency Contacts</h3>
-      <ScrollArea className="h-[200px] mb-4">
-        <div className="space-y-2">
-          {previousContacts.map((contact, index) => (
-            <div key={index} className="flex items-center space-x-2">
-              <Checkbox
-                checked={selectedContacts.includes(contact)}
-                onCheckedChange={() => handleSelect(contact)}
-              />
-              <span>
-                {contact.name} - {contact.number} ({contact.type})
-              </span>
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Previous Contacts
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Select Previous Emergency Contacts</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <ScrollArea className="h-[300px] pr-4">
+            <div className="space-y-4">
+              {previousContacts.map((contact, index) => (
+                <Card key={index} className="p-4">
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id={`contact-${index}`}
+                      checked={selectedContacts.includes(contact)}
+                      onCheckedChange={() => handleSelect(contact)}
+                    />
+                    <div className="space-y-1">
+                      <label
+                        htmlFor={`contact-${index}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {contact.name}
+                      </label>
+                      <p className="text-sm text-muted-foreground">
+                        {contact.number} ({contact.type})
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
-          ))}
+          </ScrollArea>
         </div>
-      </ScrollArea>
-      <Button
-        onClick={handleAddSelected}
-        disabled={selectedContacts.length === 0}
-        className="w-full"
-      >
-        Add Selected Contacts
-      </Button>
-    </Card>
+        <div className="flex justify-end">
+          <Button
+            onClick={handleAddSelected}
+            disabled={selectedContacts.length === 0}
+          >
+            Add Selected ({selectedContacts.length})
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
