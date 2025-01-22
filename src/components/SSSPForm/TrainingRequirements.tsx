@@ -1,169 +1,104 @@
-import { Label } from "@/components/ui/label";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
-import { useState, useEffect } from "react";
 import { TrainingSelection } from "./TrainingSelection";
+import { GraduationCap, BookOpen, Certificate, ClipboardCheck } from "lucide-react";
 
 export const TrainingRequirements = ({ formData, setFormData }: any) => {
-  const [trainings, setTrainings] = useState(formData.trainings || []);
-  const [previousTrainings, setPreviousTrainings] = useState([]);
-
-  useEffect(() => {
-    const storedSSSPs = localStorage.getItem("sssps");
-    if (storedSSSPs) {
-      const sssps = JSON.parse(storedSSSPs);
-      const allTrainings = [];
-      
-      sssps.forEach((sssp: any) => {
-        if (sssp.trainings) {
-          allTrainings.push(...sssp.trainings);
-        }
-      });
-      
-      setPreviousTrainings(allTrainings);
-    }
-  }, []);
-
-  const addTraining = () => {
-    const newTrainings = [...trainings, { requirement: "", description: "", frequency: "" }];
-    setTrainings(newTrainings);
-    setFormData({ ...formData, trainings: newTrainings });
-  };
-
-  const addMultipleTrainings = (selectedTrainings: any[]) => {
-    const newTrainings = [...trainings, ...selectedTrainings];
-    setTrainings(newTrainings);
-    setFormData({ ...formData, trainings: newTrainings });
-  };
-
-  const removeTraining = (index: number) => {
-    const updatedTrainings = trainings.filter((_: any, i: number) => i !== index);
-    setFormData({ ...formData, trainings: updatedTrainings });
-  };
-
-  const updateTraining = (index: number, field: string, value: string) => {
-    const updatedTrainings = trainings.map((training: any, i: number) =>
-      i === index ? { ...training, [field]: value } : training
-    );
-    setFormData({ ...formData, trainings: updatedTrainings });
-  };
-
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Training and Competency Requirements</h2>
-      
-      <div className="space-y-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Requirement</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Frequency</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {trainings.map((training: any, index: number) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <QuickFillButton
-                        fieldId={`training-requirement-${index}`}
-                        fieldName="Training Requirement"
-                        onSelect={(value) => updateTraining(index, "requirement", value)}
-                      />
-                    </div>
-                    <Input
-                      value={training.requirement}
-                      onChange={(e) => updateTraining(index, "requirement", e.target.value)}
-                      placeholder="e.g., Class 2 License"
-                    />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <QuickFillButton
-                        fieldId={`training-description-${index}`}
-                        fieldName="Training Description"
-                        onSelect={(value) => updateTraining(index, "description", value)}
-                      />
-                    </div>
-                    <Input
-                      value={training.description}
-                      onChange={(e) => updateTraining(index, "description", e.target.value)}
-                      placeholder="e.g., Heavy vehicle operation license"
-                    />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <QuickFillButton
-                        fieldId={`training-frequency-${index}`}
-                        fieldName="Training Frequency"
-                        onSelect={(value) => updateTraining(index, "frequency", value)}
-                      />
-                    </div>
-                    <Input
-                      value={training.frequency}
-                      onChange={(e) => updateTraining(index, "frequency", e.target.value)}
-                      placeholder="e.g., Every 5 years"
-                    />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeTraining(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="mt-4"
-          onClick={addTraining}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Training Requirement
-        </Button>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="additionalNotes">Additional Notes</Label>
-            <QuickFillButton
-              fieldId="trainingNotes"
-              fieldName="Training Notes"
-              onSelect={(value) =>
-                setFormData({ ...formData, trainingNotes: value })
-              }
-            />
+      <Card className="shadow-md border-l-4 border-l-primary">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <GraduationCap className="h-7 w-7 text-primary" />
+            Training and Competency Requirements
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {/* Required Training Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <BookOpen className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Required Training</h3>
+            </div>
+            <Card className="border-dashed">
+              <CardContent className="pt-6">
+                <TrainingSelection
+                  selectedTraining={formData.requiredTraining || []}
+                  onSelect={(training) =>
+                    setFormData({ ...formData, requiredTraining: training })
+                  }
+                />
+              </CardContent>
+            </Card>
           </div>
-          <Textarea
-            id="additionalNotes"
-            value={formData.trainingNotes || ""}
-            onChange={(e) =>
-              setFormData({ ...formData, trainingNotes: e.target.value })
-            }
-            placeholder="Add any additional notes about training requirements or competency assessments"
-            className="min-h-[100px]"
-          />
-        </div>
-      </div>
+
+          {/* Competency Requirements Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Certificate className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Competency Requirements</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Specify required competencies and qualifications
+                </p>
+                <QuickFillButton
+                  fieldId="competencyRequirements"
+                  fieldName="Competency Requirements"
+                  onSelect={(value) =>
+                    setFormData({ ...formData, competencyRequirements: value })
+                  }
+                />
+              </div>
+              <Textarea
+                value={formData.competencyRequirements || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    competencyRequirements: e.target.value,
+                  })
+                }
+                placeholder="List required certifications, licenses, and experience levels..."
+                className="min-h-[150px]"
+              />
+            </div>
+          </div>
+
+          {/* Training Records Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <ClipboardCheck className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Training Records</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Document training record keeping procedures
+                </p>
+                <QuickFillButton
+                  fieldId="trainingRecords"
+                  fieldName="Training Records"
+                  onSelect={(value) =>
+                    setFormData({ ...formData, trainingRecords: value })
+                  }
+                />
+              </div>
+              <Textarea
+                value={formData.trainingRecords || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, trainingRecords: e.target.value })
+                }
+                placeholder="Describe how training records will be maintained and verified..."
+                className="min-h-[150px]"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
