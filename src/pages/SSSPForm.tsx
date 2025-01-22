@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ProjectDetails } from "@/components/SSSPForm/ProjectDetails";
 import { CompanyInfo } from "@/components/SSSPForm/CompanyInfo";
@@ -14,6 +14,8 @@ import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type MockDataKey = 1 | 2;
 interface MockSSSPData {
@@ -24,6 +26,13 @@ interface MockSSSPData {
     contactEmail: string;
   };
 }
+
+const LoadingFallback = () => (
+  <div className="space-y-4">
+    <Skeleton className="h-8 w-3/4" />
+    <Skeleton className="h-32 w-full" />
+  </div>
+);
 
 const SSSPForm = () => {
   const { id } = useParams();
@@ -134,7 +143,11 @@ const SSSPForm = () => {
             </div>
           </div>
 
-          <CurrentStepComponent formData={formData} setFormData={setFormData} />
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <CurrentStepComponent formData={formData} setFormData={setFormData} />
+            </Suspense>
+          </ErrorBoundary>
 
           <div className="flex justify-between mt-8">
             <Button
