@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Book, Shield, Phone, Clock } from "lucide-react";
+import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 
 interface HealthAndSafetyPoliciesProps {
   formData: any;
@@ -46,7 +47,14 @@ export const HealthAndSafetyPolicies = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Label htmlFor="drugAndAlcohol">Policy Details</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="drugAndAlcohol">Policy Details</Label>
+                <QuickFillButton
+                  fieldId="drugAndAlcohol"
+                  fieldName="Drug and Alcohol Policy"
+                  onSelect={(value) => handlePolicyChange("drugAndAlcohol", value)}
+                />
+              </div>
               <Textarea
                 id="drugAndAlcohol"
                 placeholder="Enter your drug and alcohol policy details..."
@@ -65,7 +73,14 @@ export const HealthAndSafetyPolicies = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Label htmlFor="fatigueManagement">Policy Details</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="fatigueManagement">Policy Details</Label>
+                <QuickFillButton
+                  fieldId="fatigueManagement"
+                  fieldName="Fatigue Management Policy"
+                  onSelect={(value) => handlePolicyChange("fatigueManagement", value)}
+                />
+              </div>
               <Textarea
                 id="fatigueManagement"
                 placeholder="Enter your fatigue management policy details..."
@@ -80,11 +95,18 @@ export const HealthAndSafetyPolicies = ({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Book className="h-5 w-5" />
-                PPE (Personal Protective Equipment) Policy
+                PPE Policy
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Label htmlFor="ppe">Policy Details</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="ppe">Policy Details</Label>
+                <QuickFillButton
+                  fieldId="ppe"
+                  fieldName="PPE Policy"
+                  onSelect={(value) => handlePolicyChange("ppe", value)}
+                />
+              </div>
               <Textarea
                 id="ppe"
                 placeholder="Enter your PPE policy details..."
@@ -99,11 +121,18 @@ export const HealthAndSafetyPolicies = ({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Phone className="h-5 w-5" />
-                Mobile Phone and Distraction Policy
+                Mobile Phone Policy
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Label htmlFor="mobilePhone">Policy Details</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="mobilePhone">Policy Details</Label>
+                <QuickFillButton
+                  fieldId="mobilePhone"
+                  fieldName="Mobile Phone Policy"
+                  onSelect={(value) => handlePolicyChange("mobilePhone", value)}
+                />
+              </div>
               <Textarea
                 id="mobilePhone"
                 placeholder="Enter your mobile phone usage policy details..."

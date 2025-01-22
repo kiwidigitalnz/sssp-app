@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 
 interface SiteSafetyRulesProps {
   formData: any;
@@ -16,7 +18,16 @@ export const SiteSafetyRules = ({ formData, setFormData }: SiteSafetyRulesProps)
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Entry and Exit Procedures</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Entry and Exit Procedures</h3>
+              <QuickFillButton
+                fieldId="entryExitProcedures"
+                fieldName="Entry and Exit Procedures"
+                onSelect={(value) =>
+                  setFormData({ ...formData, entryExitProcedures: value })
+                }
+              />
+            </div>
             <Textarea
               placeholder="Document site entry and exit procedures..."
               value={formData.entryExitProcedures || ""}
@@ -26,7 +37,16 @@ export const SiteSafetyRules = ({ formData, setFormData }: SiteSafetyRulesProps)
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Site Speed Limits</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Site Speed Limits</h3>
+              <QuickFillButton
+                fieldId="speedLimits"
+                fieldName="Site Speed Limits"
+                onSelect={(value) =>
+                  setFormData({ ...formData, speedLimits: value })
+                }
+              />
+            </div>
             <Input
               type="text"
               placeholder="e.g., 20 km/h"
@@ -36,7 +56,16 @@ export const SiteSafetyRules = ({ formData, setFormData }: SiteSafetyRulesProps)
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Parking and Loading Zones</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Parking and Loading Zones</h3>
+              <QuickFillButton
+                fieldId="parkingRules"
+                fieldName="Parking and Loading Zones"
+                onSelect={(value) =>
+                  setFormData({ ...formData, parkingRules: value })
+                }
+              />
+            </div>
             <Textarea
               placeholder="Document parking and loading zone rules..."
               value={formData.parkingRules || ""}
@@ -46,7 +75,16 @@ export const SiteSafetyRules = ({ formData, setFormData }: SiteSafetyRulesProps)
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Site-Specific PPE Requirements</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Site-Specific PPE Requirements</h3>
+              <QuickFillButton
+                fieldId="sitePPE"
+                fieldName="Site-Specific PPE Requirements"
+                onSelect={(value) =>
+                  setFormData({ ...formData, sitePPE: value })
+                }
+              />
+            </div>
             <Textarea
               placeholder="List all required PPE for this site..."
               value={formData.sitePPE || ""}

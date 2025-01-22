@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 
 interface MonitoringReviewProps {
   formData: any;
@@ -16,6 +17,13 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
 
   const addAudit = () => {
     const newAudits = [...audits, { type: "", frequency: "", responsible: "", lastDate: "", nextDate: "" }];
+    setAudits(newAudits);
+    setFormData({ ...formData, audits: newAudits });
+  };
+
+  const updateAudit = (index: number, field: string, value: string) => {
+    const newAudits = [...audits];
+    newAudits[index] = { ...newAudits[index], [field]: value };
     setAudits(newAudits);
     setFormData({ ...formData, audits: newAudits });
   };
@@ -44,60 +52,56 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
                 {audits.map((audit: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell>
-                      <Input
-                        value={audit.type}
-                        onChange={(e) => {
-                          const newAudits = [...audits];
-                          newAudits[index].type = e.target.value;
-                          setAudits(newAudits);
-                          setFormData({ ...formData, audits: newAudits });
-                        }}
-                      />
+                      <div className="space-y-2">
+                        <QuickFillButton
+                          fieldId={`audit-type-${index}`}
+                          fieldName="Audit Type"
+                          onSelect={(value) => updateAudit(index, "type", value)}
+                        />
+                        <Input
+                          value={audit.type}
+                          onChange={(e) => updateAudit(index, "type", e.target.value)}
+                        />
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        value={audit.frequency}
-                        onChange={(e) => {
-                          const newAudits = [...audits];
-                          newAudits[index].frequency = e.target.value;
-                          setAudits(newAudits);
-                          setFormData({ ...formData, audits: newAudits });
-                        }}
-                      />
+                      <div className="space-y-2">
+                        <QuickFillButton
+                          fieldId={`audit-frequency-${index}`}
+                          fieldName="Audit Frequency"
+                          onSelect={(value) => updateAudit(index, "frequency", value)}
+                        />
+                        <Input
+                          value={audit.frequency}
+                          onChange={(e) => updateAudit(index, "frequency", e.target.value)}
+                        />
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        value={audit.responsible}
-                        onChange={(e) => {
-                          const newAudits = [...audits];
-                          newAudits[index].responsible = e.target.value;
-                          setAudits(newAudits);
-                          setFormData({ ...formData, audits: newAudits });
-                        }}
-                      />
+                      <div className="space-y-2">
+                        <QuickFillButton
+                          fieldId={`audit-responsible-${index}`}
+                          fieldName="Responsible Person"
+                          onSelect={(value) => updateAudit(index, "responsible", value)}
+                        />
+                        <Input
+                          value={audit.responsible}
+                          onChange={(e) => updateAudit(index, "responsible", e.target.value)}
+                        />
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Input
                         type="date"
                         value={audit.lastDate}
-                        onChange={(e) => {
-                          const newAudits = [...audits];
-                          newAudits[index].lastDate = e.target.value;
-                          setAudits(newAudits);
-                          setFormData({ ...formData, audits: newAudits });
-                        }}
+                        onChange={(e) => updateAudit(index, "lastDate", e.target.value)}
                       />
                     </TableCell>
                     <TableCell>
                       <Input
                         type="date"
                         value={audit.nextDate}
-                        onChange={(e) => {
-                          const newAudits = [...audits];
-                          newAudits[index].nextDate = e.target.value;
-                          setAudits(newAudits);
-                          setFormData({ ...formData, audits: newAudits });
-                        }}
+                        onChange={(e) => updateAudit(index, "nextDate", e.target.value)}
                       />
                     </TableCell>
                     <TableCell>
@@ -123,7 +127,16 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Corrective Actions</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Corrective Actions</h3>
+              <QuickFillButton
+                fieldId="correctiveActions"
+                fieldName="Corrective Actions"
+                onSelect={(value) =>
+                  setFormData({ ...formData, correctiveActions: value })
+                }
+              />
+            </div>
             <Textarea
               placeholder="Document how corrective actions are managed and tracked..."
               value={formData.correctiveActions || ""}
@@ -133,7 +146,16 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Annual Review Process</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Annual Review Process</h3>
+              <QuickFillButton
+                fieldId="annualReview"
+                fieldName="Annual Review Process"
+                onSelect={(value) =>
+                  setFormData({ ...formData, annualReview: value })
+                }
+              />
+            </div>
             <Textarea
               placeholder="Document the annual SSSP review process..."
               value={formData.annualReview || ""}
