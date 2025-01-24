@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TeamMember } from "@/types/team";
 
@@ -67,7 +67,10 @@ export function TransferOwnershipDialog({
 
       const { error } = await supabase.rpc('transfer_company_ownership', {
         new_owner_id: values.newOwnerId,
-        current_owner_id: user.id
+        current_owner_id: user.id,
+      } as {
+        new_owner_id: string;
+        current_owner_id: string;
       });
 
       if (error) throw error;
