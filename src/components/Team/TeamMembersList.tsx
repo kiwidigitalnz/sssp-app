@@ -19,6 +19,7 @@ export function TeamMembersList() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
+      console.log("Current user:", user);
       return user;
     },
   });
@@ -28,6 +29,7 @@ export function TeamMembersList() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
+      console.log("Fetching team members for user:", user.id);
 
       const { data, error } = await supabase
         .from('team_members')
@@ -42,7 +44,11 @@ export function TeamMembersList() {
         `)
         .eq('company_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching team members:", error);
+        throw error;
+      }
+      console.log("Team members fetched:", data);
       return data as TeamMember[];
     },
   });
@@ -50,6 +56,8 @@ export function TeamMembersList() {
   const isCurrentUserAdmin = teamMembers?.some(
     member => member.member_id === currentUser?.id && member.role === 'admin'
   );
+
+  console.log("Is current user admin:", isCurrentUserAdmin);
 
   const removeMember = async (memberId: string) => {
     try {
@@ -65,6 +73,7 @@ export function TeamMembersList() {
         description: "Team member removed successfully",
       });
     } catch (error: any) {
+      console.error("Error removing team member:", error);
       toast({
         variant: "destructive",
         title: "Error",

@@ -61,10 +61,12 @@ export function AddTeamMemberDialog({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
+      console.log("Adding team member with values:", values);
 
       // First, get the current user (company)
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
+      console.log("Current user (company):", user);
 
       // Then, find the profile for the invited user by email
       const { data: profiles, error: profileError } = await supabase
@@ -73,9 +75,11 @@ export function AddTeamMemberDialog({
         .eq('id', user.id)
         .single();
 
-      if (profileError || !profiles) {
+      if (profileError) {
+        console.error("Error finding profile:", profileError);
         throw new Error("User not found");
       }
+      console.log("Found profile:", profiles);
 
       // Create the team member record
       const { error: insertError } = await supabase
@@ -86,7 +90,10 @@ export function AddTeamMemberDialog({
           role: values.role as TeamMemberRole,
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Error inserting team member:", insertError);
+        throw insertError;
+      }
 
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
       toast({
@@ -96,6 +103,7 @@ export function AddTeamMemberDialog({
       onOpenChange(false);
       form.reset();
     } catch (error: any) {
+      console.error("Error in onSubmit:", error);
       toast({
         variant: "destructive",
         title: "Error",
