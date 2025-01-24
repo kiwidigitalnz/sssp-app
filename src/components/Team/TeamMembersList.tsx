@@ -1,34 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Trash2, UserPlus } from "lucide-react";
+import { UserPlus, Crown } from "lucide-react";
 import { useState } from "react";
 import { AddTeamMemberDialog } from "./AddTeamMemberDialog";
+import { TransferOwnershipDialog } from "./TransferOwnershipDialog";
+import { TeamMembersTable } from "./TeamMembersTable";
 import { useToast } from "@/components/ui/use-toast";
-import type { Database } from "@/integrations/supabase/types";
-
-type TeamMember = Database['public']['Tables']['team_members']['Row'] & {
-  member_profile: {
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-    avatar_url: string | null;
-  };
-};
+import type { TeamMember } from "@/types/team";
 
 export function TeamMembersList() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+      return user;
+    },
+  });
 
   const { data: teamMembers, isLoading } = useQuery({
     queryKey: ["team-members"],
@@ -54,22 +47,28 @@ export function TeamMembersList() {
     },
   });
 
-  const removeMember = async (memberId: string) => {
-    const { error } = await supabase
-      .from('team_members')
-      .delete()
-      .eq('id', memberId);
+  const isCurrentUserAdmin = teamMembers?.some(
+    member => member.member_id === currentUser?.id && member.role === 'admin'
+  );
 
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to remove team member",
-      });
-    } else {
+  const removeMember = async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Team member removed successfully",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
       });
     }
   };
@@ -82,60 +81,44 @@ export function TeamMembersList() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Team Members</h3>
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <UserPlus className="h-4 w-4" />
-          Add Member
-        </Button>
+        <div className="flex gap-2">
+          {isCurrentUserAdmin && (
+            <>
+              <Button
+                onClick={() => setIsTransferDialogOpen(true)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Crown className="h-4 w-4" />
+                Transfer Ownership
+              </Button>
+              <Button
+                onClick={() => setIsAddDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                Add Member
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Member</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {teamMembers?.map((member) => (
-            <TableRow key={member.id}>
-              <TableCell className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={member.member_profile.avatar_url || undefined} />
-                  <AvatarFallback>
-                    {member.member_profile.first_name?.[0]}
-                    {member.member_profile.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <span>
-                  {member.member_profile.first_name} {member.member_profile.last_name}
-                </span>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline" className="capitalize">
-                  {member.role}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeMember(member.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <TeamMembersTable
+        teamMembers={teamMembers || []}
+        onRemoveMember={removeMember}
+        isCurrentUserAdmin={!!isCurrentUserAdmin}
+      />
 
       <AddTeamMemberDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
+      />
+
+      <TransferOwnershipDialog
+        open={isTransferDialogOpen}
+        onOpenChange={setIsTransferDialogOpen}
+        teamMembers={teamMembers || []}
       />
     </div>
   );
