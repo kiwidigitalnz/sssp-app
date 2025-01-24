@@ -1,33 +1,13 @@
 import { useState, useEffect, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ProjectDetails } from "@/components/SSSPForm/ProjectDetails";
-import { CompanyInfo } from "@/components/SSSPForm/CompanyInfo";
-import { ScopeOfWork } from "@/components/SSSPForm/ScopeOfWork";
-import { HealthAndSafety } from "@/components/SSSPForm/HealthAndSafety";
-import { HazardManagement } from "@/components/SSSPForm/HazardManagement";
-import { EmergencyProcedures } from "@/components/SSSPForm/EmergencyProcedures";
-import { TrainingRequirements } from "@/components/SSSPForm/TrainingRequirements";
-import { HealthAndSafetyPolicies } from "@/components/SSSPForm/HealthAndSafetyPolicies";
-import { SiteSafetyRules } from "@/components/SSSPForm/SiteSafetyRules";
-import { Communication } from "@/components/SSSPForm/Communication";
-import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
-import { SummaryScreen } from "@/components/SSSPForm/SummaryScreen";
 import { FormHeader } from "@/components/SSSPForm/FormHeader";
 import { FormProgress } from "@/components/SSSPForm/FormProgress";
 import { FormNavigation } from "@/components/SSSPForm/FormNavigation";
+import { FormSteps, formSteps } from "@/components/SSSPForm/FormSteps";
+import { FormDialogs } from "@/components/SSSPForm/FormDialogs";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const LoadingFallback = () => (
   <div className="space-y-4">
@@ -45,23 +25,6 @@ const SSSPForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const steps = [
-    { title: "Project Details", component: ProjectDetails },
-    { title: "Company Information", component: CompanyInfo },
-    { title: "Scope of Work", component: ScopeOfWork },
-    { title: "Health and Safety Responsibilities", component: HealthAndSafety },
-    { title: "Hazard and Risk Management", component: HazardManagement },
-    { title: "Incident and Emergency Procedures", component: EmergencyProcedures },
-    { title: "Training and Competency Requirements", component: TrainingRequirements },
-    { title: "Health and Safety Policies", component: HealthAndSafetyPolicies },
-    { title: "Site-Specific Safety Rules", component: SiteSafetyRules },
-    { title: "Communication and Consultation", component: Communication },
-    { title: "Monitoring and Review", component: MonitoringReview },
-    { title: "Review and Submit", component: SummaryScreen }
-  ];
-
-  const CurrentStepComponent = steps[currentStep].component;
-
   useEffect(() => {
     if (id) {
       loadSSSPData(id);
@@ -70,6 +33,7 @@ const SSSPForm = () => {
 
   const loadSSSPData = async (ssspId: string) => {
     try {
+      setIsLoading(true);
       // Mock data loading - replace with actual API call
       const mockSSSPData = {
         1: {
@@ -110,12 +74,15 @@ const SSSPForm = () => {
         description: "Failed to load SSSP data",
       });
       navigate("/");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSave = async () => {
     try {
       setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       localStorage.setItem(`sssp-${id || 'draft'}`, JSON.stringify(formData));
       toast({
         title: "Progress saved",
@@ -134,7 +101,7 @@ const SSSPForm = () => {
   };
 
   const handleNext = async () => {
-    if (currentStep < steps.length - 1) {
+    if (currentStep < formSteps.length - 1) {
       setIsLoading(true);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -174,14 +141,15 @@ const SSSPForm = () => {
         <div className="bg-white rounded-lg shadow-lg p-6">
           <FormProgress
             currentStep={currentStep}
-            totalSteps={steps.length}
-            stepTitle={steps[currentStep].title}
+            totalSteps={formSteps.length}
+            stepTitle={formSteps[currentStep].title}
           />
 
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
-              <CurrentStepComponent 
-                formData={formData} 
+              <FormSteps
+                currentStep={currentStep}
+                formData={formData}
                 setFormData={setFormData}
                 onStepChange={setCurrentStep}
                 isLoading={isLoading}
@@ -191,7 +159,7 @@ const SSSPForm = () => {
 
           <FormNavigation
             currentStep={currentStep}
-            totalSteps={steps.length}
+            totalSteps={formSteps.length}
             isLoading={isLoading}
             onNext={handleNext}
             onPrevious={handlePrevious}
@@ -199,22 +167,11 @@ const SSSPForm = () => {
         </div>
       </div>
 
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Any unsaved changes will be lost. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Continue Editing</AlertDialogCancel>
-            <AlertDialogAction onClick={() => navigate("/")}>
-              Yes, Cancel
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <FormDialogs
+        showCancelDialog={showCancelDialog}
+        setShowCancelDialog={setShowCancelDialog}
+        onCancel={() => navigate("/")}
+      />
     </div>
   );
 };
