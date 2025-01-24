@@ -12,11 +12,12 @@ import { SiteSafetyRules } from "@/components/SSSPForm/SiteSafetyRules";
 import { Communication } from "@/components/SSSPForm/Communication";
 import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
 import { SummaryScreen } from "@/components/SSSPForm/SummaryScreen";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, Save, X, HelpCircle } from "lucide-react";
+import { FormHeader } from "@/components/SSSPForm/FormHeader";
+import { FormProgress } from "@/components/SSSPForm/FormProgress";
+import { FormNavigation } from "@/components/SSSPForm/FormNavigation";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,12 +28,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 const LoadingFallback = () => (
   <div className="space-y-4">
@@ -50,24 +45,48 @@ const SSSPForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const mockSSSPData = {
-    1: {
-      companyName: "City Center Construction",
-      address: "123 Main St",
-      contactPerson: "John Doe",
-      contactEmail: "john@example.com",
-    },
-    2: {
-      companyName: "Harbor Bridge Maintenance",
-      address: "456 Harbor Way",
-      contactPerson: "Jane Smith",
-      contactEmail: "jane@example.com",
-    },
-  };
+  const steps = [
+    { title: "Project Details", component: ProjectDetails },
+    { title: "Company Information", component: CompanyInfo },
+    { title: "Scope of Work", component: ScopeOfWork },
+    { title: "Health and Safety Responsibilities", component: HealthAndSafety },
+    { title: "Hazard and Risk Management", component: HazardManagement },
+    { title: "Incident and Emergency Procedures", component: EmergencyProcedures },
+    { title: "Training and Competency Requirements", component: TrainingRequirements },
+    { title: "Health and Safety Policies", component: HealthAndSafetyPolicies },
+    { title: "Site-Specific Safety Rules", component: SiteSafetyRules },
+    { title: "Communication and Consultation", component: Communication },
+    { title: "Monitoring and Review", component: MonitoringReview },
+    { title: "Review and Submit", component: SummaryScreen }
+  ];
+
+  const CurrentStepComponent = steps[currentStep].component;
 
   useEffect(() => {
     if (id) {
-      const numericId = parseInt(id, 10);
+      loadSSSPData(id);
+    }
+  }, [id]);
+
+  const loadSSSPData = async (ssspId: string) => {
+    try {
+      // Mock data loading - replace with actual API call
+      const mockSSSPData = {
+        1: {
+          companyName: "City Center Construction",
+          address: "123 Main St",
+          contactPerson: "John Doe",
+          contactEmail: "john@example.com",
+        },
+        2: {
+          companyName: "Harbor Bridge Maintenance",
+          address: "456 Harbor Way",
+          contactPerson: "Jane Smith",
+          contactEmail: "jane@example.com",
+        },
+      };
+
+      const numericId = parseInt(ssspId, 10);
       const ssspData = mockSSSPData[numericId];
       
       if (ssspData) {
@@ -84,8 +103,15 @@ const SSSPForm = () => {
         });
         navigate("/");
       }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load SSSP data",
+      });
+      navigate("/");
     }
-  }, [id, navigate, toast]);
+  };
 
   const handleSave = async () => {
     try {
@@ -106,31 +132,6 @@ const SSSPForm = () => {
       setIsLoading(false);
     }
   };
-
-  const handleCancel = () => {
-    setShowCancelDialog(true);
-  };
-
-  const confirmCancel = () => {
-    navigate("/");
-  };
-
-  const steps = [
-    { title: "Project Details", component: ProjectDetails },
-    { title: "Company Information", component: CompanyInfo },
-    { title: "Scope of Work", component: ScopeOfWork },
-    { title: "Health and Safety Responsibilities", component: HealthAndSafety },
-    { title: "Hazard and Risk Management", component: HazardManagement },
-    { title: "Incident and Emergency Procedures", component: EmergencyProcedures },
-    { title: "Training and Competency Requirements", component: TrainingRequirements },
-    { title: "Health and Safety Policies", component: HealthAndSafetyPolicies },
-    { title: "Site-Specific Safety Rules", component: SiteSafetyRules },
-    { title: "Communication and Consultation", component: Communication },
-    { title: "Monitoring and Review", component: MonitoringReview },
-    { title: "Review and Submit", component: SummaryScreen }
-  ];
-
-  const CurrentStepComponent = steps[currentStep].component;
 
   const handleNext = async () => {
     if (currentStep < steps.length - 1) {
@@ -163,60 +164,19 @@ const SSSPForm = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <h1 className="text-3xl font-bold">
-            {id ? "Edit SSSP" : "Create New SSSP"}
-          </h1>
-          <div className="flex gap-4">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              className="gap-2"
-              disabled={isLoading}
-            >
-              <X className="h-4 w-4" />
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              variant="outline"
-              className="gap-2"
-              disabled={isLoading}
-            >
-              <Save className="h-4 w-4" />
-              {isLoading ? "Saving..." : "Save & Exit"}
-            </Button>
-          </div>
-        </div>
+        <FormHeader
+          id={id}
+          isLoading={isLoading}
+          onSave={handleSave}
+          onCancel={() => setShowCancelDialog(true)}
+        />
 
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-xl font-semibold">
-                Step {currentStep + 1} of {steps.length}: {steps[currentStep].title}
-              </h2>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <HelpCircle className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Fill out this section with relevant information for your SSSP</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="h-2 bg-gray-200 rounded">
-              <div
-                className="h-full bg-blue-600 rounded transition-all duration-300"
-                style={{
-                  width: `${((currentStep + 1) / steps.length) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
+          <FormProgress
+            currentStep={currentStep}
+            totalSteps={steps.length}
+            stepTitle={steps[currentStep].title}
+          />
 
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
@@ -229,28 +189,13 @@ const SSSPForm = () => {
             </Suspense>
           </ErrorBoundary>
 
-          {currentStep < steps.length - 1 && (
-            <div className="flex justify-between mt-8">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 0 || isLoading}
-                className="gap-2"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-
-              <Button 
-                onClick={handleNext} 
-                className="gap-2"
-                disabled={isLoading}
-              >
-                {isLoading ? "Saving..." : "Next"}
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          <FormNavigation
+            currentStep={currentStep}
+            totalSteps={steps.length}
+            isLoading={isLoading}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
         </div>
       </div>
 
@@ -264,7 +209,7 @@ const SSSPForm = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Continue Editing</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmCancel}>
+            <AlertDialogAction onClick={() => navigate("/")}>
               Yes, Cancel
             </AlertDialogAction>
           </AlertDialogFooter>
