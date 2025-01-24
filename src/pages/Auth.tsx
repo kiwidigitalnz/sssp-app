@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, KeyRound } from "lucide-react";
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -77,7 +77,6 @@ export default function Auth() {
         description: "Please check your email to verify your account.",
       });
       
-      // Fix: Properly type the element as HTMLElement and check if it exists
       const loginTab = document.querySelector('[data-tab="login"]') as HTMLElement;
       if (loginTab) {
         loginTab.click();
@@ -91,6 +90,11 @@ export default function Auth() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDemoLogin = () => {
+    setLoginEmail("demo@sssp.dev");
+    setLoginPassword("demo123");
   };
 
   return (
@@ -146,6 +150,15 @@ export default function Auth() {
                 ) : (
                   "Login"
                 )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleDemoLogin}
+              >
+                <KeyRound className="mr-2 h-4 w-4" />
+                Use Demo Account
               </Button>
             </form>
           </TabsContent>
@@ -226,4 +239,4 @@ export default function Auth() {
       </Card>
     </div>
   );
-};
+}
