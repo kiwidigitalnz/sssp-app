@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -30,13 +31,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
 
+// Define simple, focused types
 type TeamMemberRole = Database['public']['Enums']['team_member_role'];
-type Profile = Pick<Database['public']['Tables']['profiles']['Row'], 'id'>;
 
+// Schema with custom error messages
 const formSchema = z.object({
-  email: z.string().email(),
-  role: z.enum(['admin', 'editor', 'viewer'] as const),
+  email: z.string().email("Please enter a valid email address"),
+  role: z.enum(['admin', 'editor', 'viewer'] as const, {
+    required_error: "Please select a role",
+  }),
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface AddTeamMemberDialogProps {
   open: boolean;
@@ -51,7 +57,7 @@ export function AddTeamMemberDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
@@ -59,55 +65,68 @@ export function AddTeamMemberDialog({
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     try {
       setIsLoading(true);
-      console.log("Adding team member with values:", values);
+      console.log("Starting team member addition process:", values);
 
-      // First, get the current user (company)
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-      console.log("Current user (company):", user);
+      // Get current user (company)
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw new Error("Authentication error");
+      if (!user) throw new Error("No authenticated user found");
+      
+      console.log("Current user:", user.id);
 
-      // Then, find the profile for the invited user by email
-      const { data: profiles, error: profileError } = await supabase
+      // Find invited user's profile
+      const { data: invitedProfile, error: profileError } = await supabase
         .from('profiles')
-        .select<'id', Profile>('id')
+        .select('id')
         .eq('email', values.email)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Error finding profile:", profileError);
-        throw new Error("User not found with this email address");
+        throw new Error("Error looking up user profile");
       }
-      console.log("Found profile:", profiles);
 
-      // Check if user is already a team member
+      if (!invitedProfile) {
+        throw new Error("No user found with this email address");
+      }
+
+      console.log("Found invited profile:", invitedProfile.id);
+
+      // Check for existing membership
       const { data: existingMember, error: checkError } = await supabase
         .from('team_members')
         .select('id')
         .eq('company_id', user.id)
-        .eq('member_id', profiles.id)
-        .single();
+        .eq('member_id', invitedProfile.id)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking existing membership:", checkError);
+        throw new Error("Error checking team membership");
+      }
 
       if (existingMember) {
         throw new Error("This user is already a team member");
       }
 
-      // Create the team member record
+      // Add team member
       const { error: insertError } = await supabase
         .from('team_members')
         .insert({
           company_id: user.id,
-          member_id: profiles.id,
+          member_id: invitedProfile.id,
           role: values.role as TeamMemberRole,
         });
 
       if (insertError) {
-        console.error("Error inserting team member:", insertError);
-        throw insertError;
+        console.error("Error adding team member:", insertError);
+        throw new Error("Failed to add team member");
       }
 
+      // Success handling
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
       toast({
         title: "Success",
@@ -115,12 +134,13 @@ export function AddTeamMemberDialog({
       });
       onOpenChange(false);
       form.reset();
+
     } catch (error: any) {
-      console.error("Error in onSubmit:", error);
+      console.error("Error in team member addition:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to add team member",
       });
     } finally {
       setIsLoading(false);
@@ -132,6 +152,9 @@ export function AddTeamMemberDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Team Member</DialogTitle>
+          <DialogDescription>
+            Invite a new member to join your team
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -141,9 +164,13 @@ export function AddTeamMemberDialog({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="member@company.com" {...field} />
+                    <Input 
+                      placeholder="member@company.com" 
+                      {...field}
+                      disabled={isLoading}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -159,6 +186,7 @@ export function AddTeamMemberDialog({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isLoading}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -176,11 +204,12 @@ export function AddTeamMemberDialog({
               )}
             />
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                disabled={isLoading}
               >
                 Cancel
               </Button>
