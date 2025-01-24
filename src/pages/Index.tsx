@@ -10,7 +10,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, FileText, AlertTriangle, CheckCircle } from "lucide-react";
+import { PlusCircle, FileText, AlertTriangle, CheckCircle, ArrowRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
 
 interface CompanyInfo {
   name: string;
@@ -22,6 +24,7 @@ interface CompanyInfo {
 
 const Index = () => {
   const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
     name: "Demo Company",
     logo: "/placeholder.svg",
@@ -31,11 +34,101 @@ const Index = () => {
   });
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
     const savedCompanyInfo = localStorage.getItem('companyInfo');
     if (savedCompanyInfo) {
       setCompanyInfo(JSON.parse(savedCompanyInfo));
     }
   }, []);
+
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        {/* Hero Section */}
+        <div className="container mx-auto px-4 pt-20 pb-16 text-center lg:pt-32">
+          <h1 className="mx-auto max-w-4xl font-display text-5xl font-medium tracking-tight text-slate-900 sm:text-7xl">
+            Site-Specific Safety Plans{" "}
+            <span className="relative whitespace-nowrap text-primary">
+              made simple
+            </span>
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700">
+            Create, manage, and share your Site-Specific Safety Plans with ease. Built for construction professionals who value safety and efficiency.
+          </p>
+          <div className="mt-10 flex justify-center gap-x-6">
+            <Button
+              onClick={() => navigate("/auth")}
+              size="lg"
+              className="group"
+            >
+              Get started
+              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Features Section */}
+        <div className="container mx-auto px-4 py-16">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <Card className="transition-all hover:shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Easy Creation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Intuitive interface for creating comprehensive safety plans in minutes
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-all hover:shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary" />
+                  Compliance Ready
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Built to meet industry standards and regulatory requirements
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-all hover:shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-primary" />
+                  Risk Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Comprehensive hazard identification and control measures
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Mock data for the table and statistics
   const ssspList = [
