@@ -18,7 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 
 type TeamMember = Database['public']['Tables']['team_members']['Row'] & {
-  profiles: {
+  member_profile: {
     id: string;
     first_name: string | null;
     last_name: string | null;
@@ -41,7 +41,7 @@ export function TeamMembersList() {
         .select(`
           id,
           role,
-          profiles:member_id (
+          member_profile:member_id (
             id,
             first_name,
             last_name,
@@ -105,14 +105,14 @@ export function TeamMembersList() {
             <TableRow key={member.id}>
               <TableCell className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={member.profiles.avatar_url || undefined} />
+                  <AvatarImage src={member.member_profile.avatar_url || undefined} />
                   <AvatarFallback>
-                    {member.profiles.first_name?.[0]}
-                    {member.profiles.last_name?.[0]}
+                    {member.member_profile.first_name?.[0]}
+                    {member.member_profile.last_name?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <span>
-                  {member.profiles.first_name} {member.profiles.last_name}
+                  {member.member_profile.first_name} {member.member_profile.last_name}
                 </span>
               </TableCell>
               <TableCell>
