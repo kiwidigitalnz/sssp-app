@@ -1,7 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Settings, Plug, CreditCard } from "lucide-react";
+import { Building2, Settings, Plug, CreditCard, Users } from "lucide-react";
 import { CompanyInfo } from "@/components/SSSPForm/CompanyInfo";
 import { Card } from "@/components/ui/card";
+import { TeamMembersList } from "@/components/Team/TeamMembersList";
 import { useState } from "react";
 
 const CompanySettings = () => {
@@ -17,10 +18,14 @@ const CompanySettings = () => {
       <h1 className="text-3xl font-bold mb-8">Settings</h1>
       
       <Tabs defaultValue="company" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
           <TabsTrigger value="company" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">Company Info</span>
+          </TabsTrigger>
+          <TabsTrigger value="team" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Team</span>
           </TabsTrigger>
           <TabsTrigger value="app" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -38,6 +43,12 @@ const CompanySettings = () => {
 
         <TabsContent value="company" className="space-y-4">
           <CompanyInfo formData={formData} setFormData={setFormData} />
+        </TabsContent>
+
+        <TabsContent value="team" className="space-y-4">
+          <Card className="p-6">
+            <TeamMembersList />
+          </Card>
         </TabsContent>
 
         <TabsContent value="app" className="space-y-4">
