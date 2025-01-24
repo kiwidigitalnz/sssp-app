@@ -8,15 +8,17 @@ import "./App.css";
 
 function App() {
   return (
-    <div className="app min-h-screen bg-gray-50">
+    <div className="min-h-screen w-full bg-gray-50 flex flex-col">
       <TopNav />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/create-sssp" element={<SSSPForm />} />
-        <Route path="/edit-sssp/:id" element={<SSSPForm />} />
-        <Route path="/company-settings" element={<CompanySettings />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/create-sssp" element={<SSSPForm />} />
+          <Route path="/edit-sssp/:id" element={<SSSPForm />} />
+          <Route path="/company-settings" element={<CompanySettings />} />
+          <Route path="/profile" element={<Profile />} />
+        </Routes>
+      </main>
     </div>
   );
 }

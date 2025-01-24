@@ -19,7 +19,7 @@ export function TopNav() {
   };
 
   return (
-    <div className="border-b">
+    <div className="w-full border-b bg-white">
       <div className="flex h-16 items-center px-4 container mx-auto">
         {/* Logo and App Name */}
         <div className="flex items-center space-x-2">
