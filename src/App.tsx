@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SSSPForm from "./pages/SSSPForm";
 import CompanySettings from "./pages/CompanySettings";
+import Profile from "./pages/Profile";
 import "./App.css";
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
         <Route path="/create-sssp" element={<SSSPForm />} />
         <Route path="/edit-sssp/:id" element={<SSSPForm />} />
         <Route path="/company-settings" element={<CompanySettings />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </div>
   );
