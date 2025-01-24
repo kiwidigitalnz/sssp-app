@@ -28,10 +28,13 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import type { Database } from "@/integrations/supabase/types";
+
+type TeamMemberRole = Database['public']['Enums']['team_member_role'];
 
 const formSchema = z.object({
   email: z.string().email(),
-  role: z.enum(["admin", "editor", "viewer"]),
+  role: z.enum(['admin', 'editor', 'viewer'] as const),
 });
 
 interface AddTeamMemberDialogProps {
@@ -63,11 +66,11 @@ export function AddTeamMemberDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Then, find the profile for the invited user
+      // Then, find the profile for the invited user by email
       const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
         .single();
 
       if (profileError || !profiles) {
@@ -76,11 +79,11 @@ export function AddTeamMemberDialog({
 
       // Create the team member record
       const { error: insertError } = await supabase
-        .from("team_members")
+        .from('team_members')
         .insert({
           company_id: user.id,
           member_id: profiles.id,
-          role: values.role,
+          role: values.role as TeamMemberRole,
         });
 
       if (insertError) throw insertError;

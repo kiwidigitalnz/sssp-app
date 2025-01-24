@@ -15,17 +15,16 @@ import { Trash2, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { AddTeamMemberDialog } from "./AddTeamMemberDialog";
 import { useToast } from "@/components/ui/use-toast";
+import type { Database } from "@/integrations/supabase/types";
 
-interface TeamMember {
-  id: string;
-  role: string;
+type TeamMember = Database['public']['Tables']['team_members']['Row'] & {
   profiles: {
     id: string;
     first_name: string | null;
     last_name: string | null;
     avatar_url: string | null;
   };
-}
+};
 
 export function TeamMembersList() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -38,7 +37,7 @@ export function TeamMembersList() {
       if (!user) throw new Error("No user found");
 
       const { data, error } = await supabase
-        .from("team_members")
+        .from('team_members')
         .select(`
           id,
           role,
@@ -49,7 +48,7 @@ export function TeamMembersList() {
             avatar_url
           )
         `)
-        .eq("company_id", user.id);
+        .eq('company_id', user.id);
 
       if (error) throw error;
       return data as TeamMember[];
@@ -58,9 +57,9 @@ export function TeamMembersList() {
 
   const removeMember = async (memberId: string) => {
     const { error } = await supabase
-      .from("team_members")
+      .from('team_members')
       .delete()
-      .eq("id", memberId);
+      .eq('id', memberId);
 
     if (error) {
       toast({

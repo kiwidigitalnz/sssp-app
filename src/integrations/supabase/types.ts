@@ -57,6 +57,48 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          member_id: string
+          role: Database["public"]["Enums"]["team_member_role"]
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          member_id: string
+          role?: Database["public"]["Enums"]["team_member_role"]
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+          role?: Database["public"]["Enums"]["team_member_role"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -65,7 +107,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      team_member_role: "admin" | "editor" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
