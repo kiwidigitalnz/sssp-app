@@ -39,13 +39,8 @@ export function TeamMembersList() {
       const { data, error } = await supabase
         .from('team_members')
         .select(`
-          id,
-          company_id,
-          member_id,
-          role,
-          created_at,
-          updated_at,
-          member_profile:member_id (
+          *,
+          member_profile:profiles!team_members_member_id_fkey (
             id,
             first_name,
             last_name,
