@@ -40,7 +40,11 @@ export function TeamMembersList() {
         .from('team_members')
         .select(`
           id,
+          company_id,
+          member_id,
           role,
+          created_at,
+          updated_at,
           member_profile:member_id (
             id,
             first_name,
