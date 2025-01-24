@@ -29,7 +29,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TeamMember } from "@/types/team";
-import type { Database } from "@/integrations/supabase/types";
 
 const formSchema = z.object({
   newOwnerId: z.string().uuid(),
@@ -66,12 +65,21 @@ export function TransferOwnershipDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { error } = await supabase.rpc('transfer_company_ownership', {
-        new_owner_id: values.newOwnerId,
-        current_owner_id: user.id,
-      });
+      // Update new owner to admin
+      const { error: newOwnerError } = await supabase
+        .from('team_members')
+        .update({ role: 'admin' })
+        .eq('member_id', values.newOwnerId);
 
-      if (error) throw error;
+      if (newOwnerError) throw newOwnerError;
+
+      // Update current owner to viewer
+      const { error: currentOwnerError } = await supabase
+        .from('team_members')
+        .update({ role: 'viewer' })
+        .eq('member_id', user.id);
+
+      if (currentOwnerError) throw currentOwnerError;
 
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
       toast({
