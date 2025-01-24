@@ -29,10 +29,14 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import type { Database } from "@/integrations/supabase/types";
 
-// Define simple, focused types
-type TeamMemberRole = Database['public']['Enums']['team_member_role'];
+// Define simple types to avoid deep type instantiation
+type TeamMemberRole = 'admin' | 'editor' | 'viewer';
+
+interface Profile {
+  id: string;
+  email?: string;
+}
 
 // Schema with custom error messages
 const formSchema = z.object({
@@ -70,14 +74,14 @@ export function AddTeamMemberDialog({
       setIsLoading(true);
       console.log("Starting team member addition process:", values);
 
-      // Get current user (company)
+      // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw new Error("Authentication error");
       if (!user) throw new Error("No authenticated user found");
       
       console.log("Current user:", user.id);
 
-      // Find invited user's profile
+      // Find invited user's profile using a simplified query
       const { data: invitedProfile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -95,7 +99,7 @@ export function AddTeamMemberDialog({
 
       console.log("Found invited profile:", invitedProfile.id);
 
-      // Check for existing membership
+      // Check for existing membership with simplified query
       const { data: existingMember, error: checkError } = await supabase
         .from('team_members')
         .select('id')
@@ -112,13 +116,13 @@ export function AddTeamMemberDialog({
         throw new Error("This user is already a team member");
       }
 
-      // Add team member
+      // Add team member with simplified insert
       const { error: insertError } = await supabase
         .from('team_members')
         .insert({
           company_id: user.id,
           member_id: invitedProfile.id,
-          role: values.role as TeamMemberRole,
+          role: values.role,
         });
 
       if (insertError) {
