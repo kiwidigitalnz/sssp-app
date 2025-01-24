@@ -34,6 +34,8 @@ const formSchema = z.object({
   newOwnerId: z.string().uuid(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 interface TransferOwnershipDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,18 +51,20 @@ export function TransferOwnershipDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      newOwnerId: "",
+    },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     try {
       setIsLoading(true);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Start a transaction to update both members
       const { error } = await supabase.rpc('transfer_company_ownership', {
         new_owner_id: values.newOwnerId,
         current_owner_id: user.id
@@ -105,6 +109,7 @@ export function TransferOwnershipDialog({
                   <FormLabel>New Owner</FormLabel>
                   <Select
                     onValueChange={field.onChange}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
