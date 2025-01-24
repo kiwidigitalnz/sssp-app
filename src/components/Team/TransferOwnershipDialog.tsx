@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TeamMember } from "@/types/team";
+import type { Database } from "@/integrations/supabase/types";
 
 const formSchema = z.object({
   newOwnerId: z.string().uuid(),
@@ -68,7 +69,7 @@ export function TransferOwnershipDialog({
       const { error } = await supabase.rpc('transfer_company_ownership', {
         new_owner_id: values.newOwnerId,
         current_owner_id: user.id,
-      } as Database['public']['Functions']['transfer_company_ownership']['Args']);
+      } satisfies Database['public']['Functions']['transfer_company_ownership']['Args']);
 
       if (error) throw error;
 

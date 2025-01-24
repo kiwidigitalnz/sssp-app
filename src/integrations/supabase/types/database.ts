@@ -83,9 +83,6 @@ export interface Database {
         };
       };
     };
-    Views: {
-      [_ in never]: never;
-    };
     Functions: {
       transfer_company_ownership: {
         Args: {
@@ -97,9 +94,6 @@ export interface Database {
     };
     Enums: {
       team_member_role: "admin" | "editor" | "viewer";
-    };
-    CompositeTypes: {
-      [_ in never]: never;
     };
   };
 }

@@ -1,5 +1,4 @@
 import type { Database } from './database';
-import type { Json } from './database';
 
 export interface ProfilesTable {
   Row: Database['public']['Tables']['profiles']['Row'];
