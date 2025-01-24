@@ -25,7 +25,8 @@ export function TopNav() {
         <div className="flex items-center space-x-2">
           <Link to="/" className="flex items-center space-x-2">
             <FileText className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl hidden sm:inline-block">SafetySys</span>
+            <span className="font-bold text-xl hidden sm:inline-block">SSSP Manager by Kiwi Digital</span>
+            <span className="font-bold text-xl sm:hidden">SSSP</span>
           </Link>
         </div>
 
