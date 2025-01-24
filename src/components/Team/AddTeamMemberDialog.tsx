@@ -31,6 +31,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
 
 type TeamMemberRole = Database['public']['Enums']['team_member_role'];
+type Profile = Pick<Database['public']['Tables']['profiles']['Row'], 'id'>;
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -71,7 +72,7 @@ export function AddTeamMemberDialog({
       // Then, find the profile for the invited user by email
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select<'id', Profile>('id')
         .eq('email', values.email)
         .single();
 
