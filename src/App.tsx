@@ -5,6 +5,8 @@ import CompanySettings from "./pages/CompanySettings";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import { TopNav } from "./components/TopNav";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthProvider } from "./contexts/AuthContext";
 import "./App.css";
 
 function App() {
@@ -15,21 +17,50 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/create-sssp" element={<SSSPForm />} />
-          <Route path="/edit-sssp/:id" element={<SSSPForm />} />
-          <Route path="/company-settings" element={<CompanySettings />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route
+            path="/create-sssp"
+            element={
+              <ProtectedRoute>
+                <SSSPForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit-sssp/:id"
+            element={
+              <ProtectedRoute>
+                <SSSPForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/company-settings"
+            element={
+              <ProtectedRoute>
+                <CompanySettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </main>
     </div>
   );
 }
 
-// Wrap the App component with Router
 function WrappedApp() {
   return (
     <Router>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </Router>
   );
 }
