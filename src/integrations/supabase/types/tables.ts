@@ -1,79 +1,17 @@
+import type { Database } from './database';
 import type { Json } from './database';
 
-interface ProfilesTable {
-  Row: {
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-    avatar_url: string | null;
-    company: string | null;
-    job_title: string | null;
-    phone: string | null;
-    updated_at: string;
-    bio: string | null;
-    website: string | null;
-    social_links: Json | null;
-    preferences: Json | null;
-    role: string | null;
-  };
-  Insert: {
-    id: string;
-    first_name?: string | null;
-    last_name?: string | null;
-    avatar_url?: string | null;
-    company?: string | null;
-    job_title?: string | null;
-    phone?: string | null;
-    updated_at?: string;
-    bio?: string | null;
-    website?: string | null;
-    social_links?: Json | null;
-    preferences?: Json | null;
-    role?: string | null;
-  };
-  Update: {
-    id?: string;
-    first_name?: string | null;
-    last_name?: string | null;
-    avatar_url?: string | null;
-    company?: string | null;
-    job_title?: string | null;
-    phone?: string | null;
-    updated_at?: string;
-    bio?: string | null;
-    website?: string | null;
-    social_links?: Json | null;
-    preferences?: Json | null;
-    role?: string | null;
-  };
+export interface ProfilesTable {
+  Row: Database['public']['Tables']['profiles']['Row'];
+  Insert: Database['public']['Tables']['profiles']['Insert'];
+  Update: Database['public']['Tables']['profiles']['Update'];
   Relationships: [];
 }
 
-interface TeamMembersTable {
-  Row: {
-    id: string;
-    company_id: string;
-    member_id: string;
-    role: Database["public"]["Enums"]["team_member_role"];
-    created_at: string;
-    updated_at: string;
-  };
-  Insert: {
-    id?: string;
-    company_id: string;
-    member_id: string;
-    role?: Database["public"]["Enums"]["team_member_role"];
-    created_at?: string;
-    updated_at?: string;
-  };
-  Update: {
-    id?: string;
-    company_id?: string;
-    member_id?: string;
-    role?: Database["public"]["Enums"]["team_member_role"];
-    created_at?: string;
-    updated_at?: string;
-  };
+export interface TeamMembersTable {
+  Row: Database['public']['Tables']['team_members']['Row'];
+  Insert: Database['public']['Tables']['team_members']['Insert'];
+  Update: Database['public']['Tables']['team_members']['Update'];
   Relationships: [
     {
       foreignKeyName: "team_members_company_id_fkey";
@@ -91,5 +29,3 @@ interface TeamMembersTable {
     }
   ];
 }
-
-export type { ProfilesTable, TeamMembersTable };

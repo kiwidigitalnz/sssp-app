@@ -68,7 +68,7 @@ export function TransferOwnershipDialog({
       const { error } = await supabase.rpc('transfer_company_ownership', {
         new_owner_id: values.newOwnerId,
         current_owner_id: user.id,
-      });
+      } as Database['public']['Functions']['transfer_company_ownership']['Args']);
 
       if (error) throw error;
 
