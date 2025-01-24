@@ -3,11 +3,13 @@ import Index from "./pages/Index";
 import SSSPForm from "./pages/SSSPForm";
 import CompanySettings from "./pages/CompanySettings";
 import Profile from "./pages/Profile";
+import { TopNav } from "./components/TopNav";
 import "./App.css";
 
 function App() {
   return (
-    <div className="app">
+    <div className="app min-h-screen bg-gray-50">
+      <TopNav />
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/create-sssp" element={<SSSPForm />} />
