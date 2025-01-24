@@ -1,95 +1,72 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Building2, Settings, Plug, CreditCard } from "lucide-react";
+import { CompanyInfo } from "@/components/SSSPForm/CompanyInfo";
+import { Card } from "@/components/ui/card";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 
 const CompanySettings = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [companyInfo, setCompanyInfo] = useState({
-    name: "Demo Company",
-    logo: "/placeholder.svg",
+  const [formData, setFormData] = useState({
+    companyName: "Demo Company",
     address: "123 Business Street",
-    phone: "(555) 123-4567",
-    email: "contact@democompany.com",
+    contactPerson: "John Doe",
+    contactEmail: "contact@democompany.com"
   });
 
-  const handleSave = () => {
-    localStorage.setItem('companyInfo', JSON.stringify(companyInfo));
-    toast({
-      title: "Settings saved",
-      description: "Company information has been updated successfully",
-    });
-    navigate('/'); // Navigate back to the dashboard
-  };
-
   return (
-    <div className="container mx-auto py-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-6">Company Settings</h1>
-        
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="companyName">Company Name</Label>
-            <Input
-              id="companyName"
-              value={companyInfo.name}
-              onChange={(e) => setCompanyInfo({ ...companyInfo, name: e.target.value })}
-            />
-          </div>
+    <div className="container mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8">Settings</h1>
+      
+      <Tabs defaultValue="company" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+          <TabsTrigger value="company" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Company Info</span>
+          </TabsTrigger>
+          <TabsTrigger value="app" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">App Settings</span>
+          </TabsTrigger>
+          <TabsTrigger value="integrations" className="flex items-center gap-2">
+            <Plug className="h-4 w-4" />
+            <span className="hidden sm:inline">Integrations</span>
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            <span className="hidden sm:inline">Billing</span>
+          </TabsTrigger>
+        </TabsList>
 
-          <div className="space-y-2">
-            <Label htmlFor="logo">Logo URL</Label>
-            <Input
-              id="logo"
-              value={companyInfo.logo}
-              onChange={(e) => setCompanyInfo({ ...companyInfo, logo: e.target.value })}
-            />
-            <div className="mt-2">
-              <img
-                src={companyInfo.logo}
-                alt="Company Logo"
-                className="h-16 object-contain"
-              />
-            </div>
-          </div>
+        <TabsContent value="company" className="space-y-4">
+          <CompanyInfo formData={formData} setFormData={setFormData} />
+        </TabsContent>
 
-          <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <Input
-              id="address"
-              value={companyInfo.address}
-              onChange={(e) => setCompanyInfo({ ...companyInfo, address: e.target.value })}
-            />
-          </div>
+        <TabsContent value="app" className="space-y-4">
+          <Card className="p-6">
+            <h2 className="text-2xl font-semibold mb-4">App Settings</h2>
+            <p className="text-muted-foreground">
+              App settings and preferences will be configured here.
+            </p>
+          </Card>
+        </TabsContent>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={companyInfo.phone}
-                onChange={(e) => setCompanyInfo({ ...companyInfo, phone: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={companyInfo.email}
-                onChange={(e) => setCompanyInfo({ ...companyInfo, email: e.target.value })}
-              />
-            </div>
-          </div>
+        <TabsContent value="integrations" className="space-y-4">
+          <Card className="p-6">
+            <h2 className="text-2xl font-semibold mb-4">Integrations</h2>
+            <p className="text-muted-foreground">
+              Connect and manage your third-party integrations here.
+            </p>
+          </Card>
+        </TabsContent>
 
-          <Button onClick={handleSave} className="w-full">
-            Save Settings
-          </Button>
-        </div>
-      </div>
+        <TabsContent value="billing" className="space-y-4">
+          <Card className="p-6">
+            <h2 className="text-2xl font-semibold mb-4">Billing</h2>
+            <p className="text-muted-foreground">
+              Manage your subscription and billing information here.
+            </p>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
