@@ -77,8 +77,11 @@ export default function Auth() {
         description: "Please check your email to verify your account.",
       });
       
-      // Automatically switch to login tab after successful signup
-      document.querySelector('[data-tab="login"]')?.click();
+      // Fix: Properly type the element as HTMLElement and check if it exists
+      const loginTab = document.querySelector('[data-tab="login"]') as HTMLElement;
+      if (loginTab) {
+        loginTab.click();
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -223,4 +226,4 @@ export default function Auth() {
       </Card>
     </div>
   );
-}
+};
