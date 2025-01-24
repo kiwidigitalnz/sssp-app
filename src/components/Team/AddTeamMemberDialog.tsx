@@ -72,14 +72,26 @@ export function AddTeamMemberDialog({
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('id', user.id)
+        .eq('email', values.email)
         .single();
 
       if (profileError) {
         console.error("Error finding profile:", profileError);
-        throw new Error("User not found");
+        throw new Error("User not found with this email address");
       }
       console.log("Found profile:", profiles);
+
+      // Check if user is already a team member
+      const { data: existingMember, error: checkError } = await supabase
+        .from('team_members')
+        .select('id')
+        .eq('company_id', user.id)
+        .eq('member_id', profiles.id)
+        .single();
+
+      if (existingMember) {
+        throw new Error("This user is already a team member");
+      }
 
       // Create the team member record
       const { error: insertError } = await supabase
