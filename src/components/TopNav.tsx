@@ -29,8 +29,8 @@ export function TopNav() {
           </Link>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="ml-8 flex items-center space-x-4">
+        {/* Navigation Links and User Menu */}
+        <div className="ml-auto flex items-center space-x-4">
           <Link
             to="/"
             className={cn(
@@ -41,20 +41,7 @@ export function TopNav() {
             <Home className="h-4 w-4" />
             <span className="hidden sm:inline-block">Dashboard</span>
           </Link>
-          <Link
-            to="/create-sssp"
-            className={cn(
-              "flex items-center space-x-1 text-sm font-medium transition-colors hover:text-primary",
-              isActive("/create-sssp") ? "text-primary" : "text-muted-foreground"
-            )}
-          >
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline-block">New SSSP</span>
-          </Link>
-        </nav>
 
-        {/* User Menu (existing code) */}
-        <div className="ml-auto flex items-center space-x-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
