@@ -24,9 +24,4 @@ export interface CompanyAccess {
   };
 }
 
-export interface CompanyMember {
-  id: string;
-  name: string;
-  email: string;
-  role: CompanyRole;
-}
+export type OnSubmitHandler = (values: CompanyMemberFormValues) => Promise<void>;

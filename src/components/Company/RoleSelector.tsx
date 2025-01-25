@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CompanyMemberFormValues, CompanyRole } from "@/types/company";
+import { CompanyMemberFormValues } from "@/types/company";
 
 interface RoleSelectorProps {
   field: ControllerRenderProps<CompanyMemberFormValues, "role">;

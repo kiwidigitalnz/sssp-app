@@ -11,10 +11,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RoleSelector } from "./RoleSelector";
-import { CompanyMemberFormValues, companyMemberSchema } from "@/types/company";
+import { CompanyMemberFormValues, companyMemberSchema, OnSubmitHandler } from "@/types/company";
 
 interface MemberFormProps {
-  onSubmit: (values: CompanyMemberFormValues) => Promise<void>;
+  onSubmit: OnSubmitHandler;
   isLoading?: boolean;
   onCancel?: () => void;
 }
