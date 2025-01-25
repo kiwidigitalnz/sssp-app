@@ -4,8 +4,8 @@ import SSSPForm from "./pages/SSSPForm";
 import CompanySettings from "./pages/CompanySettings";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
-import { TopNav } from "./components/TopNav";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import { TopNav } from "./components/layout/TopNav";
+import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import "./App.css";
 
