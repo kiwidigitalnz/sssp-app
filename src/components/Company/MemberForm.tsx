@@ -11,7 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RoleSelector } from "./RoleSelector";
-import { CompanyMemberFormValues, companyMemberSchema } from "@/types/company";
+import type { CompanyMemberFormValues } from "@/types/company";
+import { companyMemberSchema } from "@/types/company";
 
 interface MemberFormProps {
   onSubmit: (values: CompanyMemberFormValues) => Promise<void>;
@@ -79,5 +80,3 @@ export function MemberForm({ onSubmit, isLoading, onCancel }: MemberFormProps) {
     </Form>
   );
 }
-
-export type { CompanyMemberFormValues };

@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import type { CompanyAccess } from "@/types/company";
+import type { CompanyAccess, CompanyRole } from "@/types/company";
 
 const formSchema = z.object({
   role: z.enum(['owner', 'admin', 'editor', 'viewer'] as const),
