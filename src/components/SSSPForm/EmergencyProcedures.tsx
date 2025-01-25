@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, AlertTriangle, Phone, Users, Siren, FireExtinguisher, BellRing } from "lucide-react";
-import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import { Plus, Siren } from "lucide-react";
 import { EmergencyContactSelection } from "./EmergencyContactSelection";
 import { EmergencyContactsTable } from "./EmergencyContactsTable";
+import { EmergencyResponsePlan } from "./EmergencyComponents/EmergencyResponsePlan";
+import { AssemblyPoints } from "./EmergencyComponents/AssemblyPoints";
+import { EmergencyEquipment } from "./EmergencyComponents/EmergencyEquipment";
+import { IncidentReporting } from "./EmergencyComponents/IncidentReporting";
 
 export const EmergencyProcedures = ({ formData, setFormData }: any) => {
   const [contacts, setContacts] = useState(formData.emergencyContacts || []);
@@ -63,42 +64,12 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Emergency Response Plan Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b pb-2">
-              <AlertTriangle className="h-4 w-4" />
-              <h3 className="text-base font-medium">Emergency Response Plan</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Document your emergency response procedures and protocols
-                </p>
-                <QuickFillButton
-                  fieldId="emergencyPlan"
-                  fieldName="Emergency Response Plan"
-                  onSelect={(value) =>
-                    setFormData({ ...formData, emergencyPlan: value })
-                  }
-                />
-              </div>
-              <Textarea
-                value={formData.emergencyPlan || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, emergencyPlan: e.target.value })
-                }
-                placeholder="Detail step-by-step emergency response procedures..."
-                className="min-h-[150px]"
-              />
-            </div>
-          </div>
+          <EmergencyResponsePlan
+            value={formData.emergencyPlan || ""}
+            onChange={(value) => setFormData({ ...formData, emergencyPlan: value })}
+          />
 
-          {/* Emergency Contacts Section */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b pb-2">
-              <Phone className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">Emergency Contacts</h3>
-            </div>
             <Card className="border-dashed">
               <CardContent className="pt-6">
                 <EmergencyContactsTable
@@ -124,95 +95,20 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
             </Card>
           </div>
 
-          {/* Assembly Points Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b pb-2">
-              <Users className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">Assembly Points</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Specify emergency assembly points and evacuation routes
-                </p>
-                <QuickFillButton
-                  fieldId="assemblyPoints"
-                  fieldName="Assembly Points"
-                  onSelect={(value) =>
-                    setFormData({ ...formData, assemblyPoints: value })
-                  }
-                />
-              </div>
-              <Textarea
-                value={formData.assemblyPoints || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, assemblyPoints: e.target.value })
-                }
-                placeholder="List primary and secondary assembly points..."
-                className="min-h-[100px]"
-              />
-            </div>
-          </div>
+          <AssemblyPoints
+            value={formData.assemblyPoints || ""}
+            onChange={(value) => setFormData({ ...formData, assemblyPoints: value })}
+          />
 
-          {/* Emergency Equipment Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b pb-2">
-              <FireExtinguisher className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">Emergency Equipment</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  List available emergency equipment and their locations
-                </p>
-                <QuickFillButton
-                  fieldId="emergencyEquipment"
-                  fieldName="Emergency Equipment"
-                  onSelect={(value) =>
-                    setFormData({ ...formData, emergencyEquipment: value })
-                  }
-                />
-              </div>
-              <Textarea
-                value={formData.emergencyEquipment || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, emergencyEquipment: e.target.value })
-                }
-                placeholder="Document locations of first aid kits, fire extinguishers, etc..."
-                className="min-h-[100px]"
-              />
-            </div>
-          </div>
+          <EmergencyEquipment
+            value={formData.emergencyEquipment || ""}
+            onChange={(value) => setFormData({ ...formData, emergencyEquipment: value })}
+          />
 
-          {/* Incident Reporting Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b pb-2">
-              <BellRing className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">Incident Reporting</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Outline the incident reporting and notification process
-                </p>
-                <QuickFillButton
-                  fieldId="incidentReporting"
-                  fieldName="Incident Reporting"
-                  onSelect={(value) =>
-                    setFormData({ ...formData, incidentReporting: value })
-                  }
-                />
-              </div>
-              <Textarea
-                value={formData.incidentReporting || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, incidentReporting: e.target.value })
-                }
-                placeholder="Detail the steps for reporting and documenting incidents..."
-                className="min-h-[100px]"
-              />
-            </div>
-          </div>
+          <IncidentReporting
+            value={formData.incidentReporting || ""}
+            onChange={(value) => setFormData({ ...formData, incidentReporting: value })}
+          />
         </CardContent>
       </Card>
     </div>
