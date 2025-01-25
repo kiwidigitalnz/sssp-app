@@ -1,10 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
-import { TeamMember } from "@/types/team";
+import type { Database } from "@/integrations/supabase/types";
+
+type TeamMemberRole = Database['public']['Enums']['team_member_role'];
 
 export async function findProfileByEmail(email: string) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, email')
     .eq('email', email)
     .maybeSingle();
 
@@ -26,7 +28,7 @@ export async function checkExistingMembership(companyId: string, memberId: strin
   if (data) throw new Error("This user is already a team member");
 }
 
-export async function addTeamMember(companyId: string, memberId: string, role: string) {
+export async function addTeamMember(companyId: string, memberId: string, role: TeamMemberRole) {
   const { error } = await supabase
     .from('team_members')
     .insert({
