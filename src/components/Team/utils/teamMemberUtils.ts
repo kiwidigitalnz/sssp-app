@@ -4,16 +4,27 @@ import { supabase } from "@/integrations/supabase/client";
 type TeamMemberRole = 'admin' | 'editor' | 'viewer';
 
 export async function findProfileByEmail(email: string) {
-  const { data, error } = await supabase
+  // First get the user from auth.users through Supabase auth
+  const { data: { users }, error: authError } = await supabase.auth.admin.listUsers({
+    filters: {
+      email: email
+    }
+  });
+
+  if (authError) throw new Error("Error looking up user");
+  if (!users || users.length === 0) throw new Error("No user found with this email address");
+
+  // Then get their profile
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id')
-    .eq('email', email)
-    .maybeSingle();
+    .eq('id', users[0].id)
+    .single();
 
-  if (error) throw new Error("Error looking up user profile");
-  if (!data) throw new Error("No user found with this email address");
+  if (profileError) throw new Error("Error looking up user profile");
+  if (!profile) throw new Error("No profile found for this user");
   
-  return data;
+  return profile;
 }
 
 export async function checkExistingMembership(companyId: string, memberId: string) {
