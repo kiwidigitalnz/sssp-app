@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { User } from '@supabase/supabase-js';
 
 // Simplified type definition to avoid deep nesting
 type TeamMemberRole = 'admin' | 'editor' | 'viewer';
@@ -12,7 +13,7 @@ export async function findProfileByEmail(email: string) {
 
   if (authError) throw new Error("Error looking up user");
   
-  const user = data.users.find(u => u.email === email);
+  const user = data.users.find((u: User) => u.email === email);
   if (!user) throw new Error("No user found with this email address");
 
   // Then get their profile
