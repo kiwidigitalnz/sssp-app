@@ -39,7 +39,7 @@ export function AddCompanyMemberDialog({
         .from('profiles')
         .select('id')
         .eq('email', values.email)
-        .maybeSingle();
+        .single();
 
       if (profileError) {
         console.error("Error finding profile:", profileError);
@@ -57,9 +57,9 @@ export function AddCompanyMemberDialog({
         .select('id')
         .eq('company_id', user.id)
         .eq('user_id', invitedProfile.id)
-        .maybeSingle();
+        .single();
 
-      if (checkError) {
+      if (checkError && checkError.code !== 'PGRST116') {
         console.error("Error checking existing membership:", checkError);
         throw new Error("Error checking company membership");
       }
