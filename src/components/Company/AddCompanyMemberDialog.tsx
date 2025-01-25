@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { MemberForm } from "./MemberForm";
-import { OnSubmitHandler } from "@/types/company";
+import { CompanyMemberFormValues } from "@/types/company";
 
 interface AddCompanyMemberDialogProps {
   open: boolean;
@@ -25,7 +25,7 @@ export function AddCompanyMemberDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const onSubmit: OnSubmitHandler = async (values) => {
+  const handleSubmit = async (values: CompanyMemberFormValues) => {
     try {
       setIsLoading(true);
       console.log("Starting company member addition process:", values);
@@ -112,7 +112,7 @@ export function AddCompanyMemberDialog({
         </DialogHeader>
 
         <MemberForm
-          onSubmit={onSubmit}
+          onSubmit={handleSubmit}
           isLoading={isLoading}
           onCancel={() => onOpenChange(false)}
         />
