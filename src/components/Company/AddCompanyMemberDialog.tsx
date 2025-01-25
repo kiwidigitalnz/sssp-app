@@ -1,7 +1,4 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -9,35 +6,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-
-const formSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  role: z.enum(['owner', 'admin', 'editor', 'viewer'] as const, {
-    required_error: "Please select a role",
-  }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { MemberForm, CompanyMemberFormValues } from "./MemberForm";
 
 interface AddCompanyMemberDialogProps {
   open: boolean;
@@ -52,15 +24,7 @@ export function AddCompanyMemberDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      role: "viewer",
-    },
-  });
-
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: CompanyMemberFormValues) => {
     try {
       setIsLoading(true);
       console.log("Starting company member addition process:", values);
@@ -123,7 +87,6 @@ export function AddCompanyMemberDialog({
         description: "Company member added successfully",
       });
       onOpenChange(false);
-      form.reset();
 
     } catch (error: any) {
       console.error("Error in company member addition:", error);
@@ -147,69 +110,11 @@ export function AddCompanyMemberDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="member@company.com" 
-                      {...field}
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    disabled={isLoading}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="owner">Owner</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="editor">Editor</SelectItem>
-                      <SelectItem value="viewer">Viewer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Adding..." : "Add Member"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+        <MemberForm
+          onSubmit={onSubmit}
+          isLoading={isLoading}
+          onCancel={() => onOpenChange(false)}
+        />
       </DialogContent>
     </Dialog>
   );
