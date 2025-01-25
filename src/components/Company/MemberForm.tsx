@@ -79,3 +79,5 @@ export function MemberForm({ onSubmit, isLoading, onCancel }: MemberFormProps) {
     </Form>
   );
 }
+
+export type { CompanyMemberFormValues };

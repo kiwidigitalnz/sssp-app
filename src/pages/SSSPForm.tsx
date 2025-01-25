@@ -17,6 +17,11 @@ const LoadingFallback = () => (
   </div>
 );
 
+interface SSSPFormData {
+  // Add your form data structure here
+  [key: string]: any;
+}
+
 const SSSPForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,8 +33,11 @@ const SSSPForm = () => {
     formData,
     setFormData,
     clearSavedData,
-    isLoading: isPersistenceLoading
-  } = useFormPersistence(id || 'new-form');
+    isLoading
+  } = useFormPersistence<SSSPFormData>({
+    key: id || 'new-form',
+    initialData: {}
+  });
 
   const handleSave = async () => {
     try {
@@ -85,7 +93,7 @@ const SSSPForm = () => {
       <div className="max-w-4xl mx-auto">
         <FormHeader
           id={id}
-          isLoading={isPersistenceLoading}
+          isLoading={isLoading}
           onSave={handleSave}
           onCancel={() => setShowCancelDialog(true)}
         />
@@ -104,7 +112,7 @@ const SSSPForm = () => {
                 formData={formData}
                 setFormData={setFormData}
                 onStepChange={setCurrentStep}
-                isLoading={isPersistenceLoading}
+                isLoading={isLoading}
               />
             </Suspense>
           </ErrorBoundary>
@@ -112,7 +120,7 @@ const SSSPForm = () => {
           <FormNavigation
             currentStep={currentStep}
             totalSteps={formSteps.length}
-            isLoading={isPersistenceLoading}
+            isLoading={isLoading}
             onNext={handleNext}
             onPrevious={handlePrevious}
           />

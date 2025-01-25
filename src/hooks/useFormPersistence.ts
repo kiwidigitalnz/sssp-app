@@ -11,11 +11,21 @@ export function useFormPersistence<T>(options: FormPersistenceOptions) {
     return savedData ? JSON.parse(savedData) : options.initialData;
   });
 
+  const clearSavedData = () => {
+    localStorage.removeItem(options.key);
+    setData(options.initialData);
+  };
+
   useEffect(() => {
     if (data) {
       localStorage.setItem(options.key, JSON.stringify(data));
     }
   }, [data, options.key]);
 
-  return [data, setData] as const;
+  return {
+    formData: data,
+    setFormData: setData,
+    clearSavedData,
+    isLoading: false
+  };
 }
