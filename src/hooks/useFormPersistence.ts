@@ -1,19 +1,31 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
-export const useFormPersistence = (formId: string, initialData: any = {}) => {
-  const { toast } = useToast();
+interface FormPersistenceOptions {
+  key: string;
+  initialData?: any;
+  onLoad?: (data: any) => void;
+  onSave?: (data: any) => void;
+}
+
+export function useFormPersistence({
+  key,
+  initialData = {},
+  onLoad,
+  onSave,
+}: FormPersistenceOptions) {
   const [formData, setFormData] = useState(initialData);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Load saved form data on mount
   useEffect(() => {
     const loadSavedData = () => {
       try {
-        const savedData = localStorage.getItem(`sssp-form-${formId}`);
+        const savedData = localStorage.getItem(key);
         if (savedData) {
           const parsedData = JSON.parse(savedData);
           setFormData(parsedData);
+          onLoad?.(parsedData);
           toast({
             title: "Form data restored",
             description: "Your previous progress has been loaded",
@@ -32,13 +44,13 @@ export const useFormPersistence = (formId: string, initialData: any = {}) => {
     };
 
     loadSavedData();
-  }, [formId, toast]);
+  }, [key, onLoad, toast]);
 
-  // Autosave form data
   const saveFormData = (newData: any) => {
     try {
-      localStorage.setItem(`sssp-form-${formId}`, JSON.stringify(newData));
+      localStorage.setItem(key, JSON.stringify(newData));
       setFormData(newData);
+      onSave?.(newData);
     } catch (error) {
       console.error('Error saving form data:', error);
       toast({
@@ -49,10 +61,9 @@ export const useFormPersistence = (formId: string, initialData: any = {}) => {
     }
   };
 
-  // Clear saved form data
   const clearSavedData = () => {
     try {
-      localStorage.removeItem(`sssp-form-${formId}`);
+      localStorage.removeItem(key);
       setFormData(initialData);
       toast({
         title: "Form data cleared",
@@ -74,4 +85,4 @@ export const useFormPersistence = (formId: string, initialData: any = {}) => {
     clearSavedData,
     isLoading
   };
-};
+}
