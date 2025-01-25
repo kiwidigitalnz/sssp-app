@@ -65,20 +65,13 @@ export function AddTeamMemberDialog({
     try {
       setIsLoading(true);
       
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user found");
 
-      // Find invited user's profile
       const invitedProfile = await findProfileByEmail(values.email);
-      
-      // Check for existing membership
       await checkExistingMembership(user.id, invitedProfile.id);
-      
-      // Add team member
       await addTeamMember(user.id, invitedProfile.id, values.role);
 
-      // Success handling
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
       toast({
         title: "Success",

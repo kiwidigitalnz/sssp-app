@@ -1,12 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 
-type TeamMemberRole = Database['public']['Enums']['team_member_role'];
+// Simplified type definition to avoid deep nesting
+type TeamMemberRole = 'admin' | 'editor' | 'viewer';
 
 export async function findProfileByEmail(email: string) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email')
+    .select('id')
     .eq('email', email)
     .maybeSingle();
 
