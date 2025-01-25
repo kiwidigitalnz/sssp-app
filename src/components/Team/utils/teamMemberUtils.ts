@@ -5,20 +5,21 @@ type TeamMemberRole = 'admin' | 'editor' | 'viewer';
 
 export async function findProfileByEmail(email: string) {
   // First get the user from auth.users through Supabase auth
-  const { data: { users }, error: authError } = await supabase.auth.admin.listUsers({
-    filters: {
-      email: email
-    }
+  const { data, error: authError } = await supabase.auth.admin.listUsers({
+    page: 1,
+    perPage: 1
   });
 
   if (authError) throw new Error("Error looking up user");
-  if (!users || users.length === 0) throw new Error("No user found with this email address");
+  
+  const user = data.users.find(u => u.email === email);
+  if (!user) throw new Error("No user found with this email address");
 
   // Then get their profile
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id')
-    .eq('id', users[0].id)
+    .eq('id', user.id)
     .single();
 
   if (profileError) throw new Error("Error looking up user profile");
