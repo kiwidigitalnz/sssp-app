@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
-interface FormPersistenceOptions {
+export interface FormPersistenceOptions {
   key: string;
   initialData?: any;
   onLoad?: (data: any) => void;

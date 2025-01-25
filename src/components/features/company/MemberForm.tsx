@@ -1,46 +1,81 @@
-import { ControllerRenderProps } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Form,
+  FormControl,
+  FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { CompanyMemberFormValues } from "./MemberForm";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { RoleSelector } from "./RoleSelector";
+import { CompanyMemberFormValues, companyMemberSchema } from "@/types/company";
 
-interface RoleSelectorProps {
-  field: ControllerRenderProps<CompanyMemberFormValues, "role">;
-  disabled: boolean;
+interface MemberFormProps {
+  onSubmit: (values: CompanyMemberFormValues) => Promise<void>;
+  isLoading?: boolean;
+  onCancel?: () => void;
 }
 
-export function RoleSelector({ field, disabled }: RoleSelectorProps) {
+export function MemberForm({ onSubmit, isLoading, onCancel }: MemberFormProps) {
+  const form = useForm<CompanyMemberFormValues>({
+    resolver: zodResolver(companyMemberSchema),
+    defaultValues: {
+      email: "",
+      role: "viewer",
+    },
+  });
+
   return (
-    <FormItem>
-      <FormLabel>Role</FormLabel>
-      <Select
-        onValueChange={field.onChange}
-        defaultValue={field.value}
-        disabled={disabled}
-      >
-        <FormControl>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a role" />
-          </SelectTrigger>
-        </FormControl>
-        <SelectContent>
-          <SelectItem value="owner">Owner</SelectItem>
-          <SelectItem value="admin">Admin</SelectItem>
-          <SelectItem value="editor">Editor</SelectItem>
-          <SelectItem value="viewer">Viewer</SelectItem>
-        </SelectContent>
-      </Select>
-      <FormMessage />
-    </FormItem>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email Address</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="member@company.com" 
+                  {...field}
+                  disabled={isLoading}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <RoleSelector 
+              field={field}
+              disabled={!!isLoading}
+            />
+          )}
+        />
+
+        <div className="flex justify-end gap-2 pt-4">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Adding..." : "Add Member"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
