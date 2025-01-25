@@ -17,8 +17,16 @@ export interface CompanyAccess {
   user_id: string;
   role: CompanyRole;
   company_profile: {
+    id: string;
     first_name: string | null;
     last_name: string | null;
     avatar_url: string | null;
   };
+}
+
+export interface CompanyMember {
+  id: string;
+  name: string;
+  email: string;
+  role: CompanyRole;
 }

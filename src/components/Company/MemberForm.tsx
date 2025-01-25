@@ -11,8 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RoleSelector } from "./RoleSelector";
-import type { CompanyMemberFormValues } from "@/types/company";
-import { companyMemberSchema } from "@/types/company";
+import { CompanyMemberFormValues, companyMemberSchema } from "@/types/company";
 
 interface MemberFormProps {
   onSubmit: (values: CompanyMemberFormValues) => Promise<void>;
