@@ -10,3 +10,15 @@ export const companyMemberSchema = z.object({
 export type CompanyMemberFormValues = z.infer<typeof companyMemberSchema>;
 
 export type CompanyRole = 'owner' | 'admin' | 'editor' | 'viewer';
+
+export interface CompanyAccess {
+  id: string;
+  company_id: string;
+  user_id: string;
+  role: CompanyRole;
+  company_profile: {
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  };
+}

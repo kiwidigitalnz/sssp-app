@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { User, Session } from "@supabase/supabase-js";
 
 export interface AuthContextType {
   user: User | null;
+  session: Session | null;
   loading: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
@@ -12,7 +14,9 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  session: null,
   loading: true,
+  isLoading: true,
   login: async () => {},
   logout: async () => {},
   signup: async () => {},
@@ -20,18 +24,21 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setSession(session);
       setLoading(false);
     });
 
     // Listen for changes on auth state (logged in, signed out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setSession(session);
       setLoading(false);
     });
 
@@ -60,7 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, signup }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      isLoading: loading, 
+      login, 
+      logout, 
+      signup 
+    }}>
       {children}
     </AuthContext.Provider>
   );

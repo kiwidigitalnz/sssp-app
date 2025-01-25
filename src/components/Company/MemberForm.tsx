@@ -1,6 +1,5 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -12,25 +11,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RoleSelector } from "./RoleSelector";
-
-const formSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  role: z.enum(['owner', 'admin', 'editor', 'viewer'] as const, {
-    required_error: "Please select a role",
-  }),
-});
-
-export type CompanyMemberFormValues = z.infer<typeof formSchema>;
+import { CompanyMemberFormValues, companyMemberSchema } from "@/types/company";
 
 interface MemberFormProps {
   onSubmit: (values: CompanyMemberFormValues) => Promise<void>;
-  isLoading: boolean;
-  onCancel: () => void;
+  isLoading?: boolean;
+  onCancel?: () => void;
 }
 
 export function MemberForm({ onSubmit, isLoading, onCancel }: MemberFormProps) {
   const form = useForm<CompanyMemberFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(companyMemberSchema),
     defaultValues: {
       email: "",
       role: "viewer",
@@ -64,20 +55,22 @@ export function MemberForm({ onSubmit, isLoading, onCancel }: MemberFormProps) {
           render={({ field }) => (
             <RoleSelector 
               field={field}
-              disabled={isLoading}
+              disabled={!!isLoading}
             />
           )}
         />
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+          )}
           <Button type="submit" disabled={isLoading}>
             {isLoading ? "Adding..." : "Add Member"}
           </Button>
