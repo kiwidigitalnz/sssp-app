@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { MemberForm } from "./MemberForm";
-import { CompanyMemberFormValues, OnSubmitHandler } from "@/types/company";
+import { OnSubmitHandler } from "@/types/company";
 
 interface AddCompanyMemberDialogProps {
   open: boolean;
