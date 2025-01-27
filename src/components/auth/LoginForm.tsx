@@ -31,7 +31,7 @@ export const LoginForm = ({
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: "demo@example.com",
+        email: "demo@sssp.dev",
         password: "demo123456",
       });
 
