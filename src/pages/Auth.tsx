@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get("invite");
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -23,7 +25,32 @@ export default function Auth() {
   const [lastName, setLastName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
-  const [company, setCompany] = useState("");
+
+  // Handle invitation
+  useEffect(() => {
+    if (inviteToken) {
+      // Pre-fill email if it's an invitation
+      const email = searchParams.get("email");
+      if (email) {
+        setSignupEmail(email);
+        setLoginEmail(email);
+      }
+      // Switch to signup if user doesn't exist
+      const checkUser = async () => {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", email)
+          .single();
+        
+        if (!data && !error) {
+          const signupTab = document.querySelector('[data-tab="signup"]') as HTMLElement;
+          if (signupTab) signupTab.click();
+        }
+      };
+      checkUser();
+    }
+  }, [inviteToken, searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +64,22 @@ export default function Auth() {
 
       if (error) throw error;
       
+      if (inviteToken) {
+        // Accept invitation after login
+        const { error: inviteError } = await supabase
+          .from("sssp_invitations")
+          .update({ status: "accepted" })
+          .eq("id", inviteToken);
+
+        if (inviteError) {
+          toast({
+            title: "Error accepting invitation",
+            description: inviteError.message,
+            variant: "destructive",
+          });
+        }
+      }
+
       navigate("/");
       toast({
         title: "Welcome back!",
@@ -65,7 +108,6 @@ export default function Auth() {
           data: {
             first_name: firstName,
             last_name: lastName,
-            company: company,
           },
         },
       });
@@ -90,11 +132,6 @@ export default function Auth() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    setLoginEmail("demo@sssp.dev");
-    setLoginPassword("demo123");
   };
 
   return (
@@ -151,15 +188,6 @@ export default function Auth() {
                   "Login"
                 )}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleDemoLogin}
-              >
-                <KeyRound className="mr-2 h-4 w-4" />
-                Use Demo Account
-              </Button>
             </form>
           </TabsContent>
 
@@ -206,16 +234,6 @@ export default function Auth() {
                   placeholder="Create a password"
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
-                <Input
-                  id="company"
-                  placeholder="Company name"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
                   required
                 />
               </div>
