@@ -32,16 +32,6 @@ export function CompanyHeader({ name, logo, address, phone, email }: CompanyHead
               <p className="text-gray-600">{email}</p>
             </div>
           </div>
-          <div className="flex-shrink-0">
-            <Button 
-              onClick={() => navigate("/create-sssp")}
-              size="lg"
-              className="transition-all hover:scale-105"
-            >
-              <PlusCircle className="mr-2 h-5 w-5" />
-              Create New SSSP
-            </Button>
-          </div>
         </div>
       </div>
     </div>

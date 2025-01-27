@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { PlusCircle } from "lucide-react";
 
 interface SSSP {
   id: number;
@@ -27,26 +28,36 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
 
   return (
     <Card className="bg-white shadow-sm">
-      <CardHeader>
-        <CardTitle>Recent Site-Specific Safety Plans</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <CardTitle>Site-Specific Safety Plans</CardTitle>
+        <Button 
+          onClick={() => navigate("/create-sssp")}
+          className="transition-all hover:scale-105"
+        >
+          <PlusCircle className="mr-2 h-5 w-5" />
+          Create New SSSP
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <div className="inline-block min-w-full align-middle">
-            <div className="rounded-lg border">
+            <div className="rounded-lg border bg-card">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[200px]">Project Name</TableHead>
-                    <TableHead className="hidden sm:table-cell">Created Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="hidden sm:table-cell">Last Modified</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="min-w-[200px] font-semibold">Project Name</TableHead>
+                    <TableHead className="hidden sm:table-cell font-semibold">Created Date</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="hidden sm:table-cell font-semibold">Last Modified</TableHead>
+                    <TableHead className="text-right font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {ssspList.map((sssp) => (
-                    <TableRow key={sssp.id} className="transition-colors hover:bg-gray-50">
+                    <TableRow 
+                      key={sssp.id} 
+                      className="transition-colors hover:bg-muted/50 border-t"
+                    >
                       <TableCell className="font-medium">
                         {sssp.projectName}
                       </TableCell>
