@@ -1,4 +1,4 @@
-import { User, Settings, LogOut, FileText, Home } from "lucide-react";
+import { User, Settings, LogOut, FileText, Home, Shield } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -42,14 +42,18 @@ export function TopNav() {
   };
 
   return (
-    <div className="w-full border-b bg-white">
+    <div className="w-full border-b bg-white shadow-sm">
       <div className="flex h-16 items-center px-4 container mx-auto">
         {/* Logo and App Name */}
-        <div className="flex items-center space-x-2">
-          <Link to="/" className="flex items-center space-x-2">
-            <FileText className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl hidden sm:inline-block">SSSP Manager by Kiwi Digital</span>
-            <span className="font-bold text-xl sm:hidden">SSSP</span>
+        <div className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center">
+            <div className="bg-primary/10 p-2 rounded-lg">
+              <Shield className="h-6 w-6 text-primary" />
+            </div>
+            <div className="ml-3 flex flex-col">
+              <span className="font-bold text-xl text-gray-900">SSSP Manager</span>
+              <span className="text-xs text-muted-foreground -mt-1">by Kiwi Digital</span>
+            </div>
           </Link>
         </div>
 
