@@ -9,6 +9,8 @@ import { CompanyContact } from "./CompanyContact";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompanyLogo } from "./CompanyLogo";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const companyFormSchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
@@ -36,6 +38,58 @@ interface CompanyInfoProps {
 
 export function CompanyInfo({ onSubmit, defaultValues, isLoading = false, companyId }: CompanyInfoProps) {
   const { toast } = useToast();
+  const [company, setCompany] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        const { data: companyAccess, error: accessError } = await supabase
+          .from('company_access')
+          .select('company_id')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .single();
+
+        if (accessError) throw accessError;
+
+        if (companyAccess?.company_id) {
+          const { data: companyData, error: companyError } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('id', companyAccess.company_id)
+            .single();
+
+          if (companyError) throw companyError;
+          setCompany(companyData);
+          
+          // Update form with company data
+          form.reset({
+            name: companyData.name,
+            website: companyData.website || "",
+            logo_url: companyData.logo_url,
+            address: {
+              street: companyData.address || "",
+              city: companyData.city || "",
+              postalCode: companyData.postal_code || "",
+            },
+            contact: {
+              email: companyData.email || "",
+              phone: companyData.phone || "",
+            },
+          });
+        }
+      } catch (error: any) {
+        console.error('Error fetching company data:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load company data",
+        });
+      }
+    };
+
+    fetchCompanyData();
+  }, []);
+
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
@@ -61,6 +115,55 @@ export function CompanyInfo({ onSubmit, defaultValues, isLoading = false, compan
       title: "Logo updated",
       description: "Your company logo has been updated successfully.",
     });
+
+    // Update company logo in database
+    if (company?.id) {
+      const { error } = await supabase
+        .from('companies')
+        .update({ logo_url: filePath })
+        .eq('id', company.id);
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to update company logo",
+        });
+      }
+    }
+  };
+
+  const handleSubmit = async (values: CompanyFormValues) => {
+    try {
+      if (company?.id) {
+        const { error } = await supabase
+          .from('companies')
+          .update({
+            name: values.name,
+            website: values.website,
+            logo_url: values.logo_url,
+            address: values.address.street,
+            city: values.address.city,
+            postal_code: values.address.postalCode,
+            email: values.contact.email,
+            phone: values.contact.phone,
+          })
+          .eq('id', company.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Company information updated successfully",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
   };
 
   return (
@@ -70,10 +173,10 @@ export function CompanyInfo({ onSubmit, defaultValues, isLoading = false, compan
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <CompanyLogo
               logoUrl={form.watch("logo_url")}
-              companyId={companyId}
+              companyId={company?.id}
               onUploadSuccess={handleLogoUpload}
               isLoading={isLoading}
             />
