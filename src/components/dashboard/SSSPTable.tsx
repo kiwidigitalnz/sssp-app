@@ -10,14 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
-
-interface SSSP {
-  id: number;
-  projectName: string;
-  createdDate: string;
-  status: string;
-  lastModified: string;
-}
+import type { SSSP } from "@/types/sssp";
 
 interface SSSPTableProps {
   ssspList: SSSP[];
@@ -45,7 +38,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="min-w-[200px] font-semibold">Project Name</TableHead>
+                    <TableHead className="min-w-[200px] font-semibold">Title</TableHead>
                     <TableHead className="hidden sm:table-cell font-semibold">Created Date</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="hidden sm:table-cell font-semibold">Last Modified</TableHead>
@@ -59,13 +52,15 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                       className="transition-colors hover:bg-muted/50 border-t"
                     >
                       <TableCell className="font-medium">
-                        {sssp.projectName}
+                        {sssp.title}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">{sssp.createdDate}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {new Date(sssp.created_at).toLocaleDateString()}
+                      </TableCell>
                       <TableCell>
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            sssp.status === "Draft"
+                            sssp.status === "draft"
                               ? "bg-yellow-100 text-yellow-800"
                               : "bg-green-100 text-green-800"
                           }`}
@@ -73,7 +68,9 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                           {sssp.status}
                         </span>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">{sssp.lastModified}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {new Date(sssp.updated_at).toLocaleDateString()}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="outline"

@@ -121,7 +121,7 @@ const Index = () => {
   const stats = {
     total: sssps.length,
     draft: sssps.filter(s => s.status === "draft").length,
-    submitted: sssps.filter(s => s.status === "submitted").length,
+    submitted: sssps.filter(s => s.status !== "draft").length,
   };
 
   return (
@@ -165,13 +165,7 @@ const Index = () => {
           />
         </div>
 
-        <SSSPTable ssspList={sssps.map(sssp => ({
-          id: sssp.id,
-          projectName: sssp.title,
-          createdDate: new Date(sssp.created_at).toLocaleDateString(),
-          status: sssp.status,
-          lastModified: new Date(sssp.updated_at).toLocaleDateString(),
-        }))} />
+        <SSSPTable ssspList={sssps} />
       </div>
     </div>
   );
