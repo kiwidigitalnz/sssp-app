@@ -41,6 +41,10 @@ export function TopNav() {
     }
   };
 
+  const avatarUrl = profile?.avatar_url 
+    ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_url).data.publicUrl 
+    : undefined;
+
   return (
     <div className="w-full border-b bg-white shadow-sm">
       <div className="flex h-16 items-center px-4 container mx-auto">
@@ -66,7 +70,7 @@ export function TopNav() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={profile?.avatar_url} />
+                      <AvatarImage src={avatarUrl} />
                       <AvatarFallback>
                         <User className="h-4 w-4" />
                       </AvatarFallback>

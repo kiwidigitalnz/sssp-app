@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { User } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -88,7 +88,9 @@ export function ProfileAvatar({ avatarUrl, userId }: ProfileAvatarProps) {
 
       if (updateError) throw updateError;
 
+      // Invalidate both profile queries to update UI
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
       
       toast({
         title: "Success",
