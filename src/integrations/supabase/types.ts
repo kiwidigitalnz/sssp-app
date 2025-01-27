@@ -19,7 +19,6 @@ export type Database = {
           job_title: string | null
           last_name: string | null
           phone: string | null
-          role: string | null
           updated_at: string
           website: string | null
         }
@@ -32,7 +31,6 @@ export type Database = {
           job_title?: string | null
           last_name?: string | null
           phone?: string | null
-          role?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -45,7 +43,6 @@ export type Database = {
           job_title?: string | null
           last_name?: string | null
           phone?: string | null
-          role?: string | null
           updated_at?: string
           website?: string | null
         }

@@ -63,19 +63,6 @@ export function ContactInfo({ form }: ContactInfoProps) {
         />
         <FormField
           control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter your role" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
           name="job_title"
           render={({ field }) => (
             <FormItem>
