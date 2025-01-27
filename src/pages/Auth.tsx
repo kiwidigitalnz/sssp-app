@@ -8,13 +8,17 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import { PasswordReset } from "@/components/auth/PasswordReset";
+import { UpdatePassword } from "@/components/auth/UpdatePassword";
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get("invite");
+  const type = searchParams.get("type");
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -26,7 +30,6 @@ export default function Auth() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
 
-  // Handle invitation
   useEffect(() => {
     if (inviteToken) {
       const email = searchParams.get("email");
@@ -36,6 +39,79 @@ export default function Auth() {
       }
     }
   }, [inviteToken, searchParams]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (error) throw error;
+      
+      if (inviteToken && data.user) {
+        await handleInvitation(data.user.id);
+      }
+
+      navigate("/");
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          },
+          emailRedirectTo: `${window.location.origin}/auth?verification=true`,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (inviteToken && data.user) {
+        await handleInvitation(data.user.id);
+      }
+      
+      toast({
+        title: "Welcome!",
+        description: "Please check your email to verify your account.",
+      });
+      
+      const loginTab = document.querySelector('[data-tab="login"]') as HTMLElement;
+      if (loginTab) loginTab.click();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInvitation = async (userId: string) => {
     if (!inviteToken) return;
@@ -93,77 +169,37 @@ export default function Auth() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
-      });
+  // Show update password form if we're in recovery mode
+  if (type === "recovery") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <Card className="w-full max-w-md p-6 space-y-6 bg-white shadow-lg">
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-bold">Update Password</h1>
+            <p className="text-muted-foreground">Enter your new password below</p>
+          </div>
+          <UpdatePassword />
+        </Card>
+      </div>
+    );
+  }
 
-      if (error) throw error;
-      
-      if (inviteToken && data.user) {
-        await handleInvitation(data.user.id);
-      }
-
-      navigate("/");
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: signupEmail,
-        password: signupPassword,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-          },
-        },
-      });
-
-      if (error) throw error;
-      
-      if (inviteToken && data.user) {
-        await handleInvitation(data.user.id);
-      }
-      
-      toast({
-        title: "Welcome!",
-        description: "Please check your email to verify your account.",
-      });
-      
-      const loginTab = document.querySelector('[data-tab="login"]') as HTMLElement;
-      if (loginTab) loginTab.click();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Show password reset form if requested
+  if (showPasswordReset) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <Card className="w-full max-w-md p-6 space-y-6 bg-white shadow-lg">
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-bold">Reset Password</h1>
+            <p className="text-muted-foreground">
+              Enter your email to receive a password reset link
+            </p>
+          </div>
+          <PasswordReset onBack={() => setShowPasswordReset(false)} />
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -208,6 +244,14 @@ export default function Auth() {
                   required
                 />
               </div>
+              <Button
+                type="button"
+                variant="link"
+                className="p-0 h-auto font-normal"
+                onClick={() => setShowPasswordReset(true)}
+              >
+                Forgot password?
+              </Button>
               <Button
                 type="submit"
                 className="w-full"

@@ -172,6 +172,41 @@ export type Database = {
           },
         ]
       }
+      sssp_versions: {
+        Row: {
+          created_at: string
+          created_by: string
+          data: Json
+          id: string
+          sssp_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          data: Json
+          id?: string
+          sssp_id: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data?: Json
+          id?: string
+          sssp_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sssp_versions_sssp_id_fkey"
+            columns: ["sssp_id"]
+            isOneToOne: false
+            referencedRelation: "sssps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sssps: {
         Row: {
           company_address: string | null
@@ -187,6 +222,8 @@ export type Database = {
           status: string
           title: string
           updated_at: string
+          version: number
+          version_history: Json[] | null
         }
         Insert: {
           company_address?: string | null
@@ -202,6 +239,8 @@ export type Database = {
           status?: string
           title: string
           updated_at?: string
+          version?: number
+          version_history?: Json[] | null
         }
         Update: {
           company_address?: string | null
@@ -217,6 +256,8 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
+          version?: number
+          version_history?: Json[] | null
         }
         Relationships: []
       }
