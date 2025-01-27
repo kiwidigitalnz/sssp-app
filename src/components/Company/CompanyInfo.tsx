@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompanyLogo } from "./CompanyLogo";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const companyFormSchema = z.object({
@@ -29,13 +28,6 @@ const companyFormSchema = z.object({
 });
 
 export type CompanyFormValues = z.infer<typeof companyFormSchema>;
-
-interface CompanyInfoProps {
-  onSubmit?: (values: CompanyFormValues) => Promise<void>;
-  defaultValues?: Partial<CompanyFormValues>;
-  isLoading?: boolean;
-  companyId?: string;
-}
 
 const fetchCompanyData = async () => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -66,7 +58,7 @@ const fetchCompanyData = async () => {
   return companyData;
 };
 
-export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoProps) {
+export function CompanyInfo() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -124,7 +116,6 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
         email: "",
         phone: "",
       },
-      ...defaultValues,
     },
   });
 
@@ -198,16 +189,16 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
               logoUrl={form.watch("logo_url")}
               companyId={company?.id}
               onUploadSuccess={handleLogoUpload}
-              isLoading={isLoading || updateCompanyMutation.isPending}
+              isLoading={updateCompanyMutation.isPending}
             />
-            <CompanyBasicInfo control={form.control} isLoading={isLoading || updateCompanyMutation.isPending} />
-            <CompanyAddress control={form.control} isLoading={isLoading || updateCompanyMutation.isPending} />
-            <CompanyContact control={form.control} isLoading={isLoading || updateCompanyMutation.isPending} />
+            <CompanyBasicInfo control={form.control} isLoading={updateCompanyMutation.isPending} />
+            <CompanyAddress control={form.control} isLoading={updateCompanyMutation.isPending} />
+            <CompanyContact control={form.control} isLoading={updateCompanyMutation.isPending} />
             
             <div className="flex justify-end space-x-4">
               <Button 
                 type="submit" 
-                disabled={isLoading || updateCompanyMutation.isPending}
+                disabled={updateCompanyMutation.isPending}
               >
                 {updateCompanyMutation.isPending ? "Saving..." : "Save Changes"}
               </Button>
