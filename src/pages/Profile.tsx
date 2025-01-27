@@ -41,7 +41,12 @@ export default function Profile() {
         .single();
 
       if (error) throw error;
-      return data;
+      
+      // Include the email from the auth user
+      return {
+        ...data,
+        email: user.email,
+      };
     },
   });
 
@@ -83,6 +88,9 @@ export default function Profile() {
       last_name: profile?.last_name || "",
       phone: profile?.phone || "",
       bio: profile?.bio || "",
+      email: profile?.email || "",
+      company: profile?.company || "",
+      role: profile?.role || "",
     },
     values: profile as ProfileFormValues,
   });
