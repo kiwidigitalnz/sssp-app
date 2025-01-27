@@ -6,6 +6,7 @@ export const profileFormSchema = z.object({
   phone: z.string().optional(),
   bio: z.string().optional(),
   email: z.string().email("Please enter a valid email").optional(),
+  company: z.string().optional(),
 });
 
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;
