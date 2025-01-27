@@ -1,5 +1,5 @@
 import { User, LogOut, Shield } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,17 +9,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export function TopNav() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { session } = useAuth();
-  const { toast } = useToast();
+  const { session, logout } = useAuth();
   
   const { data: profile } = useQuery({
     queryKey: ['profile', session?.user?.id],
@@ -38,18 +34,10 @@ export function TopNav() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account.",
-      });
+      await logout();
       navigate("/");
-    } catch (error: any) {
-      toast({
-        title: "Error signing out",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
   };
 
