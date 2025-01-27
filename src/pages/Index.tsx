@@ -1,18 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, FileText, AlertTriangle, CheckCircle, ArrowRight } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CompanyHeader } from "@/components/dashboard/CompanyHeader";
+import { StatsCard } from "@/components/dashboard/StatsCard";
+import { SSSPTable } from "@/components/dashboard/SSSPTable";
 
 interface CompanyInfo {
   name: string;
@@ -26,11 +21,11 @@ const Index = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
-    name: "Demo Company",
+    name: "Kiwi Digital Safety Solutions",
     logo: "/placeholder.svg",
-    address: "123 Business Street",
+    address: "123 Innovation Drive, Tech Valley",
     phone: "(555) 123-4567",
-    email: "contact@democompany.com",
+    email: "safety@kiwidigital.com",
   });
 
   useEffect(() => {
@@ -57,7 +52,6 @@ const Index = () => {
   if (!session) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        {/* Hero Section */}
         <div className="container mx-auto px-4 pt-20 pb-16 text-center lg:pt-32">
           <h1 className="mx-auto max-w-4xl font-display text-5xl font-medium tracking-tight text-slate-900 sm:text-7xl">
             Site-Specific Safety Plans{" "}
@@ -80,7 +74,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Features Section */}
         <div className="container mx-auto px-4 py-16">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="transition-all hover:shadow-lg">
@@ -155,125 +148,32 @@ const Index = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Company Header Card */}
-      <Card className="bg-white shadow-lg transition-all hover:shadow-xl">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
-            <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
-              <img
-                src={companyInfo.logo}
-                alt={`${companyInfo.name} logo`}
-                className="object-contain w-full h-full"
-              />
-            </div>
-            <div className="flex-1 text-center sm:text-left">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{companyInfo.name}</h1>
-              <p className="text-gray-600">{companyInfo.address}</p>
-              <div className="mt-2 space-y-1">
-                <p className="text-gray-600">{companyInfo.phone}</p>
-                <p className="text-gray-600">{companyInfo.email}</p>
-              </div>
-            </div>
-            <Button 
-              onClick={() => navigate("/create-sssp")}
-              className="transition-all hover:scale-105"
-            >
-              <PlusCircle className="mr-2 h-5 w-5" />
-              Create New SSSP
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-gray-50">
+      <CompanyHeader {...companyInfo} />
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatsCard
+            title="Total SSSPs"
+            value={stats.total}
+            icon={FileText}
+          />
+          <StatsCard
+            title="Draft SSSPs"
+            value={stats.draft}
+            icon={AlertTriangle}
+            iconColor="text-yellow-500"
+          />
+          <StatsCard
+            title="Submitted SSSPs"
+            value={stats.submitted}
+            icon={CheckCircle}
+            iconColor="text-green-500"
+          />
+        </div>
 
-      {/* Statistics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-white transition-all hover:shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total SSSPs</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white transition-all hover:shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Draft SSSPs</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.draft}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white transition-all hover:shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Submitted SSSPs</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.submitted}</div>
-          </CardContent>
-        </Card>
+        <SSSPTable ssspList={ssspList} />
       </div>
-
-      {/* SSSP Table */}
-      <Card className="bg-white shadow-lg">
-        <CardHeader>
-          <CardTitle>Recent Site-Specific Safety Plans</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <div className="inline-block min-w-full align-middle">
-              <div className="rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[200px]">Project Name</TableHead>
-                      <TableHead className="hidden sm:table-cell">Created Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden sm:table-cell">Last Modified</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {ssspList.map((sssp) => (
-                      <TableRow key={sssp.id} className="transition-colors hover:bg-gray-50">
-                        <TableCell className="font-medium">
-                          {sssp.projectName}
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">{sssp.createdDate}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              sssp.status === "Draft"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {sssp.status}
-                          </span>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">{sssp.lastModified}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/edit-sssp/${sssp.id}`)}
-                            className="transition-all hover:bg-primary hover:text-white"
-                          >
-                            View/Edit
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
