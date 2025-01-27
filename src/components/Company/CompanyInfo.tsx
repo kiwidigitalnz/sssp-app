@@ -11,6 +11,7 @@ import { CompanyLogo } from "./CompanyLogo";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 const companyFormSchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
@@ -29,17 +30,35 @@ const companyFormSchema = z.object({
 
 export type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
-interface CompanyInfoProps {
-  onSubmit?: (values: CompanyFormValues) => Promise<void>;
-  defaultValues?: Partial<CompanyFormValues>;
-  isLoading?: boolean;
-  companyId?: string;
-}
-
-export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoProps) {
+export function CompanyInfo() {
   const { toast } = useToast();
-  const [company, setCompany] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { data: companyData, isLoading: isLoadingCompany } = useQuery({
+    queryKey: ["company-data"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No authenticated user found");
+
+      const { data: companyAccess, error: accessError } = await supabase
+        .from('company_access')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (accessError) throw accessError;
+      if (!companyAccess?.company_id) return null;
+
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', companyAccess.company_id)
+        .maybeSingle();
+
+      if (companyError) throw companyError;
+      return company;
+    },
+  });
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
@@ -56,83 +75,39 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
         email: "",
         phone: "",
       },
-      ...defaultValues,
     },
   });
 
   useEffect(() => {
-    const fetchCompanyData = async () => {
-      try {
-        setLoading(true);
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          throw new Error("No authenticated user found");
-        }
-
-        const { data: companyAccess, error: accessError } = await supabase
-          .from('company_access')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (accessError) throw accessError;
-
-        if (companyAccess?.company_id) {
-          const { data: companyData, error: companyError } = await supabase
-            .from('companies')
-            .select('*')
-            .eq('id', companyAccess.company_id)
-            .maybeSingle();
-
-          if (companyError) throw companyError;
-          
-          if (companyData) {
-            setCompany(companyData);
-            
-            // Parse address from string to object
-            const addressParts = companyData.address ? companyData.address.split(',').map(part => part.trim()) : ['', '', ''];
-            
-            form.reset({
-              name: companyData.name,
-              website: companyData.website,
-              logo_url: companyData.logo_url,
-              address: {
-                street: addressParts[0] || '',
-                city: addressParts[1] || '',
-                postalCode: addressParts[2] || '',
-              },
-              contact: {
-                email: companyData.email || '',
-                phone: companyData.phone || '',
-              },
-            });
-          }
-        }
-      } catch (error: any) {
-        console.error('Error fetching company data:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load company data",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCompanyData();
-  }, []);
+    if (companyData) {
+      const addressParts = companyData.address ? companyData.address.split(',').map(part => part.trim()) : ['', '', ''];
+      
+      form.reset({
+        name: companyData.name,
+        website: companyData.website,
+        logo_url: companyData.logo_url,
+        address: {
+          street: addressParts[0] || '',
+          city: addressParts[1] || '',
+          postalCode: addressParts[2] || '',
+        },
+        contact: {
+          email: companyData.email || '',
+          phone: companyData.phone || '',
+        },
+      });
+    }
+  }, [companyData, form]);
 
   const handleLogoUpload = async (filePath: string) => {
     try {
       form.setValue("logo_url", filePath);
 
-      if (company?.id) {
+      if (companyData?.id) {
         const { error } = await supabase
           .from('companies')
           .update({ logo_url: filePath })
-          .eq('id', company.id);
+          .eq('id', companyData.id);
 
         if (error) throw error;
 
@@ -152,7 +127,8 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
 
   const handleSubmit = async (values: CompanyFormValues) => {
     try {
-      if (company?.id) {
+      setIsLoading(true);
+      if (companyData?.id) {
         const { error } = await supabase
           .from('companies')
           .update({
@@ -163,7 +139,7 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
             email: values.contact.email,
             phone: values.contact.phone,
           })
-          .eq('id', company.id);
+          .eq('id', companyData.id);
 
         if (error) throw error;
 
@@ -178,10 +154,12 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
         title: "Error",
         description: error.message,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (loading) {
+  if (isLoadingCompany) {
     return (
       <Card>
         <CardHeader>
@@ -201,7 +179,7 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <CompanyLogo
               logoUrl={form.watch("logo_url")}
-              companyId={company?.id}
+              companyId={companyData?.id}
               onUploadSuccess={handleLogoUpload}
               isLoading={isLoading}
             />
@@ -210,7 +188,7 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
             <CompanyContact control={form.control} isLoading={isLoading} />
             
             <div className="flex justify-end space-x-4">
-              <Button type="submit" disabled={isLoading || loading}>
+              <Button type="submit" disabled={isLoading}>
                 {isLoading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
