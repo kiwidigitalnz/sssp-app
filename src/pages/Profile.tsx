@@ -18,6 +18,7 @@ import { PersonalInfo } from "@/components/Profile/PersonalInfo";
 import { ContactInfo } from "@/components/Profile/ContactInfo";
 import { AdditionalInfo } from "@/components/Profile/AdditionalInfo";
 import { profileFormSchema, type ProfileFormValues } from "@/components/Profile/types";
+import { Loader2 } from "lucide-react";
 
 export default function Profile() {
   const { toast } = useToast();
@@ -25,7 +26,7 @@ export default function Profile() {
   const queryClient = useQueryClient();
 
   // Fetch profile data
-  const { data: profile, isLoading: isLoadingProfile } = useQuery({
+  const { data: profile, isLoading: isLoadingProfile, error: profileError } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -63,11 +64,12 @@ export default function Profile() {
         description: "Your profile has been updated successfully.",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error("Profile update error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to update profile. Please try again.",
       });
     },
   });
@@ -94,6 +96,29 @@ export default function Profile() {
           <CardHeader>
             <CardTitle>Loading profile...</CardTitle>
           </CardHeader>
+          <CardContent className="flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-destructive">Error Loading Profile</CardTitle>
+            <CardDescription>
+              {profileError instanceof Error ? profileError.message : "Failed to load profile"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate("/dashboard")}>
+              Return to Dashboard
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
@@ -133,7 +158,14 @@ export default function Profile() {
                     type="submit"
                     disabled={updateProfile.isPending}
                   >
-                    {updateProfile.isPending ? "Saving..." : "Save Changes"}
+                    {updateProfile.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
                   </Button>
                 </div>
               </form>
