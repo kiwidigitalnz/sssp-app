@@ -9,24 +9,9 @@ import { CompanyHeader } from "@/components/dashboard/CompanyHeader";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SSSPTable } from "@/components/dashboard/SSSPTable";
 
-interface CompanyInfo {
-  name: string;
-  logo: string;
-  address: string;
-  phone: string;
-  email: string;
-}
-
 const Index = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
-  const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
-    name: "Kiwi Digital Safety Solutions",
-    logo: "/placeholder.svg",
-    address: "123 Innovation Drive, Tech Valley",
-    phone: "(555) 123-4567",
-    email: "safety@kiwidigital.com",
-  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -40,13 +25,6 @@ const Index = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const savedCompanyInfo = localStorage.getItem('companyInfo');
-    if (savedCompanyInfo) {
-      setCompanyInfo(JSON.parse(savedCompanyInfo));
-    }
   }, []);
 
   if (!session) {
@@ -149,7 +127,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <CompanyHeader {...companyInfo} />
+      <CompanyHeader />
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
