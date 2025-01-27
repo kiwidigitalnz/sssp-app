@@ -113,31 +113,44 @@ export function ProfileAvatar({ avatarUrl, userId }: ProfileAvatarProps) {
   }
 
   return (
-    <div className="flex items-center space-x-4">
-      <Avatar className="h-20 w-20">
-        <AvatarImage 
-          src={avatarUrl ? supabase.storage.from("avatars").getPublicUrl(avatarUrl).data.publicUrl : undefined} 
-          alt="Profile picture"
-        />
-        <AvatarFallback>
-          <User className="h-10 w-10" />
-        </AvatarFallback>
-      </Avatar>
-      <div className="space-y-2">
-        <h3 className="text-lg font-medium">Profile Picture</h3>
-        <div className="flex items-center space-x-2">
+    <div className="flex flex-col md:flex-row md:items-center gap-6 p-4 rounded-lg border bg-card">
+      <div className="flex items-center gap-4">
+        <Avatar className="h-24 w-24 ring-2 ring-primary/10 transition-all hover:ring-primary/30">
+          <AvatarImage 
+            src={avatarUrl ? supabase.storage.from("avatars").getPublicUrl(avatarUrl).data.publicUrl : undefined} 
+            alt="Profile picture"
+            className="object-cover"
+          />
+          <AvatarFallback className="bg-primary/5">
+            <User className="h-12 w-12 text-primary/70" />
+          </AvatarFallback>
+        </Avatar>
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold tracking-tight">Profile Picture</h3>
+          <p className="text-sm text-muted-foreground">
+            Personalize your profile with a custom avatar
+          </p>
+        </div>
+      </div>
+      <div className="space-y-4 flex-1">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
           <Input
             type="file"
             accept={ALLOWED_FILE_TYPES.join(",")}
             onChange={onAvatarUpload}
             disabled={isUploading}
-            className="max-w-xs"
+            className="max-w-md flex-1"
           />
-          {isUploading && <span className="text-sm text-muted-foreground">Uploading...</span>}
+          {isUploading && (
+            <span className="text-sm text-muted-foreground animate-pulse">
+              Uploading...
+            </span>
+          )}
         </div>
-        <p className="text-sm text-muted-foreground">
-          Maximum file size: 5MB. Supported formats: JPEG, PNG, WebP
-        </p>
+        <div className="text-sm text-muted-foreground">
+          <p>Maximum file size: 5MB</p>
+          <p>Supported formats: JPEG, PNG, WebP</p>
+        </div>
       </div>
     </div>
   );
