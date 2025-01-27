@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { FileText, AlertTriangle, CheckCircle, ArrowRight, Plus, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import type { SSSP } from "@/types/sssp";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SSSPTable } from "@/components/dashboard/SSSPTable";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
-import { useQuery } from "@tanstack/react-query";
-import type { SSSP } from "@/types/sssp";
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
+import { ProfileOverview } from "@/components/dashboard/ProfileOverview";
+import { FileText, AlertTriangle, CheckCircle } from "lucide-react";
 
 const fetchSSSPs = async () => {
   const { data, error } = await supabase
@@ -22,7 +21,6 @@ const fetchSSSPs = async () => {
 };
 
 const Index = () => {
-  const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
 
   const { data: sssps = [], isLoading } = useQuery({
@@ -73,62 +71,6 @@ const Index = () => {
           <p className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700">
             Create, manage, and share your Site-Specific Safety Plans with ease. Built for construction professionals who value safety and efficiency.
           </p>
-          <div className="mt-10 flex justify-center gap-x-6">
-            <Button
-              onClick={() => navigate("/auth")}
-              size="lg"
-              className="group"
-            >
-              Get started
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 py-16">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="transition-all hover:shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Easy Creation
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Intuitive interface for creating comprehensive safety plans in minutes
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="transition-all hover:shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary" />
-                  Compliance Ready
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Built to meet industry standards and regulatory requirements
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="transition-all hover:shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-primary" />
-                  Risk Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Comprehensive hazard identification and control measures
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
     );
@@ -142,23 +84,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm mb-8">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Safety Plans Dashboard</h1>
-              <p className="text-gray-600 mt-2">Manage and track your Site-Specific Safety Plans</p>
-            </div>
-            <Button 
-              onClick={() => navigate("/create-sssp")}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Create New SSSP
-            </Button>
-          </div>
-        </div>
-      </div>
+      <WelcomeHeader />
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -187,41 +113,7 @@ const Index = () => {
           </div>
 
           <div className="space-y-6">
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
-                  Profile Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-sm">
-                    <p className="text-gray-500">Name</p>
-                    <p className="font-medium">
-                      {profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}` : 'Not set'}
-                    </p>
-                  </div>
-                  <div className="text-sm">
-                    <p className="text-gray-500">Email</p>
-                    <p className="font-medium">{session.user.email}</p>
-                  </div>
-                  <div className="text-sm">
-                    <p className="text-gray-500">Phone</p>
-                    <p className="font-medium">{profile?.phone || 'Not set'}</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => navigate('/profile')}
-                  >
-                    Edit Profile
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
+            <ProfileOverview session={session} profile={profile} />
             <ActivityFeed />
           </div>
         </div>
