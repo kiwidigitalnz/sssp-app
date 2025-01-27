@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SSSPTable } from "@/components/dashboard/SSSPTable";
 import { useQuery } from "@tanstack/react-query";
+import type { SSSP } from "@/types/sssp";
 
 const fetchSSSPs = async () => {
   const { data, error } = await supabase
@@ -16,7 +17,7 @@ const fetchSSSPs = async () => {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data;
+  return data as SSSP[];
 };
 
 const Index = () => {
