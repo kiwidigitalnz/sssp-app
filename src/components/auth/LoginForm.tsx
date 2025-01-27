@@ -30,22 +30,32 @@ export const LoginForm = ({
   const handleQuickLogin = async () => {
     setLoading(true);
     try {
+      console.log("Attempting quick login with demo user...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email: "demo@sssp.dev",
         password: "demo123456",
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Quick login error:", error);
+        throw error;
+      }
 
+      if (!data.user) {
+        throw new Error("No user data returned");
+      }
+
+      console.log("Quick login successful:", data.user.email);
       navigate("/");
       toast({
         title: "Welcome to the demo!",
         description: "You have successfully logged in as the demo user.",
       });
     } catch (error: any) {
+      console.error("Quick login error:", error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Quick Login Failed",
+        description: error.message || "An error occurred during quick login",
         variant: "destructive",
       });
     } finally {
@@ -58,26 +68,36 @@ export const LoginForm = ({
     setLoading(true);
     
     try {
+      console.log("Attempting login with email:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Login error:", error);
+        throw error;
+      }
+
+      if (!data.user) {
+        throw new Error("No user data returned");
+      }
       
       if (inviteToken && data.user && handleInvitation) {
         await handleInvitation(data.user.id);
       }
 
+      console.log("Login successful:", data.user.email);
       navigate("/");
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Login Failed",
+        description: error.message || "An error occurred during login",
         variant: "destructive",
       });
     } finally {
