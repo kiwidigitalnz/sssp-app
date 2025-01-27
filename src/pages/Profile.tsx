@@ -91,6 +91,10 @@ export default function Profile() {
       email: profile?.email || "",
       company: profile?.company || "",
       role: profile?.role || "",
+      job_title: profile?.job_title || "",
+      website: profile?.website || "",
+      social_links: profile?.social_links || {},
+      preferences: profile?.preferences || {},
     },
     values: profile as ProfileFormValues,
   });
