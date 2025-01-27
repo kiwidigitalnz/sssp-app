@@ -14,3 +14,18 @@ export async function getAvatarUrl(path: string | null) {
     return null;
   }
 }
+
+export async function getCompanyLogoUrl(path: string | null) {
+  if (!path) return null;
+  
+  try {
+    const { data } = await supabase.storage
+      .from("company-logos")
+      .getPublicUrl(path);
+    
+    return data.publicUrl;
+  } catch (error) {
+    console.error("Error getting company logo URL:", error);
+    return null;
+  }
+}
