@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { CompanyBasicInfo } from "./CompanyBasicInfo";
 import { CompanyAddress } from "./CompanyAddress";
 import { CompanyContact } from "./CompanyContact";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CompanyLogo } from "./CompanyLogo";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Building2 } from "lucide-react";
 
 const companyFormSchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
@@ -63,15 +64,48 @@ export function CompanyInfo() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: company, isLoading: isLoadingCompany } = useQuery({
+  const { data: company, isLoading: isLoadingCompany, error } = useQuery({
     queryKey: ['company'],
     queryFn: fetchCompanyData,
   });
 
   const updateCompanyMutation = useMutation({
     mutationFn: async (values: CompanyFormValues) => {
-      if (!company?.id) throw new Error("No company ID found");
-      
+      if (!company?.id) {
+        // Create new company if none exists
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No authenticated user found");
+
+        const { data: newCompany, error: createError } = await supabase
+          .from('companies')
+          .insert({
+            name: values.name,
+            website: values.website,
+            logo_url: values.logo_url,
+            address: `${values.address.street}, ${values.address.city}, ${values.address.postalCode}`,
+            email: values.contact.email,
+            phone: values.contact.phone,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        if (!newCompany) throw new Error("Failed to create company");
+
+        // Create company access for the user
+        const { error: accessError } = await supabase
+          .from('company_access')
+          .insert({
+            user_id: user.id,
+            company_id: newCompany.id,
+            role: 'owner',
+          });
+
+        if (accessError) throw accessError;
+        return newCompany;
+      }
+
+      // Update existing company
       const { error } = await supabase
         .from('companies')
         .update({
@@ -90,7 +124,9 @@ export function CompanyInfo() {
       queryClient.invalidateQueries({ queryKey: ['company'] });
       toast({
         title: "Success",
-        description: "Company information updated successfully",
+        description: company?.id 
+          ? "Company information updated successfully"
+          : "Company created successfully",
       });
     },
     onError: (error: Error) => {
@@ -141,33 +177,6 @@ export function CompanyInfo() {
     }
   }, [company, form]);
 
-  const handleLogoUpload = async (filePath: string) => {
-    try {
-      form.setValue("logo_url", filePath);
-
-      if (company?.id) {
-        const { error } = await supabase
-          .from('companies')
-          .update({ logo_url: filePath })
-          .eq('id', company.id);
-
-        if (error) throw error;
-
-        queryClient.invalidateQueries({ queryKey: ['company'] });
-        toast({
-          title: "Success",
-          description: "Company logo updated successfully",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
   if (isLoadingCompany) {
     return (
       <Card>
@@ -178,10 +187,29 @@ export function CompanyInfo() {
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-destructive">Error</CardTitle>
+          <CardDescription>{error.message}</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Company Information</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="h-6 w-6" />
+          {company ? "Company Information" : "Create Company Profile"}
+        </CardTitle>
+        {!company && (
+          <CardDescription>
+            Get started by creating your company profile
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -189,7 +217,7 @@ export function CompanyInfo() {
             <CompanyLogo
               logoUrl={form.watch("logo_url")}
               companyId={company?.id}
-              onUploadSuccess={handleLogoUpload}
+              onUploadSuccess={(filePath) => form.setValue("logo_url", filePath)}
               isLoading={updateCompanyMutation.isPending}
             />
             <CompanyBasicInfo control={form.control} isLoading={updateCompanyMutation.isPending} />
@@ -201,7 +229,12 @@ export function CompanyInfo() {
                 type="submit" 
                 disabled={updateCompanyMutation.isPending}
               >
-                {updateCompanyMutation.isPending ? "Saving..." : "Save Changes"}
+                {updateCompanyMutation.isPending 
+                  ? "Saving..." 
+                  : company 
+                    ? "Save Changes"
+                    : "Create Company"
+                }
               </Button>
             </div>
           </form>
