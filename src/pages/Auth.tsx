@@ -30,6 +30,32 @@ export default function Auth() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
 
+  const handleQuickLogin = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: "demo@example.com",
+        password: "demo123456",
+      });
+
+      if (error) throw error;
+
+      navigate("/");
+      toast({
+        title: "Welcome to the demo!",
+        description: "You have successfully logged in as the demo user.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (inviteToken) {
       const email = searchParams.get("email");
