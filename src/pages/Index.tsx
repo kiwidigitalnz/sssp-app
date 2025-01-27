@@ -7,7 +7,6 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SSSPTable } from "@/components/dashboard/SSSPTable";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
-import { ProfileOverview } from "@/components/dashboard/ProfileOverview";
 import { FileText, AlertTriangle, CheckCircle } from "lucide-react";
 
 const fetchSSSPs = async () => {
@@ -27,21 +26,6 @@ const Index = () => {
     queryKey: ['sssps'],
     queryFn: fetchSSSPs,
     enabled: !!session
-  });
-
-  const { data: profile } = useQuery({
-    queryKey: ['profile', session?.user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session?.user?.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!session?.user?.id
   });
 
   useEffect(() => {
@@ -113,7 +97,6 @@ const Index = () => {
           </div>
 
           <div className="space-y-6">
-            <ProfileOverview session={session} profile={profile} />
             <ActivityFeed />
           </div>
         </div>
