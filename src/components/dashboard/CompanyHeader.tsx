@@ -3,28 +3,76 @@ import { Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getCompanyLogoUrl } from "@/lib/supabase-storage";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-interface CompanyHeaderProps {
-  name: string;
-  logo: string | null;
-  address: string;
-  phone: string;
-  email: string;
-}
+const fetchCompanyData = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("No authenticated user found");
+  }
 
-export function CompanyHeader({ name, logo, address, phone, email }: CompanyHeaderProps) {
+  const { data: companyAccess, error: accessError } = await supabase
+    .from('company_access')
+    .select('company_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (accessError) throw accessError;
+
+  if (!companyAccess?.company_id) {
+    return null;
+  }
+
+  const { data: companyData, error: companyError } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('id', companyAccess.company_id)
+    .maybeSingle();
+
+  if (companyError) throw companyError;
+  return companyData;
+};
+
+export function CompanyHeader() {
   const navigate = useNavigate();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   
+  const { data: company, isLoading } = useQuery({
+    queryKey: ['company'],
+    queryFn: fetchCompanyData,
+  });
+  
   useEffect(() => {
     const loadLogoUrl = async () => {
-      if (logo) {
-        const url = await getCompanyLogoUrl(logo);
+      if (company?.logo_url) {
+        const url = await getCompanyLogoUrl(company.logo_url);
         setLogoUrl(url);
       }
     };
     loadLogoUrl();
-  }, [logo]);
+  }, [company?.logo_url]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
+        <div className="max-w-7xl mx-auto">
+          <p>Loading company information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!company) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
+        <div className="max-w-7xl mx-auto">
+          <p>No company information found.</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
@@ -34,7 +82,7 @@ export function CompanyHeader({ name, logo, address, phone, email }: CompanyHead
             {logoUrl ? (
               <img
                 src={logoUrl}
-                alt={`${name} logo`}
+                alt={`${company.name} logo`}
                 className="object-contain w-full h-full"
               />
             ) : (
@@ -42,11 +90,11 @@ export function CompanyHeader({ name, logo, address, phone, email }: CompanyHead
             )}
           </div>
           <div className="flex-1 text-center md:text-left space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">{name}</h1>
-            <p className="text-gray-600">{address}</p>
+            <h1 className="text-3xl font-bold text-gray-900">{company.name}</h1>
+            <p className="text-gray-600">{company.address}</p>
             <div className="space-y-1">
-              <p className="text-gray-600">{phone}</p>
-              <p className="text-gray-600">{email}</p>
+              <p className="text-gray-600">{company.phone}</p>
+              <p className="text-gray-600">{company.email}</p>
             </div>
           </div>
         </div>

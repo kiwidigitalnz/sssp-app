@@ -11,6 +11,7 @@ import { CompanyLogo } from "./CompanyLogo";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const companyFormSchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
@@ -36,10 +37,77 @@ interface CompanyInfoProps {
   companyId?: string;
 }
 
+const fetchCompanyData = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("No authenticated user found");
+  }
+
+  const { data: companyAccess, error: accessError } = await supabase
+    .from('company_access')
+    .select('company_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (accessError) throw accessError;
+
+  if (!companyAccess?.company_id) {
+    return null;
+  }
+
+  const { data: companyData, error: companyError } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('id', companyAccess.company_id)
+    .maybeSingle();
+
+  if (companyError) throw companyError;
+  return companyData;
+};
+
 export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoProps) {
   const { toast } = useToast();
-  const [company, setCompany] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: company, isLoading: isLoadingCompany } = useQuery({
+    queryKey: ['company'],
+    queryFn: fetchCompanyData,
+  });
+
+  const updateCompanyMutation = useMutation({
+    mutationFn: async (values: CompanyFormValues) => {
+      if (!company?.id) throw new Error("No company ID found");
+      
+      const { error } = await supabase
+        .from('companies')
+        .update({
+          name: values.name,
+          website: values.website,
+          logo_url: values.logo_url,
+          address: `${values.address.street}, ${values.address.city}, ${values.address.postalCode}`,
+          email: values.contact.email,
+          phone: values.contact.phone,
+        })
+        .eq('id', company.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company'] });
+      toast({
+        title: "Success",
+        description: "Company information updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    },
+  });
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
@@ -61,68 +129,25 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
   });
 
   useEffect(() => {
-    const fetchCompanyData = async () => {
-      try {
-        setLoading(true);
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          throw new Error("No authenticated user found");
-        }
-
-        const { data: companyAccess, error: accessError } = await supabase
-          .from('company_access')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (accessError) throw accessError;
-
-        if (companyAccess?.company_id) {
-          const { data: companyData, error: companyError } = await supabase
-            .from('companies')
-            .select('*')
-            .eq('id', companyAccess.company_id)
-            .maybeSingle();
-
-          if (companyError) throw companyError;
-          
-          if (companyData) {
-            setCompany(companyData);
-            
-            // Parse address from string to object
-            const addressParts = companyData.address ? companyData.address.split(',').map(part => part.trim()) : ['', '', ''];
-            
-            form.reset({
-              name: companyData.name,
-              website: companyData.website,
-              logo_url: companyData.logo_url,
-              address: {
-                street: addressParts[0] || '',
-                city: addressParts[1] || '',
-                postalCode: addressParts[2] || '',
-              },
-              contact: {
-                email: companyData.email || '',
-                phone: companyData.phone || '',
-              },
-            });
-          }
-        }
-      } catch (error: any) {
-        console.error('Error fetching company data:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load company data",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCompanyData();
-  }, []);
+    if (company) {
+      const addressParts = company.address ? company.address.split(',').map(part => part.trim()) : ['', '', ''];
+      
+      form.reset({
+        name: company.name,
+        website: company.website,
+        logo_url: company.logo_url,
+        address: {
+          street: addressParts[0] || '',
+          city: addressParts[1] || '',
+          postalCode: addressParts[2] || '',
+        },
+        contact: {
+          email: company.email || '',
+          phone: company.phone || '',
+        },
+      });
+    }
+  }, [company, form]);
 
   const handleLogoUpload = async (filePath: string) => {
     try {
@@ -136,6 +161,7 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
 
         if (error) throw error;
 
+        queryClient.invalidateQueries({ queryKey: ['company'] });
         toast({
           title: "Success",
           description: "Company logo updated successfully",
@@ -150,38 +176,7 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
     }
   };
 
-  const handleSubmit = async (values: CompanyFormValues) => {
-    try {
-      if (company?.id) {
-        const { error } = await supabase
-          .from('companies')
-          .update({
-            name: values.name,
-            website: values.website,
-            logo_url: values.logo_url,
-            address: `${values.address.street}, ${values.address.city}, ${values.address.postalCode}`,
-            email: values.contact.email,
-            phone: values.contact.phone,
-          })
-          .eq('id', company.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Company information updated successfully",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
-  if (loading) {
+  if (isLoadingCompany) {
     return (
       <Card>
         <CardHeader>
@@ -198,20 +193,23 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit((values) => updateCompanyMutation.mutate(values))} className="space-y-6">
             <CompanyLogo
               logoUrl={form.watch("logo_url")}
               companyId={company?.id}
               onUploadSuccess={handleLogoUpload}
-              isLoading={isLoading}
+              isLoading={isLoading || updateCompanyMutation.isPending}
             />
-            <CompanyBasicInfo control={form.control} isLoading={isLoading} />
-            <CompanyAddress control={form.control} isLoading={isLoading} />
-            <CompanyContact control={form.control} isLoading={isLoading} />
+            <CompanyBasicInfo control={form.control} isLoading={isLoading || updateCompanyMutation.isPending} />
+            <CompanyAddress control={form.control} isLoading={isLoading || updateCompanyMutation.isPending} />
+            <CompanyContact control={form.control} isLoading={isLoading || updateCompanyMutation.isPending} />
             
             <div className="flex justify-end space-x-4">
-              <Button type="submit" disabled={isLoading || loading}>
-                {isLoading ? "Saving..." : "Save Changes"}
+              <Button 
+                type="submit" 
+                disabled={isLoading || updateCompanyMutation.isPending}
+              >
+                {updateCompanyMutation.isPending ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </form>
