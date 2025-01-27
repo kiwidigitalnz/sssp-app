@@ -26,14 +26,17 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sssp_access')
-        .select('sssp_id, count(*)')
-        .group('sssp_id');
+        .select('sssp_id, user_id');
       
       if (error) throw error;
-      return data.reduce((acc: Record<string, number>, curr) => {
-        acc[curr.sssp_id] = Number(curr.count);
-        return acc;
-      }, {});
+      
+      // Count the number of users for each SSSP
+      const counts: Record<string, number> = {};
+      data.forEach(access => {
+        counts[access.sssp_id] = (counts[access.sssp_id] || 0) + 1;
+      });
+      
+      return counts;
     }
   });
 
