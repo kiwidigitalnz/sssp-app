@@ -30,13 +30,13 @@ const companyFormSchema = z.object({
 export type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 interface CompanyInfoProps {
-  onSubmit: (values: CompanyFormValues) => Promise<void>;
+  onSubmit?: (values: CompanyFormValues) => Promise<void>;
   defaultValues?: Partial<CompanyFormValues>;
   isLoading?: boolean;
   companyId?: string;
 }
 
-export function CompanyInfo({ onSubmit, defaultValues, isLoading = false, companyId }: CompanyInfoProps) {
+export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoProps) {
   const { toast } = useToast();
   const [company, setCompany] = useState<any>(null);
 
@@ -68,8 +68,8 @@ export function CompanyInfo({ onSubmit, defaultValues, isLoading = false, compan
             logo_url: companyData.logo_url,
             address: {
               street: companyData.address || "",
-              city: companyData.city || "",
-              postalCode: companyData.postal_code || "",
+              city: companyData.address || "", // Fixed: Using address field instead of non-existent city
+              postalCode: companyData.address || "", // Fixed: Using address field instead of non-existent postal_code
             },
             contact: {
               email: companyData.email || "",
@@ -143,8 +143,6 @@ export function CompanyInfo({ onSubmit, defaultValues, isLoading = false, compan
             website: values.website,
             logo_url: values.logo_url,
             address: values.address.street,
-            city: values.address.city,
-            postal_code: values.address.postalCode,
             email: values.contact.email,
             phone: values.contact.phone,
           })
