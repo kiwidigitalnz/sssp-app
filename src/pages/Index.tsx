@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, AlertTriangle, CheckCircle, ArrowRight, Plus } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle, ArrowRight, Plus, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SSSPTable } from "@/components/dashboard/SSSPTable";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { useQuery } from "@tanstack/react-query";
 import type { SSSP } from "@/types/sssp";
 
@@ -28,6 +29,21 @@ const Index = () => {
     queryKey: ['sssps'],
     queryFn: fetchSSSPs,
     enabled: !!session
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile', session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session?.user?.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id
   });
 
   useEffect(() => {
@@ -145,27 +161,70 @@ const Index = () => {
       </div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatsCard
-            title="Total SSSPs"
-            value={stats.total}
-            icon={FileText}
-          />
-          <StatsCard
-            title="Draft SSSPs"
-            value={stats.draft}
-            icon={AlertTriangle}
-            iconColor="text-yellow-500"
-          />
-          <StatsCard
-            title="Submitted SSSPs"
-            value={stats.submitted}
-            icon={CheckCircle}
-            iconColor="text-green-500"
-          />
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <StatsCard
+                title="Total SSSPs"
+                value={stats.total}
+                icon={FileText}
+              />
+              <StatsCard
+                title="Draft SSSPs"
+                value={stats.draft}
+                icon={AlertTriangle}
+                iconColor="text-yellow-500"
+              />
+              <StatsCard
+                title="Submitted SSSPs"
+                value={stats.submitted}
+                icon={CheckCircle}
+                iconColor="text-green-500"
+              />
+            </div>
 
-        <SSSPTable ssspList={sssps} />
+            <SSSPTable ssspList={sssps} />
+          </div>
+
+          <div className="space-y-6">
+            <Card className="bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  Profile Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="text-sm">
+                    <p className="text-gray-500">Name</p>
+                    <p className="font-medium">
+                      {profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}` : 'Not set'}
+                    </p>
+                  </div>
+                  <div className="text-sm">
+                    <p className="text-gray-500">Email</p>
+                    <p className="font-medium">{session.user.email}</p>
+                  </div>
+                  <div className="text-sm">
+                    <p className="text-gray-500">Phone</p>
+                    <p className="font-medium">{profile?.phone || 'Not set'}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate('/profile')}
+                  >
+                    Edit Profile
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <ActivityFeed />
+          </div>
+        </div>
       </div>
     </div>
   );
