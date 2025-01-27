@@ -77,10 +77,7 @@ export default function Profile() {
     defaultValues: {
       first_name: profile?.first_name || "",
       last_name: profile?.last_name || "",
-      company: profile?.company || "",
-      job_title: profile?.job_title || "",
       phone: profile?.phone || "",
-      website: profile?.website || "",
       bio: profile?.bio || "",
     },
     values: profile as ProfileFormValues,
@@ -108,18 +105,16 @@ export default function Profile() {
         <CardHeader>
           <CardTitle className="text-2xl">Profile Settings</CardTitle>
           <CardDescription>
-            Manage your profile information and company details
+            Manage your profile information
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-8">
-            {/* Avatar Section */}
             <ProfileAvatar 
               avatarUrl={profile?.avatar_url} 
               userId={profile?.id}
             />
 
-            {/* Profile Form */}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <PersonalInfo form={form} />
