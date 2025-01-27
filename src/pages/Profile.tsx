@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,8 +17,10 @@ import { ProfileAvatar } from "@/components/Profile/ProfileAvatar";
 import { PersonalInfo } from "@/components/Profile/PersonalInfo";
 import { ContactInfo } from "@/components/Profile/ContactInfo";
 import { AdditionalInfo } from "@/components/Profile/AdditionalInfo";
+import { SecuritySettings } from "@/components/Profile/SecuritySettings";
 import { profileFormSchema, type ProfileFormValues } from "@/components/Profile/types";
 import { Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export default function Profile() {
   const { toast } = useToast();
@@ -130,7 +132,7 @@ export default function Profile() {
         <CardHeader>
           <CardTitle className="text-2xl">Profile Settings</CardTitle>
           <CardDescription>
-            Manage your profile information
+            Manage your profile information and account settings
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -170,6 +172,10 @@ export default function Profile() {
                 </div>
               </form>
             </Form>
+
+            <Separator className="my-6" />
+            
+            <SecuritySettings />
           </div>
         </CardContent>
       </Card>
