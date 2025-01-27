@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Building2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -17,22 +17,39 @@ export function CompanyLogo({ logoUrl, companyId, onUploadSuccess, isLoading }: 
   const { toast } = useToast();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // Load the logo URL when the component mounts or logoUrl changes
-  useState(() => {
+  useEffect(() => {
     const loadLogoUrl = async () => {
       if (logoUrl) {
-        const url = await getCompanyLogoUrl(logoUrl);
-        setPreviewUrl(url);
+        try {
+          const url = await getCompanyLogoUrl(logoUrl);
+          setPreviewUrl(url);
+        } catch (error) {
+          console.error('Error loading logo URL:', error);
+          setPreviewUrl(null);
+        }
+      } else {
+        setPreviewUrl(null);
       }
     };
+
     loadLogoUrl();
-  });
+  }, [logoUrl]);
 
   async function onLogoUpload(event: React.ChangeEvent<HTMLInputElement>) {
     try {
       setIsUploading(true);
       const file = event.target.files?.[0];
       if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please upload an image file');
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size must be less than 5MB');
+      }
 
       const fileExt = file.name.split(".").pop();
       const filePath = `${companyId || 'new'}-${Math.random()}.${fileExt}`;
@@ -48,6 +65,11 @@ export function CompanyLogo({ logoUrl, companyId, onUploadSuccess, isLoading }: 
       // Update preview
       const url = await getCompanyLogoUrl(filePath);
       setPreviewUrl(url);
+
+      toast({
+        title: "Success",
+        description: "Logo uploaded successfully",
+      });
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -82,7 +104,7 @@ export function CompanyLogo({ logoUrl, companyId, onUploadSuccess, isLoading }: 
             disabled={isLoading || isUploading}
             className="max-w-xs"
           />
-          {isUploading && <span>Uploading...</span>}
+          {isUploading && <span className="text-sm text-muted-foreground">Uploading...</span>}
         </div>
       </div>
     </div>

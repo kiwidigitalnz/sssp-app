@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 
 const companyFormSchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
-  website: z.string().url("Please enter a valid URL"),
+  website: z.string().url("Please enter a valid URL").optional().nullable(),
   logo_url: z.string().nullable(),
   address: z.object({
     street: z.string().min(5, "Street address must be at least 5 characters"),
@@ -39,56 +39,7 @@ interface CompanyInfoProps {
 export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoProps) {
   const { toast } = useToast();
   const [company, setCompany] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchCompanyData = async () => {
-      try {
-        const { data: companyAccess, error: accessError } = await supabase
-          .from('company_access')
-          .select('company_id')
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-          .single();
-
-        if (accessError) throw accessError;
-
-        if (companyAccess?.company_id) {
-          const { data: companyData, error: companyError } = await supabase
-            .from('companies')
-            .select('*')
-            .eq('id', companyAccess.company_id)
-            .single();
-
-          if (companyError) throw companyError;
-          setCompany(companyData);
-          
-          // Update form with company data
-          form.reset({
-            name: companyData.name,
-            website: companyData.website || "",
-            logo_url: companyData.logo_url,
-            address: {
-              street: companyData.address || "",
-              city: companyData.address || "", // Fixed: Using address field instead of non-existent city
-              postalCode: companyData.address || "", // Fixed: Using address field instead of non-existent postal_code
-            },
-            contact: {
-              email: companyData.email || "",
-              phone: companyData.phone || "",
-            },
-          });
-        }
-      } catch (error: any) {
-        console.error('Error fetching company data:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load company data",
-        });
-      }
-    };
-
-    fetchCompanyData();
-  }, []);
+  const [loading, setLoading] = useState(true);
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
@@ -109,27 +60,93 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
     },
   });
 
-  const handleLogoUpload = async (filePath: string) => {
-    form.setValue("logo_url", filePath);
-    toast({
-      title: "Logo updated",
-      description: "Your company logo has been updated successfully.",
-    });
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error("No authenticated user found");
+        }
 
-    // Update company logo in database
-    if (company?.id) {
-      const { error } = await supabase
-        .from('companies')
-        .update({ logo_url: filePath })
-        .eq('id', company.id);
+        const { data: companyAccess, error: accessError } = await supabase
+          .from('company_access')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      if (error) {
+        if (accessError) throw accessError;
+
+        if (companyAccess?.company_id) {
+          const { data: companyData, error: companyError } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('id', companyAccess.company_id)
+            .maybeSingle();
+
+          if (companyError) throw companyError;
+          
+          if (companyData) {
+            setCompany(companyData);
+            
+            // Parse address from string to object
+            const addressParts = companyData.address ? companyData.address.split(',').map(part => part.trim()) : ['', '', ''];
+            
+            form.reset({
+              name: companyData.name,
+              website: companyData.website,
+              logo_url: companyData.logo_url,
+              address: {
+                street: addressParts[0] || '',
+                city: addressParts[1] || '',
+                postalCode: addressParts[2] || '',
+              },
+              contact: {
+                email: companyData.email || '',
+                phone: companyData.phone || '',
+              },
+            });
+          }
+        }
+      } catch (error: any) {
+        console.error('Error fetching company data:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to update company logo",
+          description: "Failed to load company data",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanyData();
+  }, []);
+
+  const handleLogoUpload = async (filePath: string) => {
+    try {
+      form.setValue("logo_url", filePath);
+
+      if (company?.id) {
+        const { error } = await supabase
+          .from('companies')
+          .update({ logo_url: filePath })
+          .eq('id', company.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Company logo updated successfully",
         });
       }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     }
   };
 
@@ -142,7 +159,7 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
             name: values.name,
             website: values.website,
             logo_url: values.logo_url,
-            address: values.address.street,
+            address: `${values.address.street}, ${values.address.city}, ${values.address.postalCode}`,
             email: values.contact.email,
             phone: values.contact.phone,
           })
@@ -164,6 +181,16 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
     }
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Loading company information...</CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -183,7 +210,7 @@ export function CompanyInfo({ defaultValues, isLoading = false }: CompanyInfoPro
             <CompanyContact control={form.control} isLoading={isLoading} />
             
             <div className="flex justify-end space-x-4">
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || loading}>
                 {isLoading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
