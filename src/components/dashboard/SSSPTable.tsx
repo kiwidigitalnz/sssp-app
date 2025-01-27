@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { PlusCircle, Share2, Users } from "lucide-react";
+import { PlusCircle, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
+import { ShareSSSP } from "@/components/SSSPForm/ShareSSSP";
 
 interface SSSPTableProps {
   ssspList: SSSP[];
@@ -21,7 +22,7 @@ interface SSSPTableProps {
 export function SSSPTable({ ssspList }: SSSPTableProps) {
   const navigate = useNavigate();
 
-  const { data: sharingInfo } = useQuery({
+  const { data: sharingInfo, refetch: refetchSharing } = useQuery({
     queryKey: ['sssp-sharing'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -30,7 +31,6 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
       
       if (error) throw error;
       
-      // Count the number of users for each SSSP
       const counts: Record<string, number> = {};
       data.forEach(access => {
         counts[access.sssp_id] = (counts[access.sssp_id] || 0) + 1;
@@ -112,14 +112,10 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                         >
                           View/Edit
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/share-sssp/${sssp.id}`)}
-                          className="transition-all hover:bg-primary/10"
-                        >
-                          <Share2 className="h-4 w-4" />
-                        </Button>
+                        <ShareSSSP 
+                          ssspId={sssp.id} 
+                          onShare={() => refetchSharing()} 
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
