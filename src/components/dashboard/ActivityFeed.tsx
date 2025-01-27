@@ -1,12 +1,15 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, User, Share, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 export function ActivityFeed() {
-  const { data: activities, isLoading } = useQuery({
+  const { toast } = useToast();
+  const { data: activities, isLoading, refetch } = useQuery({
     queryKey: ['sssp-activities'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -23,6 +26,52 @@ export function ActivityFeed() {
       return data;
     }
   });
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sssp_activity'
+        },
+        async (payload) => {
+          // Refetch to update the list
+          await refetch();
+          
+          // Show a toast notification for the new activity
+          const { data: activityDetails } = await supabase
+            .from('sssp_activity')
+            .select(`
+              *,
+              sssps (title),
+              profiles!sssp_activity_user_id_fkey (first_name, last_name)
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (activityDetails) {
+            const userName = activityDetails.profiles?.first_name 
+              ? `${activityDetails.profiles.first_name} ${activityDetails.profiles.last_name}`
+              : 'A user';
+            
+            toast({
+              title: "New Activity",
+              description: `${userName} ${activityDetails.action} "${activityDetails.sssps.title}"`,
+              duration: 5000,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch, toast]);
 
   const getActivityIcon = (action: string) => {
     switch (action) {

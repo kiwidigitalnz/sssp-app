@@ -122,6 +122,13 @@ export type Database = {
             referencedRelation: "sssps"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sssp_activity_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sssp_invitations: {
