@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, KeyRound } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -29,55 +29,84 @@ export default function Auth() {
   // Handle invitation
   useEffect(() => {
     if (inviteToken) {
-      // Pre-fill email if it's an invitation
       const email = searchParams.get("email");
       if (email) {
         setSignupEmail(email);
         setLoginEmail(email);
       }
-      // Switch to signup if user doesn't exist
-      const checkUser = async () => {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", email)
-          .single();
-        
-        if (!data && !error) {
-          const signupTab = document.querySelector('[data-tab="signup"]') as HTMLElement;
-          if (signupTab) signupTab.click();
-        }
-      };
-      checkUser();
     }
   }, [inviteToken, searchParams]);
+
+  const handleInvitation = async (userId: string) => {
+    if (!inviteToken) return;
+
+    try {
+      // First verify the invitation is valid
+      const { data: invitation, error: inviteError } = await supabase
+        .from("sssp_invitations")
+        .select("*")
+        .eq("id", inviteToken)
+        .eq("status", "pending")
+        .single();
+
+      if (inviteError || !invitation) {
+        throw new Error("Invalid or expired invitation");
+      }
+
+      // Create access record
+      const { error: accessError } = await supabase
+        .from("sssp_access")
+        .insert({
+          sssp_id: invitation.sssp_id,
+          user_id: userId,
+          access_level: invitation.access_level,
+        });
+
+      if (accessError) throw accessError;
+
+      // Update invitation status
+      const { error: updateError } = await supabase
+        .from("sssp_invitations")
+        .update({ status: "accepted" })
+        .eq("id", inviteToken);
+
+      if (updateError) throw updateError;
+
+      // Log activity
+      await supabase.from("sssp_activity").insert({
+        sssp_id: invitation.sssp_id,
+        user_id: userId,
+        action: "joined_sssp",
+        details: { invitation_id: inviteToken },
+      });
+
+      toast({
+        title: "Invitation accepted",
+        description: "You now have access to the shared SSSP.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error accepting invitation",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
       });
 
       if (error) throw error;
       
-      if (inviteToken) {
-        // Accept invitation after login
-        const { error: inviteError } = await supabase
-          .from("sssp_invitations")
-          .update({ status: "accepted" })
-          .eq("id", inviteToken);
-
-        if (inviteError) {
-          toast({
-            title: "Error accepting invitation",
-            description: inviteError.message,
-            variant: "destructive",
-          });
-        }
+      if (inviteToken && data.user) {
+        await handleInvitation(data.user.id);
       }
 
       navigate("/");
@@ -101,7 +130,7 @@ export default function Auth() {
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: signupEmail,
         password: signupPassword,
         options: {
@@ -114,15 +143,17 @@ export default function Auth() {
 
       if (error) throw error;
       
+      if (inviteToken && data.user) {
+        await handleInvitation(data.user.id);
+      }
+      
       toast({
         title: "Welcome!",
         description: "Please check your email to verify your account.",
       });
       
       const loginTab = document.querySelector('[data-tab="login"]') as HTMLElement;
-      if (loginTab) {
-        loginTab.click();
-      }
+      if (loginTab) loginTab.click();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -140,14 +171,17 @@ export default function Auth() {
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">Welcome to SSSP Manager</h1>
           <p className="text-muted-foreground">
-            Sign in to your account or create a new one
+            {inviteToken 
+              ? "Accept invitation by signing in or creating an account"
+              : "Sign in to your account or create a new one"
+            }
           </p>
         </div>
 
         <Tabs defaultValue="login" className="space-y-4">
           <TabsList className="grid grid-cols-2 w-full">
             <TabsTrigger value="login" data-tab="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="signup" data-tab="signup">Sign Up</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
@@ -182,10 +216,10 @@ export default function Auth() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging in...
+                    {inviteToken ? "Accepting invitation..." : "Logging in..."}
                   </>
                 ) : (
-                  "Login"
+                  inviteToken ? "Login & Accept Invitation" : "Login"
                 )}
               </Button>
             </form>
@@ -245,10 +279,10 @@ export default function Auth() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    {inviteToken ? "Creating account & accepting..." : "Creating account..."}
                   </>
                 ) : (
-                  "Create Account"
+                  inviteToken ? "Create Account & Accept Invitation" : "Create Account"
                 )}
               </Button>
             </form>
