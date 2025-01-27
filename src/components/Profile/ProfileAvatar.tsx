@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { User } from "lucide-react";
+import { User, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProfileAvatarProps {
   avatarUrl: string | null;
@@ -18,6 +24,7 @@ export function ProfileAvatar({ avatarUrl, userId }: ProfileAvatarProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const hiddenFileInput = React.useRef<HTMLInputElement>(null);
 
   async function onAvatarUpload(event: React.ChangeEvent<HTMLInputElement>) {
     try {
@@ -112,46 +119,61 @@ export function ProfileAvatar({ avatarUrl, userId }: ProfileAvatarProps) {
     }
   }
 
+  const handleUploadClick = () => {
+    hiddenFileInput.current?.click();
+  };
+
   return (
-    <div className="flex flex-col md:flex-row md:items-center gap-6 p-4 rounded-lg border bg-card">
-      <div className="flex items-center gap-4">
-        <Avatar className="h-24 w-24 ring-2 ring-primary/10 transition-all hover:ring-primary/30">
-          <AvatarImage 
-            src={avatarUrl ? supabase.storage.from("avatars").getPublicUrl(avatarUrl).data.publicUrl : undefined} 
-            alt="Profile picture"
-            className="object-cover"
-          />
-          <AvatarFallback className="bg-primary/5">
-            <User className="h-12 w-12 text-primary/70" />
-          </AvatarFallback>
-        </Avatar>
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold tracking-tight">Profile Picture</h3>
-          <p className="text-sm text-muted-foreground">
-            Personalize your profile with a custom avatar
-          </p>
-        </div>
-      </div>
-      <div className="space-y-4 flex-1">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <Input
-            type="file"
-            accept={ALLOWED_FILE_TYPES.join(",")}
-            onChange={onAvatarUpload}
-            disabled={isUploading}
-            className="max-w-md flex-1"
-          />
-          {isUploading && (
-            <span className="text-sm text-muted-foreground animate-pulse">
-              Uploading...
-            </span>
+    <div className="flex items-center gap-4">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="relative group">
+              <Avatar className="h-24 w-24 ring-2 ring-primary/10 transition-all group-hover:ring-primary/30">
+                <AvatarImage 
+                  src={avatarUrl ? supabase.storage.from("avatars").getPublicUrl(avatarUrl).data.publicUrl : undefined} 
+                  alt="Profile picture"
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-primary/5">
+                  <User className="h-12 w-12 text-primary/70" />
+                </AvatarFallback>
+              </Avatar>
+              <div 
+                className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center"
+                onClick={handleUploadClick}
+              >
+                <Upload className="h-8 w-8 text-white" />
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="p-3">
+            <div className="space-y-1 text-sm">
+              <p>Upload profile picture</p>
+              <p className="text-xs text-muted-foreground">Maximum size: 5MB</p>
+              <p className="text-xs text-muted-foreground">Formats: JPEG, PNG, WebP</p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <div className="space-y-1">
+        <h3 className="text-lg font-semibold tracking-tight">Profile Picture</h3>
+        <p className="text-sm text-muted-foreground">
+          {isUploading ? (
+            <span className="animate-pulse">Uploading...</span>
+          ) : (
+            "Personalize your profile with a custom avatar"
           )}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          <p>Maximum file size: 5MB</p>
-          <p>Supported formats: JPEG, PNG, WebP</p>
-        </div>
+        </p>
       </div>
+      <Input
+        ref={hiddenFileInput}
+        type="file"
+        accept={ALLOWED_FILE_TYPES.join(",")}
+        onChange={onAvatarUpload}
+        disabled={isUploading}
+        className="hidden"
+      />
     </div>
   );
 }
