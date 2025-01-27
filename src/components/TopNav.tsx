@@ -11,13 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export function TopNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const { toast } = useToast();
   
   const isActive = (path: string) => {
@@ -26,13 +25,10 @@ export function TopNav() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account.",
-      });
+      await logout();
       navigate("/");
     } catch (error: any) {
+      console.error("Error signing out:", error);
       toast({
         title: "Error signing out",
         description: error.message,
