@@ -9,77 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      companies: {
-        Row: {
-          address: string | null
-          created_at: string
-          email: string | null
-          id: string
-          logo_url: string | null
-          name: string
-          phone: string | null
-          updated_at: string
-          website: string | null
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          logo_url?: string | null
-          name: string
-          phone?: string | null
-          updated_at?: string
-          website?: string | null
-        }
-        Update: {
-          address?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          logo_url?: string | null
-          name?: string
-          phone?: string | null
-          updated_at?: string
-          website?: string | null
-        }
-        Relationships: []
-      }
-      company_access: {
-        Row: {
-          company_id: string | null
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["company_role"]
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["company_role"]
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["company_role"]
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_access_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -128,47 +57,161 @@ export type Database = {
         }
         Relationships: []
       }
-      team_members: {
+      sssp_access: {
         Row: {
-          company_id: string
+          access_level: string
           created_at: string
           id: string
-          member_id: string
-          role: Database["public"]["Enums"]["team_member_role"]
-          updated_at: string
+          sssp_id: string
+          user_id: string
         }
         Insert: {
-          company_id: string
+          access_level: string
           created_at?: string
           id?: string
-          member_id: string
-          role?: Database["public"]["Enums"]["team_member_role"]
-          updated_at?: string
+          sssp_id: string
+          user_id: string
         }
         Update: {
-          company_id?: string
+          access_level?: string
           created_at?: string
           id?: string
-          member_id?: string
-          role?: Database["public"]["Enums"]["team_member_role"]
-          updated_at?: string
+          sssp_id?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "team_members_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: "sssp_access_sssp_id_fkey"
+            columns: ["sssp_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "team_members_member_id_fkey"
-            columns: ["member_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "sssps"
             referencedColumns: ["id"]
           },
         ]
+      }
+      sssp_activity: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          sssp_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          sssp_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          sssp_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sssp_activity_sssp_id_fkey"
+            columns: ["sssp_id"]
+            isOneToOne: false
+            referencedRelation: "sssps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sssp_invitations: {
+        Row: {
+          access_level: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          sssp_id: string
+          status: string
+        }
+        Insert: {
+          access_level: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          sssp_id: string
+          status?: string
+        }
+        Update: {
+          access_level?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          sssp_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sssp_invitations_sssp_id_fkey"
+            columns: ["sssp_id"]
+            isOneToOne: false
+            referencedRelation: "sssps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sssps: {
+        Row: {
+          company_address: string | null
+          company_contact_email: string | null
+          company_contact_name: string | null
+          company_contact_phone: string | null
+          company_name: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          modified_by: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_address?: string | null
+          company_contact_email?: string | null
+          company_contact_name?: string | null
+          company_contact_phone?: string | null
+          company_name: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          modified_by: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_address?: string | null
+          company_contact_email?: string | null
+          company_contact_name?: string | null
+          company_contact_phone?: string | null
+          company_name?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          modified_by?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

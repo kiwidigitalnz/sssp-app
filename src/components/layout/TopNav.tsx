@@ -1,4 +1,4 @@
-import { User, Settings, LogOut, FileText, Home, Shield } from "lucide-react";
+import { User, LogOut, Shield } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -44,7 +44,6 @@ export function TopNav() {
   return (
     <div className="w-full border-b bg-white shadow-sm">
       <div className="flex h-16 items-center px-4 container mx-auto">
-        {/* Logo and App Name */}
         <div className="flex items-center space-x-3">
           <Link to="/" className="flex items-center">
             <div className="bg-primary/10 p-2 rounded-lg">
@@ -57,21 +56,7 @@ export function TopNav() {
           </Link>
         </div>
 
-        {/* Navigation Links and User Menu */}
         <div className="ml-auto flex items-center space-x-4">
-          {session && (
-            <Link
-              to="/"
-              className={cn(
-                "flex items-center space-x-1 text-sm font-medium transition-colors hover:text-primary",
-                isActive("/") ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <Home className="h-4 w-4" />
-              <span className="hidden sm:inline-block">Dashboard</span>
-            </Link>
-          )}
-
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -89,12 +74,6 @@ export function TopNav() {
                   <Link to="/profile" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/company-settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Company Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

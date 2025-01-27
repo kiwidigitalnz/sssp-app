@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SSSPForm from "./pages/SSSPForm";
-import CompanySettings from "./pages/CompanySettings";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import { TopNav } from "./components/layout/TopNav";
@@ -30,14 +29,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <SSSPForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/company-settings"
-            element={
-              <ProtectedRoute>
-                <CompanySettings />
               </ProtectedRoute>
             }
           />

@@ -1,17 +1,33 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, AlertTriangle, CheckCircle, ArrowRight } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle, ArrowRight, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CompanyHeader } from "@/components/dashboard/CompanyHeader";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SSSPTable } from "@/components/dashboard/SSSPTable";
+import { useQuery } from "@tanstack/react-query";
+
+const fetchSSSPs = async () => {
+  const { data, error } = await supabase
+    .from('sssps')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+};
 
 const Index = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
+
+  const { data: sssps = [], isLoading } = useQuery({
+    queryKey: ['sssps'],
+    queryFn: fetchSSSPs,
+    enabled: !!session
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -101,33 +117,31 @@ const Index = () => {
     );
   }
 
-  // Mock data for the table and statistics
-  const ssspList = [
-    {
-      id: 1,
-      projectName: "City Center Construction",
-      createdDate: "2024-03-15",
-      status: "Draft",
-      lastModified: "2024-03-16",
-    },
-    {
-      id: 2,
-      projectName: "Harbor Bridge Maintenance",
-      createdDate: "2024-03-14",
-      status: "Submitted",
-      lastModified: "2024-03-14",
-    },
-  ];
-
   const stats = {
-    total: ssspList.length,
-    draft: ssspList.filter(s => s.status === "Draft").length,
-    submitted: ssspList.filter(s => s.status === "Submitted").length,
+    total: sssps.length,
+    draft: sssps.filter(s => s.status === "draft").length,
+    submitted: sssps.filter(s => s.status === "submitted").length,
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <CompanyHeader />
+      <div className="bg-white shadow-sm mb-8">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Safety Plans Dashboard</h1>
+              <p className="text-gray-600 mt-2">Manage and track your Site-Specific Safety Plans</p>
+            </div>
+            <Button 
+              onClick={() => navigate("/create-sssp")}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create New SSSP
+            </Button>
+          </div>
+        </div>
+      </div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -150,7 +164,13 @@ const Index = () => {
           />
         </div>
 
-        <SSSPTable ssspList={ssspList} />
+        <SSSPTable ssspList={sssps.map(sssp => ({
+          id: sssp.id,
+          projectName: sssp.title,
+          createdDate: new Date(sssp.created_at).toLocaleDateString(),
+          status: sssp.status,
+          lastModified: new Date(sssp.updated_at).toLocaleDateString(),
+        }))} />
       </div>
     </div>
   );
