@@ -19,9 +19,7 @@ export type Database = {
           job_title: string | null
           last_name: string | null
           phone: string | null
-          preferences: Json | null
           role: string | null
-          social_links: Json | null
           updated_at: string
           website: string | null
         }
@@ -34,9 +32,7 @@ export type Database = {
           job_title?: string | null
           last_name?: string | null
           phone?: string | null
-          preferences?: Json | null
           role?: string | null
-          social_links?: Json | null
           updated_at?: string
           website?: string | null
         }
@@ -49,9 +45,7 @@ export type Database = {
           job_title?: string | null
           last_name?: string | null
           phone?: string | null
-          preferences?: Json | null
           role?: string | null
-          social_links?: Json | null
           updated_at?: string
           website?: string | null
         }
