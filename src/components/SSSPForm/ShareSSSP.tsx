@@ -32,12 +32,19 @@ export function ShareSSSP({ ssspId, onShare }: ShareSSSPProps) {
 
   const handleShare = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       const { error } = await supabase
         .from('sssp_invitations')
         .insert({
           sssp_id: ssspId,
           email: email,
           access_level: accessLevel,
+          invited_by: user.id,
         });
 
       if (error) throw error;
@@ -51,10 +58,11 @@ export function ShareSSSP({ ssspId, onShare }: ShareSSSPProps) {
       setIsOpen(false);
       onShare?.();
     } catch (error) {
+      console.error('Share error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to send invitation",
+        description: error instanceof Error ? error.message : "Failed to send invitation",
       });
     }
   };
