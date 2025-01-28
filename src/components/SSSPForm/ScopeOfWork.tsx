@@ -6,12 +6,11 @@ import { Briefcase, MapPin, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const scopeOfWorkSchema = z.object({
   services: z.string().min(1, "Services description is required"),
@@ -36,7 +35,7 @@ interface VersionData {
 export const ScopeOfWork = ({ formData, setFormData }: any) => {
   const { id } = useParams();
   const { toast } = useToast();
-  
+
   const { data: sssp, isLoading } = useQuery({
     queryKey: ['sssp-version', id],
     queryFn: async () => {
@@ -46,13 +45,21 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
         .eq('sssp_id', id)
         .order('version', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching SSSP version:', error);
         throw error;
       }
       
+      if (!versions) {
+        return {
+          services: '',
+          locations: '',
+          considerations: ''
+        };
+      }
+
       // Cast the versions data to our VersionData interface
       const versionData = versions as unknown as VersionData;
       
