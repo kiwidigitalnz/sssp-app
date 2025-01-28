@@ -29,7 +29,7 @@ interface ScopeOfWorkData {
 
 interface VersionData {
   data: {
-    scopeOfWork?: ScopeOfWorkData;
+    scopeOfWork: ScopeOfWorkData;
   };
 }
 
@@ -48,16 +48,22 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
         .limit(1)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching SSSP version:', error);
+        throw error;
+      }
       
       // Cast the versions data to our VersionData interface
       const versionData = versions as unknown as VersionData;
+      
+      // Access the scopeOfWork data with proper typing
       const scopeOfWork = versionData?.data?.scopeOfWork;
       
-      return scopeOfWork || {
-        services: '',
-        locations: '',
-        considerations: ''
+      // Return the scopeOfWork data or default values
+      return {
+        services: scopeOfWork?.services || '',
+        locations: scopeOfWork?.locations || '',
+        considerations: scopeOfWork?.considerations || ''
       };
     }
   });
@@ -79,14 +85,14 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
 
   useEffect(() => {
     if (sssp) {
-      setValue("services", sssp.services || "");
-      setValue("locations", sssp.locations || "");
-      setValue("considerations", sssp.considerations || "");
+      setValue("services", sssp.services);
+      setValue("locations", sssp.locations);
+      setValue("considerations", sssp.considerations);
       setFormData({
         ...formData,
-        services: sssp.services || "",
-        locations: sssp.locations || "",
-        considerations: sssp.considerations || ""
+        services: sssp.services,
+        locations: sssp.locations,
+        considerations: sssp.considerations
       });
     }
   }, [sssp, setValue, setFormData, formData]);
