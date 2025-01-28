@@ -41,11 +41,11 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
   } = useForm<HealthAndSafetyFormData>({
     resolver: zodResolver(healthAndSafetySchema),
     defaultValues: {
-      pcbu_duties: formData.pcbu_duties || "",
-      site_supervisor_duties: formData.site_supervisor_duties || "",
-      worker_duties: formData.worker_duties || "",
-      contractor_duties: formData.contractor_duties || "",
-      visitor_rules: formData.visitor_rules || ""
+      pcbu_duties: formData?.pcbu_duties || "",
+      site_supervisor_duties: formData?.site_supervisor_duties || "",
+      worker_duties: formData?.worker_duties || "",
+      contractor_duties: formData?.contractor_duties || "",
+      visitor_rules: formData?.visitor_rules || ""
     }
   });
 
