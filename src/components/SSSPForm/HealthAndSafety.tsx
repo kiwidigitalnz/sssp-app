@@ -31,6 +31,8 @@ const healthAndSafetySchema = z.object({
 type HealthAndSafetyFormData = z.infer<typeof healthAndSafetySchema>;
 
 export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
+  console.log("HealthAndSafety - Initial formData:", formData);
+  
   const { toast } = useToast();
   const {
     register,
@@ -51,7 +53,16 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
   });
 
   useEffect(() => {
+    console.log("HealthAndSafety - useEffect triggered with formData:", formData);
     if (formData) {
+      console.log("HealthAndSafety - Resetting form with values:", {
+        pcbu_duties: formData.pcbu_duties || "",
+        site_supervisor_duties: formData.site_supervisor_duties || "",
+        worker_duties: formData.worker_duties || "",
+        contractor_duties: formData.contractor_duties || "",
+        visitor_rules: formData.visitor_rules || ""
+      });
+      
       reset({
         pcbu_duties: formData.pcbu_duties || "",
         site_supervisor_duties: formData.site_supervisor_duties || "",
@@ -63,6 +74,7 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
   }, [formData, reset]);
 
   const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
+    console.log("HealthAndSafety - Field change:", field, value);
     setFormData({ ...formData, [field]: value });
     setValue(field, value);
     const result = await trigger(field);
@@ -225,4 +237,4 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
       </CardContent>
     </Card>
   );
-};
+});

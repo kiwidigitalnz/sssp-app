@@ -39,6 +39,9 @@ const SSSPForm = () => {
     initialData: {}
   });
 
+  console.log("SSSPForm - Current formData:", formData);
+  console.log("SSSPForm - Current step:", currentStep);
+
   const handleSave = async () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
