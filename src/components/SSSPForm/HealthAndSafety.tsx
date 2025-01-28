@@ -50,11 +50,13 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
   });
 
   useEffect(() => {
-    setValue("pcbu_duties", formData.pcbu_duties || "");
-    setValue("site_supervisor_duties", formData.site_supervisor_duties || "");
-    setValue("worker_duties", formData.worker_duties || "");
-    setValue("contractor_duties", formData.contractor_duties || "");
-    setValue("visitor_rules", formData.visitor_rules || "");
+    if (formData) {
+      setValue("pcbu_duties", formData.pcbu_duties || "");
+      setValue("site_supervisor_duties", formData.site_supervisor_duties || "");
+      setValue("worker_duties", formData.worker_duties || "");
+      setValue("contractor_duties", formData.contractor_duties || "");
+      setValue("visitor_rules", formData.visitor_rules || "");
+    }
   }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
