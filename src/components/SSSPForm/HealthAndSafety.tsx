@@ -37,27 +37,30 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
     handleSubmit,
     setValue,
     formState: { errors },
-    trigger
+    trigger,
+    reset
   } = useForm<HealthAndSafetyFormData>({
     resolver: zodResolver(healthAndSafetySchema),
     defaultValues: {
-      pcbu_duties: formData?.pcbu_duties || "",
-      site_supervisor_duties: formData?.site_supervisor_duties || "",
-      worker_duties: formData?.worker_duties || "",
-      contractor_duties: formData?.contractor_duties || "",
-      visitor_rules: formData?.visitor_rules || ""
+      pcbu_duties: "",
+      site_supervisor_duties: "",
+      worker_duties: "",
+      contractor_duties: "",
+      visitor_rules: ""
     }
   });
 
   useEffect(() => {
     if (formData) {
-      setValue("pcbu_duties", formData.pcbu_duties || "");
-      setValue("site_supervisor_duties", formData.site_supervisor_duties || "");
-      setValue("worker_duties", formData.worker_duties || "");
-      setValue("contractor_duties", formData.contractor_duties || "");
-      setValue("visitor_rules", formData.visitor_rules || "");
+      reset({
+        pcbu_duties: formData.pcbu_duties || "",
+        site_supervisor_duties: formData.site_supervisor_duties || "",
+        worker_duties: formData.worker_duties || "",
+        contractor_duties: formData.contractor_duties || "",
+        visitor_rules: formData.visitor_rules || ""
+      });
     }
-  }, [formData, setValue]);
+  }, [formData, reset]);
 
   const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
     setFormData({ ...formData, [field]: value });
