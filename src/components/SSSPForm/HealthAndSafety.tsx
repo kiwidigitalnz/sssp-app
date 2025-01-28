@@ -237,4 +237,4 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
       </CardContent>
     </Card>
   );
-});
+};
