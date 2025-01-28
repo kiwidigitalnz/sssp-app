@@ -69,7 +69,7 @@ export default function Profile() {
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
-      navigate("/dashboard");
+      navigate("/"); // Changed from "/dashboard" to "/"
     },
     onError: (error: Error) => {
       console.error("Profile update error:", error);
@@ -126,7 +126,7 @@ export default function Profile() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/dashboard")}>
+            <Button onClick={() => navigate("/")}>
               Return to Dashboard
             </Button>
           </CardContent>
