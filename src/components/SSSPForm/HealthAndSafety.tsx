@@ -47,20 +47,20 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
 
   useEffect(() => {
     if (formData) {
-      console.log("HealthAndSafety - Resetting form with values:", {
-        pcbu_duties: formData.pcbu_duties || "",
-        site_supervisor_duties: formData.site_supervisor_duties || "",
-        worker_duties: formData.worker_duties || "",
-        contractor_duties: formData.contractor_duties || "",
-        visitor_rules: formData.visitor_rules || ""
+      console.log("HealthAndSafety - Setting form values:", {
+        pcbu_duties: formData.pcbu_duties,
+        site_supervisor_duties: formData.site_supervisor_duties,
+        worker_duties: formData.worker_duties,
+        contractor_duties: formData.contractor_duties,
+        visitor_rules: formData.visitor_rules
       });
       
       reset({
-        pcbu_duties: formData.pcbu_duties || "",
-        site_supervisor_duties: formData.site_supervisor_duties || "",
-        worker_duties: formData.worker_duties || "",
-        contractor_duties: formData.contractor_duties || "",
-        visitor_rules: formData.visitor_rules || ""
+        pcbu_duties: formData.pcbu_duties ?? "",
+        site_supervisor_duties: formData.site_supervisor_duties ?? "",
+        worker_duties: formData.worker_duties ?? "",
+        contractor_duties: formData.contractor_duties ?? "",
+        visitor_rules: formData.visitor_rules ?? ""
       });
     }
   }, [formData, reset]);
