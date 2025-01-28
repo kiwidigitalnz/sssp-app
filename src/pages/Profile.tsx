@@ -42,7 +42,6 @@ export default function Profile() {
 
       if (error) throw error;
       
-      // Include the email from the auth user
       return {
         ...data,
         email: user.email,
@@ -70,13 +69,14 @@ export default function Profile() {
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
+      navigate("/dashboard");
     },
     onError: (error: Error) => {
       console.error("Profile update error:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to update profile. Please try again.",
+        title: "Error updating profile",
+        description: "There was a problem updating your profile. Please try again.",
       });
     },
   });

@@ -40,9 +40,9 @@ export function ContactInfo({ form }: ContactInfoProps) {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone Number</FormLabel>
+              <FormLabel>Phone Number (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your phone number" {...field} />
+                <Input placeholder="Enter your phone number" {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -53,9 +53,9 @@ export function ContactInfo({ form }: ContactInfoProps) {
           name="company"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company Name</FormLabel>
+              <FormLabel>Company Name (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your company name" {...field} />
+                <Input placeholder="Enter your company name" {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -66,9 +66,9 @@ export function ContactInfo({ form }: ContactInfoProps) {
           name="job_title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Job Title</FormLabel>
+              <FormLabel>Job Title (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your job title" {...field} />
+                <Input placeholder="Enter your job title" {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -79,9 +79,13 @@ export function ContactInfo({ form }: ContactInfoProps) {
           name="website"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Website</FormLabel>
+              <FormLabel>Website (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your website URL" {...field} />
+                <Input 
+                  placeholder="https://example.com" 
+                  {...field} 
+                  value={field.value || ''} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
