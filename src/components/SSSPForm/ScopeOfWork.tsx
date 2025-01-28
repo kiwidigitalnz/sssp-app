@@ -44,9 +44,8 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
 
       if (error) throw error;
       
-      // Safely type and access the scopeOfWork data
-      const versionData = versions?.data as Record<string, any>;
-      const scopeOfWork = versionData?.scopeOfWork as ScopeOfWorkData;
+      // The data property contains our scopeOfWork object directly
+      const scopeOfWork = versions?.data?.scopeOfWork as ScopeOfWorkData;
       
       return scopeOfWork || {
         services: '',
