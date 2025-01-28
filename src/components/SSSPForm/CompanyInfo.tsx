@@ -2,24 +2,47 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Mail, MapPin, User } from "lucide-react";
+import { Building2, Mail, MapPin, User, Phone } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const companyInfoSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   address: z.string().min(1, "Address is required"),
   contactPerson: z.string().min(1, "Contact person is required"),
-  contactEmail: z.string().email("Invalid email address")
+  contactEmail: z.string().email("Invalid email address"),
+  contactPhone: z.string().min(1, "Contact phone is required")
 });
 
 type CompanyInfoFormData = z.infer<typeof companyInfoSchema>;
 
+const fetchSSSP = async (id: string) => {
+  const { data, error } = await supabase
+    .from('sssps')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
 export const CompanyInfo = ({ formData, setFormData }: any) => {
+  const { id } = useParams();
   const { toast } = useToast();
+
+  const { data: sssp, isLoading } = useQuery({
+    queryKey: ['sssp', id],
+    queryFn: () => fetchSSSP(id!),
+    enabled: !!id
+  });
+
   const {
     register,
     handleSubmit,
@@ -32,17 +55,29 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
       companyName: formData.companyName || "",
       address: formData.address || "",
       contactPerson: formData.contactPerson || "",
-      contactEmail: formData.contactEmail || ""
+      contactEmail: formData.contactEmail || "",
+      contactPhone: formData.contactPhone || ""
     }
   });
 
   useEffect(() => {
-    // Update form when formData changes externally
-    setValue("companyName", formData.companyName || "");
-    setValue("address", formData.address || "");
-    setValue("contactPerson", formData.contactPerson || "");
-    setValue("contactEmail", formData.contactEmail || "");
-  }, [formData, setValue]);
+    if (sssp) {
+      setValue("companyName", sssp.company_name || "");
+      setValue("address", sssp.company_address || "");
+      setValue("contactPerson", sssp.company_contact_name || "");
+      setValue("contactEmail", sssp.company_contact_email || "");
+      setValue("contactPhone", sssp.company_contact_phone || "");
+
+      setFormData({
+        ...formData,
+        companyName: sssp.company_name,
+        address: sssp.company_address,
+        contactPerson: sssp.company_contact_name,
+        contactEmail: sssp.company_contact_email,
+        contactPhone: sssp.company_contact_phone
+      });
+    }
+  }, [sssp, setValue, setFormData]);
 
   const handleFieldChange = async (field: keyof CompanyInfoFormData, value: string) => {
     setFormData({ ...formData, [field]: value });
@@ -56,6 +91,16 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle>Loading company information...</CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-md">
@@ -115,7 +160,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="contactPerson" className="text-base font-medium">Contact Person</Label>
@@ -161,6 +206,30 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
                 />
                 {errors.contactEmail && (
                   <p className="text-sm text-destructive mt-1">{errors.contactEmail.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="contactPhone" className="text-base font-medium">Contact Phone</Label>
+                <QuickFillButton
+                  fieldId="contactPhone"
+                  fieldName="Contact Phone"
+                  onSelect={(value) => handleFieldChange("contactPhone", value)}
+                />
+              </div>
+              <div className="relative">
+                <Phone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="contactPhone"
+                  {...register("contactPhone")}
+                  className={`pl-9 ${errors.contactPhone ? "border-destructive" : ""}`}
+                  placeholder="Enter contact phone"
+                  onChange={(e) => handleFieldChange("contactPhone", e.target.value)}
+                />
+                {errors.contactPhone && (
+                  <p className="text-sm text-destructive mt-1">{errors.contactPhone.message}</p>
                 )}
               </div>
             </div>
