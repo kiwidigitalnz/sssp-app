@@ -211,8 +211,10 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          end_date: string | null
           id: string
           modified_by: string
+          start_date: string | null
           status: string
           title: string
           updated_at: string
@@ -228,8 +230,10 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          end_date?: string | null
           id?: string
           modified_by: string
+          start_date?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -245,8 +249,10 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          end_date?: string | null
           id?: string
           modified_by?: string
+          start_date?: string | null
           status?: string
           title?: string
           updated_at?: string

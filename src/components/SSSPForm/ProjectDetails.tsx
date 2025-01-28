@@ -9,6 +9,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const projectDetailsSchema = z.object({
   projectName: z.string()
@@ -34,8 +37,27 @@ const projectDetailsSchema = z.object({
 
 type ProjectDetailsFormData = z.infer<typeof projectDetailsSchema>;
 
+const fetchSSSP = async (id: string) => {
+  const { data, error } = await supabase
+    .from('sssps')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
 export const ProjectDetails = ({ formData, setFormData }: any) => {
+  const { id } = useParams();
   const { toast } = useToast();
+
+  const { data: sssp, isLoading } = useQuery({
+    queryKey: ['sssp', id],
+    queryFn: () => fetchSSSP(id!),
+    enabled: !!id
+  });
+
   const {
     register,
     handleSubmit,
@@ -54,12 +76,27 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
   });
 
   useEffect(() => {
-    setValue("projectName", formData.projectName || "");
-    setValue("siteAddress", formData.siteAddress || "");
-    setValue("startDate", formData.startDate || "");
-    setValue("endDate", formData.endDate || "");
-    setValue("projectDescription", formData.projectDescription || "");
-  }, [formData, setValue]);
+    if (sssp) {
+      const startDate = sssp.start_date ? new Date(sssp.start_date).toISOString().split('T')[0] : '';
+      const endDate = sssp.end_date ? new Date(sssp.end_date).toISOString().split('T')[0] : '';
+      
+      setValue("projectName", sssp.title);
+      setValue("siteAddress", sssp.company_address || "");
+      setValue("startDate", startDate);
+      setValue("endDate", endDate);
+      setValue("projectDescription", sssp.description || "");
+
+      // Update parent form data
+      setFormData({
+        ...formData,
+        projectName: sssp.title,
+        siteAddress: sssp.company_address,
+        startDate,
+        endDate,
+        projectDescription: sssp.description
+      });
+    }
+  }, [sssp, setValue, setFormData]);
 
   const handleFieldChange = async (field: keyof ProjectDetailsFormData, value: string) => {
     setFormData({ ...formData, [field]: value });
@@ -73,6 +110,16 @@ export const ProjectDetails = ({ formData, setFormData }: any) => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-md">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl font-semibold">Loading...</CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-md">
