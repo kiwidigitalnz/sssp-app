@@ -1,13 +1,13 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardHat, Building2, Users2, Users, UserCheck } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const healthAndSafetySchema = z.object({
@@ -30,17 +30,9 @@ const healthAndSafetySchema = z.object({
 
 type HealthAndSafetyFormData = z.infer<typeof healthAndSafetySchema>;
 
-interface HealthAndSafetyProps {
-  formData: any;
-  setFormData: (data: any) => void;
-  isLoading?: boolean;
-}
-
-export const HealthAndSafety = ({ formData, setFormData, isLoading }: HealthAndSafetyProps) => {
+export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
   const { toast } = useToast();
   
-  console.log("HealthAndSafety - Initial render with formData:", formData);
-
   const {
     register,
     setValue,
@@ -48,35 +40,30 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: HealthAndS
     trigger
   } = useForm<HealthAndSafetyFormData>({
     resolver: zodResolver(healthAndSafetySchema),
-    defaultValues: formData
+    defaultValues: {
+      pcbu_duties: formData?.pcbu_duties ?? "",
+      site_supervisor_duties: formData?.site_supervisor_duties ?? "",
+      worker_duties: formData?.worker_duties ?? "",
+      contractor_duties: formData?.contractor_duties ?? "",
+      visitor_rules: formData?.visitor_rules ?? ""
+    }
   });
 
-  // Initialize form with formData
   useEffect(() => {
+    console.log("HealthAndSafety - Form Data Updated:", formData);
     if (formData) {
-      console.log("HealthAndSafety - Updating form with data:", formData);
-      const fields: (keyof HealthAndSafetyFormData)[] = [
-        'pcbu_duties',
-        'site_supervisor_duties',
-        'worker_duties',
-        'contractor_duties',
-        'visitor_rules'
-      ];
-      
-      fields.forEach(field => {
-        if (formData[field]) {
-          console.log(`Setting ${field}:`, formData[field]);
-          setValue(field, formData[field]);
-        }
-      });
+      setValue("pcbu_duties", formData.pcbu_duties ?? "");
+      setValue("site_supervisor_duties", formData.site_supervisor_duties ?? "");
+      setValue("worker_duties", formData.worker_duties ?? "");
+      setValue("contractor_duties", formData.contractor_duties ?? "");
+      setValue("visitor_rules", formData.visitor_rules ?? "");
     }
   }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
-    console.log(`HealthAndSafety - Field change: ${field}`, value);
+    console.log("HealthAndSafety - Field change:", field, value);
     setFormData({ ...formData, [field]: value });
     setValue(field, value);
-    
     const result = await trigger(field);
     if (!result && errors[field]) {
       toast({
@@ -90,13 +77,15 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: HealthAndS
   if (isLoading) {
     return (
       <Card className="shadow-sm">
-        <CardHeader>
+        <CardHeader className="space-y-1">
           <Skeleton className="h-8 w-64" />
         </CardHeader>
         <CardContent className="space-y-6">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
         </CardContent>
       </Card>
     );
