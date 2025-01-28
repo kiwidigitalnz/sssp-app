@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardHat, Users, UserCog, Users2 } from "lucide-react";
+import { HardHat, Building2, Users2, Users, UserCheck } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,18 +11,21 @@ import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const healthAndSafetySchema = z.object({
-  project_manager_responsibilities: z.string()
-    .min(10, "Project manager responsibilities must be at least 10 characters long")
-    .max(1000, "Project manager responsibilities must not exceed 1000 characters"),
-  site_supervisor_responsibilities: z.string()
-    .min(10, "Site supervisor responsibilities must be at least 10 characters long")
-    .max(1000, "Site supervisor responsibilities must not exceed 1000 characters"),
-  worker_responsibilities: z.string()
-    .min(10, "Worker responsibilities must be at least 10 characters long")
-    .max(1000, "Worker responsibilities must not exceed 1000 characters"),
-  subcontractor_responsibilities: z.string()
-    .min(10, "Subcontractor responsibilities must be at least 10 characters long")
-    .max(1000, "Subcontractor responsibilities must not exceed 1000 characters")
+  pcbu_duties: z.string()
+    .min(10, "PCBU duties must be at least 10 characters long")
+    .max(1000, "PCBU duties must not exceed 1000 characters"),
+  site_supervisor_duties: z.string()
+    .min(10, "Site supervisor duties must be at least 10 characters long")
+    .max(1000, "Site supervisor duties must not exceed 1000 characters"),
+  worker_duties: z.string()
+    .min(10, "Worker duties must be at least 10 characters long")
+    .max(1000, "Worker duties must not exceed 1000 characters"),
+  contractor_duties: z.string()
+    .min(10, "Contractor duties must be at least 10 characters long")
+    .max(1000, "Contractor duties must not exceed 1000 characters"),
+  visitor_rules: z.string()
+    .min(10, "Visitor rules must be at least 10 characters long")
+    .max(1000, "Visitor rules must not exceed 1000 characters")
 });
 
 type HealthAndSafetyFormData = z.infer<typeof healthAndSafetySchema>;
@@ -38,18 +41,20 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
   } = useForm<HealthAndSafetyFormData>({
     resolver: zodResolver(healthAndSafetySchema),
     defaultValues: {
-      project_manager_responsibilities: formData.project_manager_responsibilities || "",
-      site_supervisor_responsibilities: formData.site_supervisor_responsibilities || "",
-      worker_responsibilities: formData.worker_responsibilities || "",
-      subcontractor_responsibilities: formData.subcontractor_responsibilities || ""
+      pcbu_duties: formData.pcbu_duties || "",
+      site_supervisor_duties: formData.site_supervisor_duties || "",
+      worker_duties: formData.worker_duties || "",
+      contractor_duties: formData.contractor_duties || "",
+      visitor_rules: formData.visitor_rules || ""
     }
   });
 
   useEffect(() => {
-    setValue("project_manager_responsibilities", formData.project_manager_responsibilities || "");
-    setValue("site_supervisor_responsibilities", formData.site_supervisor_responsibilities || "");
-    setValue("worker_responsibilities", formData.worker_responsibilities || "");
-    setValue("subcontractor_responsibilities", formData.subcontractor_responsibilities || "");
+    setValue("pcbu_duties", formData.pcbu_duties || "");
+    setValue("site_supervisor_duties", formData.site_supervisor_duties || "");
+    setValue("worker_duties", formData.worker_duties || "");
+    setValue("contractor_duties", formData.contractor_duties || "");
+    setValue("visitor_rules", formData.visitor_rules || "");
   }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
@@ -76,6 +81,7 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
         </CardContent>
       </Card>
     );
@@ -93,97 +99,121 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="project_manager_responsibilities" className="text-lg font-semibold flex items-center gap-2">
-                <UserCog className="h-4 w-4" />
-                Project Manager Responsibilities
+              <Label htmlFor="pcbu_duties" className="text-lg font-semibold flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                PCBU (Company) Duties
               </Label>
               <QuickFillButton
-                fieldId="project_manager_responsibilities"
-                fieldName="Project Manager Responsibilities"
-                onSelect={(value) => handleFieldChange("project_manager_responsibilities", value)}
+                fieldId="pcbu_duties"
+                fieldName="PCBU Duties"
+                onSelect={(value) => handleFieldChange("pcbu_duties", value)}
               />
             </div>
             <Textarea
-              id="project_manager_responsibilities"
-              {...register("project_manager_responsibilities")}
-              className={`min-h-[100px] resize-none ${errors.project_manager_responsibilities ? "border-destructive" : ""}`}
-              placeholder="Outline project manager responsibilities for health and safety"
-              onChange={(e) => handleFieldChange("project_manager_responsibilities", e.target.value)}
+              id="pcbu_duties"
+              {...register("pcbu_duties")}
+              className={`min-h-[100px] resize-none ${errors.pcbu_duties ? "border-destructive" : ""}`}
+              placeholder="Enter PCBU duties for health and safety"
+              onChange={(e) => handleFieldChange("pcbu_duties", e.target.value)}
             />
-            {errors.project_manager_responsibilities && (
-              <p className="text-sm text-destructive mt-1">{errors.project_manager_responsibilities.message}</p>
+            {errors.pcbu_duties && (
+              <p className="text-sm text-destructive mt-1">{errors.pcbu_duties.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="site_supervisor_responsibilities" className="text-lg font-semibold flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Site Supervisor Responsibilities
+              <Label htmlFor="site_supervisor_duties" className="text-lg font-semibold flex items-center gap-2">
+                <UserCheck className="h-4 w-4" />
+                Site Manager/Supervisor Duties
               </Label>
               <QuickFillButton
-                fieldId="site_supervisor_responsibilities"
-                fieldName="Site Supervisor Responsibilities"
-                onSelect={(value) => handleFieldChange("site_supervisor_responsibilities", value)}
+                fieldId="site_supervisor_duties"
+                fieldName="Site Supervisor Duties"
+                onSelect={(value) => handleFieldChange("site_supervisor_duties", value)}
               />
             </div>
             <Textarea
-              id="site_supervisor_responsibilities"
-              {...register("site_supervisor_responsibilities")}
-              className={`min-h-[100px] resize-none ${errors.site_supervisor_responsibilities ? "border-destructive" : ""}`}
-              placeholder="List site supervisor responsibilities for health and safety"
-              onChange={(e) => handleFieldChange("site_supervisor_responsibilities", e.target.value)}
+              id="site_supervisor_duties"
+              {...register("site_supervisor_duties")}
+              className={`min-h-[100px] resize-none ${errors.site_supervisor_duties ? "border-destructive" : ""}`}
+              placeholder="Enter site supervisor duties for health and safety"
+              onChange={(e) => handleFieldChange("site_supervisor_duties", e.target.value)}
             />
-            {errors.site_supervisor_responsibilities && (
-              <p className="text-sm text-destructive mt-1">{errors.site_supervisor_responsibilities.message}</p>
+            {errors.site_supervisor_duties && (
+              <p className="text-sm text-destructive mt-1">{errors.site_supervisor_duties.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="worker_responsibilities" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="worker_duties" className="text-lg font-semibold flex items-center gap-2">
                 <Users2 className="h-4 w-4" />
-                Worker Responsibilities
+                Worker Duties
               </Label>
               <QuickFillButton
-                fieldId="worker_responsibilities"
-                fieldName="Worker Responsibilities"
-                onSelect={(value) => handleFieldChange("worker_responsibilities", value)}
+                fieldId="worker_duties"
+                fieldName="Worker Duties"
+                onSelect={(value) => handleFieldChange("worker_duties", value)}
               />
             </div>
             <Textarea
-              id="worker_responsibilities"
-              {...register("worker_responsibilities")}
-              className={`min-h-[100px] resize-none ${errors.worker_responsibilities ? "border-destructive" : ""}`}
-              placeholder="Outline worker responsibilities for health and safety"
-              onChange={(e) => handleFieldChange("worker_responsibilities", e.target.value)}
+              id="worker_duties"
+              {...register("worker_duties")}
+              className={`min-h-[100px] resize-none ${errors.worker_duties ? "border-destructive" : ""}`}
+              placeholder="Enter worker duties for health and safety"
+              onChange={(e) => handleFieldChange("worker_duties", e.target.value)}
             />
-            {errors.worker_responsibilities && (
-              <p className="text-sm text-destructive mt-1">{errors.worker_responsibilities.message}</p>
+            {errors.worker_duties && (
+              <p className="text-sm text-destructive mt-1">{errors.worker_duties.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="subcontractor_responsibilities" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="contractor_duties" className="text-lg font-semibold flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Subcontractor Responsibilities
+                Contractor/Subcontractor Duties
               </Label>
               <QuickFillButton
-                fieldId="subcontractor_responsibilities"
-                fieldName="Subcontractor Responsibilities"
-                onSelect={(value) => handleFieldChange("subcontractor_responsibilities", value)}
+                fieldId="contractor_duties"
+                fieldName="Contractor Duties"
+                onSelect={(value) => handleFieldChange("contractor_duties", value)}
               />
             </div>
             <Textarea
-              id="subcontractor_responsibilities"
-              {...register("subcontractor_responsibilities")}
-              className={`min-h-[100px] resize-none ${errors.subcontractor_responsibilities ? "border-destructive" : ""}`}
-              placeholder="Specify subcontractor responsibilities for health and safety"
-              onChange={(e) => handleFieldChange("subcontractor_responsibilities", e.target.value)}
+              id="contractor_duties"
+              {...register("contractor_duties")}
+              className={`min-h-[100px] resize-none ${errors.contractor_duties ? "border-destructive" : ""}`}
+              placeholder="Enter contractor duties for health and safety"
+              onChange={(e) => handleFieldChange("contractor_duties", e.target.value)}
             />
-            {errors.subcontractor_responsibilities && (
-              <p className="text-sm text-destructive mt-1">{errors.subcontractor_responsibilities.message}</p>
+            {errors.contractor_duties && (
+              <p className="text-sm text-destructive mt-1">{errors.contractor_duties.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="visitor_rules" className="text-lg font-semibold flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Visitor Rules
+              </Label>
+              <QuickFillButton
+                fieldId="visitor_rules"
+                fieldName="Visitor Rules"
+                onSelect={(value) => handleFieldChange("visitor_rules", value)}
+              />
+            </div>
+            <Textarea
+              id="visitor_rules"
+              {...register("visitor_rules")}
+              className={`min-h-[100px] resize-none ${errors.visitor_rules ? "border-destructive" : ""}`}
+              placeholder="Enter visitor rules for health and safety"
+              onChange={(e) => handleFieldChange("visitor_rules", e.target.value)}
+            />
+            {errors.visitor_rules && (
+              <p className="text-sm text-destructive mt-1">{errors.visitor_rules.message}</p>
             )}
           </div>
         </div>

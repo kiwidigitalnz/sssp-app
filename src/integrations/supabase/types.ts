@@ -209,6 +209,7 @@ export type Database = {
           company_contact_phone: string | null
           company_name: string
           considerations: string | null
+          contractor_duties: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -216,17 +217,17 @@ export type Database = {
           id: string
           locations: string | null
           modified_by: string
-          project_manager_responsibilities: string | null
+          pcbu_duties: string | null
           services: string | null
-          site_supervisor_responsibilities: string | null
+          site_supervisor_duties: string | null
           start_date: string | null
           status: string
-          subcontractor_responsibilities: string | null
           title: string
           updated_at: string
           version: number
           version_history: Json[] | null
-          worker_responsibilities: string | null
+          visitor_rules: string | null
+          worker_duties: string | null
         }
         Insert: {
           company_address?: string | null
@@ -235,6 +236,7 @@ export type Database = {
           company_contact_phone?: string | null
           company_name: string
           considerations?: string | null
+          contractor_duties?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -242,17 +244,17 @@ export type Database = {
           id?: string
           locations?: string | null
           modified_by: string
-          project_manager_responsibilities?: string | null
+          pcbu_duties?: string | null
           services?: string | null
-          site_supervisor_responsibilities?: string | null
+          site_supervisor_duties?: string | null
           start_date?: string | null
           status?: string
-          subcontractor_responsibilities?: string | null
           title: string
           updated_at?: string
           version?: number
           version_history?: Json[] | null
-          worker_responsibilities?: string | null
+          visitor_rules?: string | null
+          worker_duties?: string | null
         }
         Update: {
           company_address?: string | null
@@ -261,6 +263,7 @@ export type Database = {
           company_contact_phone?: string | null
           company_name?: string
           considerations?: string | null
+          contractor_duties?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -268,17 +271,17 @@ export type Database = {
           id?: string
           locations?: string | null
           modified_by?: string
-          project_manager_responsibilities?: string | null
+          pcbu_duties?: string | null
           services?: string | null
-          site_supervisor_responsibilities?: string | null
+          site_supervisor_duties?: string | null
           start_date?: string | null
           status?: string
-          subcontractor_responsibilities?: string | null
           title?: string
           updated_at?: string
           version?: number
           version_history?: Json[] | null
-          worker_responsibilities?: string | null
+          visitor_rules?: string | null
+          worker_duties?: string | null
         }
         Relationships: []
       }
