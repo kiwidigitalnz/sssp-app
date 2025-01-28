@@ -31,39 +31,34 @@ const healthAndSafetySchema = z.object({
 type HealthAndSafetyFormData = z.infer<typeof healthAndSafetySchema>;
 
 export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
-  console.log("HealthAndSafety - Initial formData:", formData);
-  
   const { toast } = useToast();
+  
   const {
     register,
-    handleSubmit,
     setValue,
     formState: { errors },
-    trigger,
-    reset
+    trigger
   } = useForm<HealthAndSafetyFormData>({
-    resolver: zodResolver(healthAndSafetySchema)
+    resolver: zodResolver(healthAndSafetySchema),
+    defaultValues: {
+      pcbu_duties: formData?.pcbu_duties ?? "",
+      site_supervisor_duties: formData?.site_supervisor_duties ?? "",
+      worker_duties: formData?.worker_duties ?? "",
+      contractor_duties: formData?.contractor_duties ?? "",
+      visitor_rules: formData?.visitor_rules ?? ""
+    }
   });
 
   useEffect(() => {
+    console.log("HealthAndSafety - Form Data Updated:", formData);
     if (formData) {
-      console.log("HealthAndSafety - Setting form values:", {
-        pcbu_duties: formData.pcbu_duties,
-        site_supervisor_duties: formData.site_supervisor_duties,
-        worker_duties: formData.worker_duties,
-        contractor_duties: formData.contractor_duties,
-        visitor_rules: formData.visitor_rules
-      });
-      
-      reset({
-        pcbu_duties: formData.pcbu_duties ?? "",
-        site_supervisor_duties: formData.site_supervisor_duties ?? "",
-        worker_duties: formData.worker_duties ?? "",
-        contractor_duties: formData.contractor_duties ?? "",
-        visitor_rules: formData.visitor_rules ?? ""
-      });
+      setValue("pcbu_duties", formData.pcbu_duties ?? "");
+      setValue("site_supervisor_duties", formData.site_supervisor_duties ?? "");
+      setValue("worker_duties", formData.worker_duties ?? "");
+      setValue("contractor_duties", formData.contractor_duties ?? "");
+      setValue("visitor_rules", formData.visitor_rules ?? "");
     }
-  }, [formData, reset]);
+  }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
     console.log("HealthAndSafety - Field change:", field, value);
