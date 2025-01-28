@@ -42,18 +42,10 @@ export const HealthAndSafety = ({ formData, setFormData, isLoading }: any) => {
     trigger,
     reset
   } = useForm<HealthAndSafetyFormData>({
-    resolver: zodResolver(healthAndSafetySchema),
-    defaultValues: {
-      pcbu_duties: "",
-      site_supervisor_duties: "",
-      worker_duties: "",
-      contractor_duties: "",
-      visitor_rules: ""
-    }
+    resolver: zodResolver(healthAndSafetySchema)
   });
 
   useEffect(() => {
-    console.log("HealthAndSafety - useEffect triggered with formData:", formData);
     if (formData) {
       console.log("HealthAndSafety - Resetting form with values:", {
         pcbu_duties: formData.pcbu_duties || "",
