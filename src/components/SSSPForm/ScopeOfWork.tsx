@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const scopeOfWorkSchema = z.object({
   services: z.string().min(1, "Services description is required"),
@@ -60,13 +61,9 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
         };
       }
 
-      // Cast the versions data to our VersionData interface
       const versionData = versions as unknown as VersionData;
-      
-      // Access the scopeOfWork data with proper typing
       const scopeOfWork = versionData?.data?.scopeOfWork;
       
-      // Return the scopeOfWork data or default values
       return {
         services: scopeOfWork?.services || '',
         locations: scopeOfWork?.locations || '',
