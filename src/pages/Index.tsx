@@ -7,7 +7,8 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SSSPTable } from "@/components/dashboard/SSSPTable";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
-import { FileText, AlertTriangle, CheckCircle } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle, ClipboardCheck } from "lucide-react";
+import { addDays, isPast } from "date-fns";
 
 const fetchSSSPs = async () => {
   const { data, error } = await supabase
@@ -64,40 +65,56 @@ const Index = () => {
     total: sssps.length,
     draft: sssps.filter(s => s.status === "draft").length,
     submitted: sssps.filter(s => s.status !== "draft").length,
+    needsReview: sssps.filter(s => {
+      const thirtyDaysFromNow = addDays(new Date(), 30);
+      const lastUpdated = new Date(s.updated_at);
+      const daysSinceUpdate = Math.floor((thirtyDaysFromNow.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60 * 24));
+      return daysSinceUpdate >= 30;
+    }).length
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <WelcomeHeader />
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <StatsCard
-                title="Total SSSPs"
-                value={stats.total}
-                icon={FileText}
-              />
-              <StatsCard
-                title="Draft SSSPs"
-                value={stats.draft}
-                icon={AlertTriangle}
-                iconColor="text-yellow-500"
-              />
-              <StatsCard
-                title="Submitted SSSPs"
-                value={stats.submitted}
-                icon={CheckCircle}
-                iconColor="text-green-500"
-              />
-            </div>
-
-            <SSSPTable ssspList={sssps} />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="grid grid-cols-1 gap-8">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatsCard
+              title="Total SSSPs"
+              value={stats.total}
+              icon={FileText}
+              iconColor="text-blue-500"
+            />
+            <StatsCard
+              title="Draft SSSPs"
+              value={stats.draft}
+              icon={AlertTriangle}
+              iconColor="text-yellow-500"
+            />
+            <StatsCard
+              title="Submitted SSSPs"
+              value={stats.submitted}
+              icon={CheckCircle}
+              iconColor="text-green-500"
+            />
+            <StatsCard
+              title="Need Review (30 Days)"
+              value={stats.needsReview}
+              icon={ClipboardCheck}
+              iconColor="text-purple-500"
+            />
           </div>
 
-          <div className="space-y-6">
-            <ActivityFeed />
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <SSSPTable ssspList={sssps} />
+            </div>
+            <div className="lg:col-span-1">
+              <ActivityFeed />
+            </div>
           </div>
         </div>
       </div>

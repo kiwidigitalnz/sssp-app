@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Activity, FileText, Share } from "lucide-react";
+import { Activity, FileText, Share, Edit } from "lucide-react";
 
 interface ActivityItemProps {
   activity: {
@@ -20,7 +20,7 @@ export function ActivityItem({ activity }: ActivityItemProps) {
       case "created":
         return <FileText className="h-4 w-4 text-green-500" />;
       case "updated":
-        return <Activity className="h-4 w-4 text-blue-500" />;
+        return <Edit className="h-4 w-4 text-blue-500" />;
       case "shared":
         return <Share className="h-4 w-4 text-purple-500" />;
       default:
@@ -46,11 +46,13 @@ export function ActivityItem({ activity }: ActivityItemProps) {
   };
 
   return (
-    <div className="flex items-start space-x-4">
-      <div className="mt-1">{getActivityIcon(activity.action)}</div>
-      <div className="flex-1">
-        <p className="text-sm text-gray-900">{getActivityText(activity)}</p>
-        <p className="text-xs text-gray-500">
+    <div className="flex items-start space-x-4 p-2 rounded-lg transition-colors hover:bg-muted/50">
+      <div className="mt-1 p-2 rounded-full bg-muted/20">
+        {getActivityIcon(activity.action)}
+      </div>
+      <div className="flex-1 space-y-1">
+        <p className="text-sm font-medium text-gray-900">{getActivityText(activity)}</p>
+        <p className="text-xs text-muted-foreground">
           {format(new Date(activity.created_at), 'PPp')}
         </p>
       </div>

@@ -29,25 +29,28 @@ export function ActivityFeed() {
   useActivitySubscription(query);
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="bg-white shadow-sm h-[600px] flex flex-col">
+      <CardHeader className="border-b bg-muted/10">
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <Activity className="h-5 w-5 text-primary" />
           Recent Activity
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[300px]">
+      <CardContent className="p-0 flex-1">
+        <ScrollArea className="h-[520px] px-6">
           {query.isLoading ? (
             <ActivitySkeleton />
           ) : query.data && query.data.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-4 py-4">
               {query.data.map((activity) => (
-                <ActivityItem key={activity.id} activity={activity} />
+                <ActivityItem 
+                  key={activity.id} 
+                  activity={activity}
+                />
               ))}
             </div>
           ) : (
-            <div className="text-center text-gray-500 py-8">
+            <div className="flex items-center justify-center h-full text-center text-muted-foreground py-8">
               No recent activity
             </div>
           )}
