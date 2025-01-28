@@ -216,13 +216,17 @@ export type Database = {
           id: string
           locations: string | null
           modified_by: string
+          project_manager_responsibilities: string | null
           services: string | null
+          site_supervisor_responsibilities: string | null
           start_date: string | null
           status: string
+          subcontractor_responsibilities: string | null
           title: string
           updated_at: string
           version: number
           version_history: Json[] | null
+          worker_responsibilities: string | null
         }
         Insert: {
           company_address?: string | null
@@ -238,13 +242,17 @@ export type Database = {
           id?: string
           locations?: string | null
           modified_by: string
+          project_manager_responsibilities?: string | null
           services?: string | null
+          site_supervisor_responsibilities?: string | null
           start_date?: string | null
           status?: string
+          subcontractor_responsibilities?: string | null
           title: string
           updated_at?: string
           version?: number
           version_history?: Json[] | null
+          worker_responsibilities?: string | null
         }
         Update: {
           company_address?: string | null
@@ -260,13 +268,17 @@ export type Database = {
           id?: string
           locations?: string | null
           modified_by?: string
+          project_manager_responsibilities?: string | null
           services?: string | null
+          site_supervisor_responsibilities?: string | null
           start_date?: string | null
           status?: string
+          subcontractor_responsibilities?: string | null
           title?: string
           updated_at?: string
           version?: number
           version_history?: Json[] | null
+          worker_responsibilities?: string | null
         }
         Relationships: []
       }
