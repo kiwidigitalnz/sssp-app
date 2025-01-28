@@ -4,7 +4,7 @@ export const profileFormSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   phone: z.string().optional(),
-  bio: z.string().optional(),
+  bio: z.string().optional().nullable(),
   email: z.string().email("Please enter a valid email address"),
   company: z.string().optional(),
   job_title: z.string().optional(),

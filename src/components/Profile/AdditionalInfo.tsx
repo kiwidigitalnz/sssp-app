@@ -20,6 +20,7 @@ export function AdditionalInfo({ form }: AdditionalInfoProps) {
               placeholder="Tell us about yourself..."
               className="min-h-[100px]"
               {...field}
+              value={field.value || ''}
             />
           </FormControl>
           <FormMessage />
