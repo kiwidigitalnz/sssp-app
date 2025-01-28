@@ -21,53 +21,28 @@ const scopeOfWorkSchema = z.object({
 
 type ScopeOfWorkFormData = z.infer<typeof scopeOfWorkSchema>;
 
-interface ScopeOfWorkData {
-  services: string;
-  locations: string;
-  considerations: string;
-}
-
-interface VersionData {
-  data: {
-    scopeOfWork: ScopeOfWorkData;
-  };
-}
-
 export const ScopeOfWork = ({ formData, setFormData }: any) => {
   const { id } = useParams();
   const { toast } = useToast();
 
   const { data: sssp, isLoading } = useQuery({
-    queryKey: ['sssp-version', id],
+    queryKey: ['sssp', id],
     queryFn: async () => {
-      const { data: versions, error } = await supabase
-        .from('sssp_versions')
-        .select('*')
-        .eq('sssp_id', id)
-        .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await supabase
+        .from('sssps')
+        .select('services, locations, considerations')
+        .eq('id', id)
+        .single();
 
       if (error) {
-        console.error('Error fetching SSSP version:', error);
+        console.error('Error fetching SSSP:', error);
         throw error;
       }
-      
-      if (!versions) {
-        return {
-          services: '',
-          locations: '',
-          considerations: ''
-        };
-      }
 
-      const versionData = versions as unknown as VersionData;
-      const scopeOfWork = versionData?.data?.scopeOfWork;
-      
       return {
-        services: scopeOfWork?.services || '',
-        locations: scopeOfWork?.locations || '',
-        considerations: scopeOfWork?.considerations || ''
+        services: data?.services || '',
+        locations: data?.locations || '',
+        considerations: data?.considerations || ''
       };
     }
   });

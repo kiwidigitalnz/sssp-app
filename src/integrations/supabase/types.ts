@@ -208,12 +208,15 @@ export type Database = {
           company_contact_name: string | null
           company_contact_phone: string | null
           company_name: string
+          considerations: string | null
           created_at: string
           created_by: string
           description: string | null
           end_date: string | null
           id: string
+          locations: string | null
           modified_by: string
+          services: string | null
           start_date: string | null
           status: string
           title: string
@@ -227,12 +230,15 @@ export type Database = {
           company_contact_name?: string | null
           company_contact_phone?: string | null
           company_name: string
+          considerations?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           end_date?: string | null
           id?: string
+          locations?: string | null
           modified_by: string
+          services?: string | null
           start_date?: string | null
           status?: string
           title: string
@@ -246,12 +252,15 @@ export type Database = {
           company_contact_name?: string | null
           company_contact_phone?: string | null
           company_name?: string
+          considerations?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           end_date?: string | null
           id?: string
+          locations?: string | null
           modified_by?: string
+          services?: string | null
           start_date?: string | null
           status?: string
           title?: string
