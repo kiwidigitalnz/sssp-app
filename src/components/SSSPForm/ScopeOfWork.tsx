@@ -27,6 +27,12 @@ interface ScopeOfWorkData {
   considerations: string;
 }
 
+interface VersionData {
+  data: {
+    scopeOfWork?: ScopeOfWorkData;
+  };
+}
+
 export const ScopeOfWork = ({ formData, setFormData }: any) => {
   const { id } = useParams();
   const { toast } = useToast();
@@ -44,8 +50,9 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
 
       if (error) throw error;
       
-      // The data property contains our scopeOfWork object directly
-      const scopeOfWork = versions?.data?.scopeOfWork as ScopeOfWorkData;
+      // Cast the versions data to our VersionData interface
+      const versionData = versions as unknown as VersionData;
+      const scopeOfWork = versionData?.data?.scopeOfWork;
       
       return scopeOfWork || {
         services: '',
