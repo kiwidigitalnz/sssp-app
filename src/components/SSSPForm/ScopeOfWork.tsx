@@ -21,6 +21,12 @@ const scopeOfWorkSchema = z.object({
 
 type ScopeOfWorkFormData = z.infer<typeof scopeOfWorkSchema>;
 
+interface ScopeOfWorkData {
+  services: string;
+  locations: string;
+  considerations: string;
+}
+
 export const ScopeOfWork = ({ formData, setFormData }: any) => {
   const { id } = useParams();
   const { toast } = useToast();
@@ -37,7 +43,16 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
         .single();
 
       if (error) throw error;
-      return versions?.data?.scopeOfWork || {};
+      
+      // Safely type and access the scopeOfWork data
+      const versionData = versions?.data as Record<string, any>;
+      const scopeOfWork = versionData?.scopeOfWork as ScopeOfWorkData;
+      
+      return scopeOfWork || {
+        services: '',
+        locations: '',
+        considerations: ''
+      };
     }
   });
 
