@@ -8,6 +8,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const scopeOfWorkSchema = z.object({
   services: z.string().min(1, "Services description is required"),
@@ -18,7 +22,25 @@ const scopeOfWorkSchema = z.object({
 type ScopeOfWorkFormData = z.infer<typeof scopeOfWorkSchema>;
 
 export const ScopeOfWork = ({ formData, setFormData }: any) => {
+  const { id } = useParams();
   const { toast } = useToast();
+  
+  const { data: sssp, isLoading } = useQuery({
+    queryKey: ['sssp-version', id],
+    queryFn: async () => {
+      const { data: versions, error } = await supabase
+        .from('sssp_versions')
+        .select('*')
+        .eq('sssp_id', id)
+        .order('version', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return versions?.data?.scopeOfWork || {};
+    }
+  });
+
   const {
     register,
     handleSubmit,
@@ -35,10 +57,18 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
   });
 
   useEffect(() => {
-    setValue("services", formData.services || "");
-    setValue("locations", formData.locations || "");
-    setValue("considerations", formData.considerations || "");
-  }, [formData, setValue]);
+    if (sssp) {
+      setValue("services", sssp.services || "");
+      setValue("locations", sssp.locations || "");
+      setValue("considerations", sssp.considerations || "");
+      setFormData({
+        ...formData,
+        services: sssp.services || "",
+        locations: sssp.locations || "",
+        considerations: sssp.considerations || ""
+      });
+    }
+  }, [sssp, setValue, setFormData, formData]);
 
   const handleFieldChange = async (field: keyof ScopeOfWorkFormData, value: string) => {
     setFormData({ ...formData, [field]: value });
@@ -52,6 +82,26 @@ export const ScopeOfWork = ({ formData, setFormData }: any) => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-md">
+        <CardHeader className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-md">
