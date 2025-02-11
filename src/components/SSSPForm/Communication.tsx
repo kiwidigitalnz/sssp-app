@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { MeetingSelection } from "./MeetingSelection";
-import type { Meeting } from "@/types/meetings";
+import type { CommunicationProps, Meeting } from "@/types/sssp/ui";
 
 const communicationSchema = z.object({
   communication_methods: z.string()
@@ -29,18 +29,7 @@ const communicationSchema = z.object({
 
 type CommunicationFormData = z.infer<typeof communicationSchema>;
 
-interface CommunicationProps {
-  formData: {
-    communication_methods?: string;
-    toolbox_meetings?: string;
-    reporting_procedures?: string;
-    communication_protocols?: string;
-    meetings_schedule?: Meeting[];
-  };
-  setFormData: (data: any) => void;
-}
-
-export const Communication = ({ formData, setFormData }: CommunicationProps) => {
+export const Communication = ({ formData, setFormData, isLoading = false }: CommunicationProps) => {
   const { toast } = useToast();
   const {
     register,
@@ -200,3 +189,4 @@ export const Communication = ({ formData, setFormData }: CommunicationProps) => 
     </Card>
   );
 };
+

@@ -57,3 +57,24 @@ export interface TextSectionProps {
   onChange: (value: string) => void;
   placeholder: string;
 }
+
+export interface CommunicationProps {
+  formData: {
+    communication_methods?: string;
+    toolbox_meetings?: string;
+    reporting_procedures?: string;
+    communication_protocols?: string;
+    meetings_schedule?: Meeting[];
+  };
+  setFormData: (data: any) => void;
+  isLoading?: boolean;
+}
+
+export interface Meeting {
+  id?: string;
+  type: string;
+  frequency: string;
+  participants: string[];
+  description?: string;
+}
+
