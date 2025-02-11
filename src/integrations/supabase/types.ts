@@ -204,6 +204,8 @@ export type Database = {
       sssps: {
         Row: {
           assembly_points: string | null
+          communication_methods: string | null
+          communication_protocols: string | null
           company_address: string | null
           company_contact_email: string | null
           company_contact_name: string | null
@@ -226,11 +228,13 @@ export type Database = {
           id: string
           incident_reporting: string | null
           locations: string | null
+          meetings_schedule: Json[] | null
           mobile_phone: string | null
           modified_by: string
           parking_rules: string | null
           pcbu_duties: string | null
           ppe: string | null
+          reporting_procedures: string | null
           required_training: Json[] | null
           services: string | null
           site_specific_ppe: string | null
@@ -239,6 +243,7 @@ export type Database = {
           start_date: string | null
           status: string
           title: string
+          toolbox_meetings: string | null
           training_records: string | null
           updated_at: string
           version: number
@@ -247,6 +252,8 @@ export type Database = {
         }
         Insert: {
           assembly_points?: string | null
+          communication_methods?: string | null
+          communication_protocols?: string | null
           company_address?: string | null
           company_contact_email?: string | null
           company_contact_name?: string | null
@@ -269,11 +276,13 @@ export type Database = {
           id?: string
           incident_reporting?: string | null
           locations?: string | null
+          meetings_schedule?: Json[] | null
           mobile_phone?: string | null
           modified_by: string
           parking_rules?: string | null
           pcbu_duties?: string | null
           ppe?: string | null
+          reporting_procedures?: string | null
           required_training?: Json[] | null
           services?: string | null
           site_specific_ppe?: string | null
@@ -282,6 +291,7 @@ export type Database = {
           start_date?: string | null
           status?: string
           title: string
+          toolbox_meetings?: string | null
           training_records?: string | null
           updated_at?: string
           version?: number
@@ -290,6 +300,8 @@ export type Database = {
         }
         Update: {
           assembly_points?: string | null
+          communication_methods?: string | null
+          communication_protocols?: string | null
           company_address?: string | null
           company_contact_email?: string | null
           company_contact_name?: string | null
@@ -312,11 +324,13 @@ export type Database = {
           id?: string
           incident_reporting?: string | null
           locations?: string | null
+          meetings_schedule?: Json[] | null
           mobile_phone?: string | null
           modified_by?: string
           parking_rules?: string | null
           pcbu_duties?: string | null
           ppe?: string | null
+          reporting_procedures?: string | null
           required_training?: Json[] | null
           services?: string | null
           site_specific_ppe?: string | null
@@ -325,6 +339,7 @@ export type Database = {
           start_date?: string | null
           status?: string
           title?: string
+          toolbox_meetings?: string | null
           training_records?: string | null
           updated_at?: string
           version?: number

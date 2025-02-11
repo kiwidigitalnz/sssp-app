@@ -1,24 +1,29 @@
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, ClipboardList, Users } from "lucide-react";
+import { MessageSquare, ClipboardList, Users, Calendar } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { MeetingSelection } from "./MeetingSelection";
 
 const communicationSchema = z.object({
-  meetings: z.string()
-    .min(10, "Safety meetings description must be at least 10 characters long")
-    .max(1000, "Safety meetings description must not exceed 1000 characters"),
-  reporting: z.string()
-    .min(10, "Incident reporting procedures must be at least 10 characters long")
-    .max(1000, "Incident reporting procedures must not exceed 1000 characters"),
-  consultation: z.string()
-    .min(10, "Worker consultation process must be at least 10 characters long")
-    .max(1000, "Worker consultation process must not exceed 1000 characters")
+  communication_methods: z.string()
+    .min(10, "Communication methods must be at least 10 characters long")
+    .max(1000, "Communication methods must not exceed 1000 characters"),
+  toolbox_meetings: z.string()
+    .min(10, "Toolbox meetings description must be at least 10 characters long")
+    .max(1000, "Toolbox meetings description must not exceed 1000 characters"),
+  reporting_procedures: z.string()
+    .min(10, "Reporting procedures must be at least 10 characters long")
+    .max(1000, "Reporting procedures must not exceed 1000 characters"),
+  communication_protocols: z.string()
+    .min(10, "Communication protocols must be at least 10 characters long")
+    .max(1000, "Communication protocols must not exceed 1000 characters")
 });
 
 type CommunicationFormData = z.infer<typeof communicationSchema>;
@@ -34,16 +39,18 @@ export const Communication = ({ formData, setFormData }: any) => {
   } = useForm<CommunicationFormData>({
     resolver: zodResolver(communicationSchema),
     defaultValues: {
-      meetings: formData.meetings || "",
-      reporting: formData.reporting || "",
-      consultation: formData.consultation || ""
+      communication_methods: formData.communication_methods || "",
+      toolbox_meetings: formData.toolbox_meetings || "",
+      reporting_procedures: formData.reporting_procedures || "",
+      communication_protocols: formData.communication_protocols || ""
     }
   });
 
   useEffect(() => {
-    setValue("meetings", formData.meetings || "");
-    setValue("reporting", formData.reporting || "");
-    setValue("consultation", formData.consultation || "");
+    setValue("communication_methods", formData.communication_methods || "");
+    setValue("toolbox_meetings", formData.toolbox_meetings || "");
+    setValue("reporting_procedures", formData.reporting_procedures || "");
+    setValue("communication_protocols", formData.communication_protocols || "");
   }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof CommunicationFormData, value: string) => {
@@ -59,6 +66,10 @@ export const Communication = ({ formData, setFormData }: any) => {
     }
   };
 
+  const handleMeetingsChange = (meetings: any[]) => {
+    setFormData({ ...formData, meetings_schedule: meetings });
+  };
+
   return (
     <Card className="shadow-md">
       <CardHeader className="space-y-2">
@@ -71,74 +82,106 @@ export const Communication = ({ formData, setFormData }: any) => {
         <div className="space-y-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="meetings" className="text-base font-medium flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Safety Meetings
+              <Label htmlFor="communication_methods" className="text-base font-medium flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Communication Methods
               </Label>
               <QuickFillButton
-                fieldId="meetings"
-                fieldName="Safety Meetings"
-                onSelect={(value) => handleFieldChange("meetings", value)}
+                fieldId="communication_methods"
+                fieldName="Communication Methods"
+                onSelect={(value) => handleFieldChange("communication_methods", value)}
               />
             </div>
             <Textarea
-              id="meetings"
-              {...register("meetings")}
-              className={`min-h-[100px] resize-none ${errors.meetings ? "border-destructive" : ""}`}
-              placeholder="Detail safety meeting schedules and procedures..."
-              onChange={(e) => handleFieldChange("meetings", e.target.value)}
+              id="communication_methods"
+              {...register("communication_methods")}
+              className={`min-h-[100px] resize-none ${errors.communication_methods ? "border-destructive" : ""}`}
+              placeholder="Detail communication methods used on site..."
+              onChange={(e) => handleFieldChange("communication_methods", e.target.value)}
             />
-            {errors.meetings && (
-              <p className="text-sm text-destructive mt-1">{errors.meetings.message}</p>
+            {errors.communication_methods && (
+              <p className="text-sm text-destructive mt-1">{errors.communication_methods.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="reporting" className="text-base font-medium flex items-center gap-2">
+              <Label htmlFor="toolbox_meetings" className="text-base font-medium flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Toolbox Meetings
+              </Label>
+              <QuickFillButton
+                fieldId="toolbox_meetings"
+                fieldName="Toolbox Meetings"
+                onSelect={(value) => handleFieldChange("toolbox_meetings", value)}
+              />
+            </div>
+            <Textarea
+              id="toolbox_meetings"
+              {...register("toolbox_meetings")}
+              className={`min-h-[100px] resize-none ${errors.toolbox_meetings ? "border-destructive" : ""}`}
+              placeholder="Describe toolbox meetings schedule and procedures..."
+              onChange={(e) => handleFieldChange("toolbox_meetings", e.target.value)}
+            />
+            {errors.toolbox_meetings && (
+              <p className="text-sm text-destructive mt-1">{errors.toolbox_meetings.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="reporting_procedures" className="text-base font-medium flex items-center gap-2">
                 <ClipboardList className="h-4 w-4" />
-                Incident Reporting
+                Reporting Procedures
               </Label>
               <QuickFillButton
-                fieldId="reporting"
-                fieldName="Incident Reporting"
-                onSelect={(value) => handleFieldChange("reporting", value)}
+                fieldId="reporting_procedures"
+                fieldName="Reporting Procedures"
+                onSelect={(value) => handleFieldChange("reporting_procedures", value)}
               />
             </div>
             <Textarea
-              id="reporting"
-              {...register("reporting")}
-              className={`min-h-[100px] resize-none ${errors.reporting ? "border-destructive" : ""}`}
-              placeholder="Outline incident reporting procedures..."
-              onChange={(e) => handleFieldChange("reporting", e.target.value)}
+              id="reporting_procedures"
+              {...register("reporting_procedures")}
+              className={`min-h-[100px] resize-none ${errors.reporting_procedures ? "border-destructive" : ""}`}
+              placeholder="Outline reporting procedures..."
+              onChange={(e) => handleFieldChange("reporting_procedures", e.target.value)}
             />
-            {errors.reporting && (
-              <p className="text-sm text-destructive mt-1">{errors.reporting.message}</p>
+            {errors.reporting_procedures && (
+              <p className="text-sm text-destructive mt-1">{errors.reporting_procedures.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="consultation" className="text-base font-medium flex items-center gap-2">
+              <Label htmlFor="communication_protocols" className="text-base font-medium flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Worker Consultation
+                Communication Protocols
               </Label>
               <QuickFillButton
-                fieldId="consultation"
-                fieldName="Worker Consultation"
-                onSelect={(value) => handleFieldChange("consultation", value)}
+                fieldId="communication_protocols"
+                fieldName="Communication Protocols"
+                onSelect={(value) => handleFieldChange("communication_protocols", value)}
               />
             </div>
             <Textarea
-              id="consultation"
-              {...register("consultation")}
-              className={`min-h-[100px] resize-none ${errors.consultation ? "border-destructive" : ""}`}
-              placeholder="Describe worker consultation processes..."
-              onChange={(e) => handleFieldChange("consultation", e.target.value)}
+              id="communication_protocols"
+              {...register("communication_protocols")}
+              className={`min-h-[100px] resize-none ${errors.communication_protocols ? "border-destructive" : ""}`}
+              placeholder="Describe communication protocols..."
+              onChange={(e) => handleFieldChange("communication_protocols", e.target.value)}
             />
-            {errors.consultation && (
-              <p className="text-sm text-destructive mt-1">{errors.consultation.message}</p>
+            {errors.communication_protocols && (
+              <p className="text-sm text-destructive mt-1">{errors.communication_protocols.message}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-base font-medium">Scheduled Meetings</Label>
+            <MeetingSelection
+              previousMeetings={formData.meetings_schedule || []}
+              onSelect={handleMeetingsChange}
+            />
           </div>
         </div>
       </CardContent>
