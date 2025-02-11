@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -99,7 +100,7 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
               removeAudit={removeAudit}
             />
             <Button onClick={addAudit} className="mt-4">
-              Add Audit
+              <Plus className="mr-2 h-4 w-4" /> Add Audit
             </Button>
           </div>
 
