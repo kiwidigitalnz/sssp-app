@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import type { SSSP } from '@/types/sssp';
@@ -17,7 +17,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const lastSavedRef = useRef<string | null>(null);
 
   // If the key is a UUID, it's an existing SSSP, so fetch from Supabase
   useEffect(() => {
@@ -35,7 +35,9 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           
           if (sssp) {
             console.log('Fetched SSSP data from Supabase:', sssp);
-            setData(sssp as Partial<SSSP> as T);
+            setData(sssp as T);
+            // Update lastSavedRef with the initial Supabase data
+            lastSavedRef.current = JSON.stringify(sssp);
           } else {
             console.log('No SSSP found with ID:', options.key);
             toast({
@@ -65,22 +67,30 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   const clearSavedData = useCallback(() => {
     localStorage.removeItem(options.key);
     setData(options.initialData);
-    setLastSaved(null);
+    lastSavedRef.current = null;
   }, [options.key, options.initialData]);
 
   useEffect(() => {
     if (data && !isLoading) {
       const currentData = JSON.stringify(data);
-      if (currentData !== lastSaved) {
+      // Only save if the data has actually changed
+      if (currentData !== lastSavedRef.current) {
         console.log('Saving form data to localStorage:', data);
         localStorage.setItem(options.key, currentData);
-        setLastSaved(currentData);
+        lastSavedRef.current = currentData;
       }
     }
-  }, [data, options.key, isLoading, lastSaved]);
+  }, [data, options.key, isLoading]);
 
   const updateFormData = useCallback((newData: T) => {
-    setData(newData);
+    setData((prevData) => {
+      const newDataString = JSON.stringify(newData);
+      // Only update if the data has actually changed
+      if (newDataString !== lastSavedRef.current) {
+        return newData;
+      }
+      return prevData;
+    });
   }, []);
 
   return {
