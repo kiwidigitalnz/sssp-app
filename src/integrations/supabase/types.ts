@@ -249,6 +249,7 @@ export type Database = {
           updated_at: string
           version: number
           version_history: Json[] | null
+          visitor_rules: string | null
           worker_duties: string | null
         }
         Insert: {
@@ -298,6 +299,7 @@ export type Database = {
           updated_at?: string
           version?: number
           version_history?: Json[] | null
+          visitor_rules?: string | null
           worker_duties?: string | null
         }
         Update: {
@@ -347,6 +349,7 @@ export type Database = {
           updated_at?: string
           version?: number
           version_history?: Json[] | null
+          visitor_rules?: string | null
           worker_duties?: string | null
         }
         Relationships: []
