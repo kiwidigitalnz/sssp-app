@@ -45,7 +45,13 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
         }
 
         if (data) {
-          const emergencyContacts = data.emergency_contacts as EmergencyContactFormData[] || [];
+          const emergencyContacts = (data.emergency_contacts as any[] || []).map(contact => ({
+            name: contact.name || '',
+            role: contact.role || '',
+            phone: contact.phone || '',
+            email: contact.email
+          }));
+
           setFormData({
             ...formData,
             emergencyPlan: data.emergency_plan || '',
@@ -81,7 +87,13 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
       const allContacts: EmergencyContactFormData[] = [];
       sssps.forEach((sssp: any) => {
         if (sssp.emergency_contacts) {
-          allContacts.push(...(sssp.emergency_contacts as EmergencyContactFormData[]));
+          const contacts = (sssp.emergency_contacts as any[]).map(contact => ({
+            name: contact.name || '',
+            role: contact.role || '',
+            phone: contact.phone || '',
+            email: contact.email
+          }));
+          allContacts.push(...contacts);
         }
       });
 
@@ -181,3 +193,4 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
     </div>
   );
 };
+
