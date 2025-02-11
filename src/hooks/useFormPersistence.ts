@@ -2,13 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import type { SSSP } from '@/types/sssp';
 
 export interface FormPersistenceOptions {
   key: string;
   initialData?: any;
 }
 
-export function useFormPersistence<T>(options: FormPersistenceOptions) {
+export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersistenceOptions) {
   const [data, setData] = useState<T>(() => {
     const savedData = localStorage.getItem(options.key);
     console.log('Initial form data from localStorage:', savedData ? JSON.parse(savedData) : options.initialData);
@@ -31,7 +32,7 @@ export function useFormPersistence<T>(options: FormPersistenceOptions) {
           if (error) throw error;
           
           console.log('Fetched SSSP data from Supabase:', sssp);
-          setData(sssp);
+          setData(sssp as T);
         } catch (error) {
           console.error('Error fetching SSSP:', error);
           toast({
