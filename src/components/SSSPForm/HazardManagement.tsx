@@ -8,7 +8,7 @@ import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import type { HazardFormData, SSSPFormData, Hazard } from "@/types/sssp";
+import type { HazardFormData, SSSPFormData, Hazard } from "@/types/sssp/forms";
 
 interface HazardManagementProps {
   formData: SSSPFormData;
