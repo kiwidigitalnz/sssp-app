@@ -1,6 +1,6 @@
-
 // UI-specific type definitions
 import type { Meeting, MeetingFrequency } from '../meetings';
+import type { HazardFormData } from './forms';
 
 export { Meeting, MeetingFrequency };
 
@@ -26,15 +26,11 @@ export interface FormNavigationProps {
 }
 
 export interface HazardTableProps {
-  hazards: Array<{
-    hazard: string;
-    risk: string;
-    controlMeasures: string;
-  }>;
-  previousHazards: any[];
+  hazards: HazardFormData[];
+  previousHazards: HazardFormData[];
   previousRisks: string[];
   previousControls: string[];
-  updateHazard: (index: number, field: string, value: string) => void;
+  updateHazard: (index: number, field: keyof HazardFormData, value: string) => void;
   removeHazard: (index: number) => void;
 }
 
@@ -84,4 +80,3 @@ export interface HealthAndSafetyPoliciesProps {
   setFormData: (data: any) => void;
   isLoading?: boolean;
 }
-

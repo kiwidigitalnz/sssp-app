@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -17,21 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Hazard {
-  hazard: string;
-  risk: string;
-  controlMeasures: string;
-}
-
-interface HazardTableProps {
-  hazards: Hazard[];
-  previousHazards: Hazard[];
-  previousRisks: string[];
-  previousControls: string[];
-  updateHazard: (index: number, field: keyof Hazard, value: string) => void;
-  removeHazard: (index: number) => void;
-}
+import type { HazardFormData } from "@/types/sssp/forms";
+import type { HazardTableProps } from "@/types/sssp/ui";
 
 export const HazardTable = ({
   hazards,
@@ -48,13 +36,12 @@ export const HazardTable = ({
           <TableRow className="bg-muted/50">
             <TableHead className="w-[25%] min-w-[200px]">Hazard/Risk Source</TableHead>
             <TableHead className="w-[15%] min-w-[120px]">Risk Level</TableHead>
-            <TableHead className="w-[25%] min-w-[200px]">Potential Harm</TableHead>
             <TableHead className="w-[30%] min-w-[250px]">Control Measures</TableHead>
             <TableHead className="w-[5%] min-w-[60px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {hazards.map((hazard: Hazard, index: number) => (
+          {hazards.map((hazard: HazardFormData, index: number) => (
             <TableRow key={index} className="hover:bg-muted/50">
               <TableCell className="align-top">
                 <Input
@@ -66,8 +53,8 @@ export const HazardTable = ({
               </TableCell>
               <TableCell className="align-top">
                 <Select
-                  value={hazard.risk}
-                  onValueChange={(value) => updateHazard(index, "risk", value)}
+                  value={hazard.riskLevel}
+                  onValueChange={(value) => updateHazard(index, "riskLevel", value)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select risk" />
@@ -79,14 +66,6 @@ export const HazardTable = ({
                     <SelectItem value="Critical">Critical</SelectItem>
                   </SelectContent>
                 </Select>
-              </TableCell>
-              <TableCell className="align-top">
-                <Input
-                  value={hazard.risk}
-                  onChange={(e) => updateHazard(index, "risk", e.target.value)}
-                  placeholder="Describe potential harm"
-                  className="w-full"
-                />
               </TableCell>
               <TableCell className="align-top">
                 <Input
@@ -112,7 +91,7 @@ export const HazardTable = ({
           ))}
           {hazards.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                 No hazards added yet. Click "Add Single Hazard" to begin.
               </TableCell>
             </TableRow>

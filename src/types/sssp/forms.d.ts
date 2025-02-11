@@ -24,6 +24,7 @@ export interface HazardFormData {
   hazard: string;
   risk: string;
   controlMeasures: string;
+  riskLevel?: "Low" | "Medium" | "High" | "Critical";
 }
 
 export type Hazard = HazardFormData;
