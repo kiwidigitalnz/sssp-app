@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
@@ -37,22 +38,30 @@ export const SiteSafetyRules = ({ formData, setFormData }: any) => {
   } = useForm<SiteSafetyRulesFormData>({
     resolver: zodResolver(siteSafetyRulesSchema),
     defaultValues: {
-      entryExitProcedures: formData.entryExitProcedures || "",
-      speedLimits: formData.speedLimits || "",
-      parkingRules: formData.parkingRules || "",
-      sitePPE: formData.sitePPE || ""
+      entryExitProcedures: formData?.entry_exit_procedures || "",
+      speedLimits: formData?.speed_limits || "",
+      parkingRules: formData?.parking_rules || "",
+      sitePPE: formData?.site_specific_ppe || ""
     }
   });
 
   useEffect(() => {
-    setValue("entryExitProcedures", formData.entryExitProcedures || "");
-    setValue("speedLimits", formData.speedLimits || "");
-    setValue("parkingRules", formData.parkingRules || "");
-    setValue("sitePPE", formData.sitePPE || "");
+    setValue("entryExitProcedures", formData?.entry_exit_procedures || "");
+    setValue("speedLimits", formData?.speed_limits || "");
+    setValue("parkingRules", formData?.parking_rules || "");
+    setValue("sitePPE", formData?.site_specific_ppe || "");
   }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof SiteSafetyRulesFormData, value: string) => {
-    setFormData({ ...formData, [field]: value });
+    const dbFieldMapping: Record<keyof SiteSafetyRulesFormData, string> = {
+      entryExitProcedures: 'entry_exit_procedures',
+      speedLimits: 'speed_limits',
+      parkingRules: 'parking_rules',
+      sitePPE: 'site_specific_ppe'
+    };
+
+    const dbField = dbFieldMapping[field];
+    setFormData({ ...formData, [dbField]: value });
     setValue(field, value);
     const result = await trigger(field);
     if (!result && errors[field]) {

@@ -220,22 +220,22 @@ export type Database = {
           emergency_equipment: string | null
           emergency_plan: string | null
           end_date: string | null
+          entry_exit_procedures: string | null
           fatigue_management: string | null
           hazards: Json[] | null
-          housekeeping_rules: string | null
           id: string
           incident_reporting: string | null
           locations: string | null
           mobile_phone: string | null
           modified_by: string
+          parking_rules: string | null
           pcbu_duties: string | null
           ppe: string | null
           required_training: Json[] | null
-          security_requirements: string | null
           services: string | null
-          site_access_rules: string | null
+          site_specific_ppe: string | null
           site_supervisor_duties: string | null
-          smoking_policy: string | null
+          speed_limits: string | null
           start_date: string | null
           status: string
           title: string
@@ -243,7 +243,6 @@ export type Database = {
           updated_at: string
           version: number
           version_history: Json[] | null
-          visitor_rules: string | null
           worker_duties: string | null
         }
         Insert: {
@@ -264,22 +263,22 @@ export type Database = {
           emergency_equipment?: string | null
           emergency_plan?: string | null
           end_date?: string | null
+          entry_exit_procedures?: string | null
           fatigue_management?: string | null
           hazards?: Json[] | null
-          housekeeping_rules?: string | null
           id?: string
           incident_reporting?: string | null
           locations?: string | null
           mobile_phone?: string | null
           modified_by: string
+          parking_rules?: string | null
           pcbu_duties?: string | null
           ppe?: string | null
           required_training?: Json[] | null
-          security_requirements?: string | null
           services?: string | null
-          site_access_rules?: string | null
+          site_specific_ppe?: string | null
           site_supervisor_duties?: string | null
-          smoking_policy?: string | null
+          speed_limits?: string | null
           start_date?: string | null
           status?: string
           title: string
@@ -287,7 +286,6 @@ export type Database = {
           updated_at?: string
           version?: number
           version_history?: Json[] | null
-          visitor_rules?: string | null
           worker_duties?: string | null
         }
         Update: {
@@ -308,22 +306,22 @@ export type Database = {
           emergency_equipment?: string | null
           emergency_plan?: string | null
           end_date?: string | null
+          entry_exit_procedures?: string | null
           fatigue_management?: string | null
           hazards?: Json[] | null
-          housekeeping_rules?: string | null
           id?: string
           incident_reporting?: string | null
           locations?: string | null
           mobile_phone?: string | null
           modified_by?: string
+          parking_rules?: string | null
           pcbu_duties?: string | null
           ppe?: string | null
           required_training?: Json[] | null
-          security_requirements?: string | null
           services?: string | null
-          site_access_rules?: string | null
+          site_specific_ppe?: string | null
           site_supervisor_duties?: string | null
-          smoking_policy?: string | null
+          speed_limits?: string | null
           start_date?: string | null
           status?: string
           title?: string
@@ -331,7 +329,6 @@ export type Database = {
           updated_at?: string
           version?: number
           version_history?: Json[] | null
-          visitor_rules?: string | null
           worker_duties?: string | null
         }
         Relationships: []
