@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,6 +51,19 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
       annualReview: formData.annualReview || ""
     }
   });
+
+  useEffect(() => {
+    // Initialize demo data if fields are empty
+    if (!formData.correctiveActions) {
+      const demoCorrectiveActions = "Our corrective actions process involves immediate documentation of identified issues, assignment of responsibility, setting timeframes for completion, and follow-up verification. All actions are tracked in our digital system and reviewed monthly to ensure completion and effectiveness. Serious issues are escalated to senior management for review and resource allocation.";
+      setFormData({ ...formData, correctiveActions: demoCorrectiveActions });
+    }
+
+    if (!formData.annualReview) {
+      const demoAnnualReview = "The SSSP undergoes a comprehensive annual review led by our Health & Safety team. This includes analyzing incident data, audit findings, and worker feedback. Updates are made to reflect changing site conditions, new hazards, and lessons learned. All stakeholders participate in the review process, and changes are communicated through toolbox meetings and formal training sessions.";
+      setFormData({ ...formData, annualReview: demoAnnualReview });
+    }
+  }, []);
 
   const updateAudit = async (index: number, field: string, value: string) => {
     const newAudits = [...audits];
