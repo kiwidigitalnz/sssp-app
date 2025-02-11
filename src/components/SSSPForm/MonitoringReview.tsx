@@ -37,7 +37,35 @@ interface MonitoringReviewProps {
 
 export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProps) => {
   const { toast } = useToast();
-  const [audits, setAudits] = useState(formData.audits || []);
+  const [audits, setAudits] = useState(() => {
+    if (formData.audits && formData.audits.length > 0) {
+      return formData.audits;
+    }
+    // Initialize with demo data if no audits exist
+    return [
+      {
+        type: "Site Safety Inspection",
+        frequency: "Weekly",
+        responsible: "Site Supervisor",
+        lastDate: "2024-02-01",
+        nextDate: "2024-02-08"
+      },
+      {
+        type: "Equipment Safety Check",
+        frequency: "Monthly",
+        responsible: "Safety Officer",
+        lastDate: "2024-01-15",
+        nextDate: "2024-02-15"
+      },
+      {
+        type: "Emergency Response Drill",
+        frequency: "Quarterly",
+        responsible: "H&S Manager",
+        lastDate: "2024-01-01",
+        nextDate: "2024-04-01"
+      }
+    ];
+  });
 
   const {
     setValue,
@@ -53,15 +81,9 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
   });
 
   useEffect(() => {
-    // Initialize demo data if fields are empty
-    if (!formData.correctiveActions) {
-      const demoCorrectiveActions = "Our corrective actions process involves immediate documentation of identified issues, assignment of responsibility, setting timeframes for completion, and follow-up verification. All actions are tracked in our digital system and reviewed monthly to ensure completion and effectiveness. Serious issues are escalated to senior management for review and resource allocation.";
-      setFormData({ ...formData, correctiveActions: demoCorrectiveActions });
-    }
-
-    if (!formData.annualReview) {
-      const demoAnnualReview = "The SSSP undergoes a comprehensive annual review led by our Health & Safety team. This includes analyzing incident data, audit findings, and worker feedback. Updates are made to reflect changing site conditions, new hazards, and lessons learned. All stakeholders participate in the review process, and changes are communicated through toolbox meetings and formal training sessions.";
-      setFormData({ ...formData, annualReview: demoAnnualReview });
+    if (!formData.audits || formData.audits.length === 0) {
+      setFormData({ ...formData, audits });
+      setValue("audits", audits);
     }
   }, []);
 
