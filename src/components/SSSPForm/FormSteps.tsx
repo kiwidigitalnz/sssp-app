@@ -1,3 +1,4 @@
+
 import { ReactNode } from "react";
 import { ProjectDetails } from "./ProjectDetails";
 import { CompanyInfo } from "./CompanyInfo";
@@ -5,7 +6,7 @@ import { ScopeOfWork } from "./ScopeOfWork";
 import { HealthAndSafety } from "./HealthAndSafety";
 import { HazardManagement } from "./HazardManagement";
 import { EmergencyProcedures } from "./EmergencyProcedures";
-import { TrainingRequirements } from "./TrainingRequirements";
+import TrainingRequirements from "./TrainingRequirements";
 import { HealthAndSafetyPolicies } from "./HealthAndSafetyPolicies";
 import { SiteSafetyRules } from "./SiteSafetyRules";
 import { Communication } from "./Communication";
