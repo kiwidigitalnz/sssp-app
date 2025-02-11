@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { TrainingSelection } from "../TrainingSelection";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTrainingDialog } from "./AddTrainingDialog";
@@ -24,24 +23,42 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
 
   useEffect(() => {
     const fetchPreviousTrainings = async () => {
-      const { data, error } = await supabase
-        .from('sssps')
-        .select('required_training')
-        .not('id', 'eq', formData.id);
+      // Only fetch if we have a valid ID
+      if (formData?.id) {
+        const { data, error } = await supabase
+          .from('sssps')
+          .select('required_training')
+          .neq('id', formData.id);
 
-      if (!error && data) {
-        const allTrainings = data.reduce((acc: any[], curr: any) => {
-          if (curr.required_training) {
-            return [...acc, ...curr.required_training];
-          }
-          return acc;
-        }, []);
-        setPreviousTrainings(allTrainings);
+        if (!error && data) {
+          const allTrainings = data.reduce((acc: any[], curr: any) => {
+            if (curr.required_training) {
+              return [...acc, ...curr.required_training];
+            }
+            return acc;
+          }, []);
+          setPreviousTrainings(allTrainings);
+        }
+      } else {
+        // If no ID (new form), fetch all training data
+        const { data, error } = await supabase
+          .from('sssps')
+          .select('required_training');
+
+        if (!error && data) {
+          const allTrainings = data.reduce((acc: any[], curr: any) => {
+            if (curr.required_training) {
+              return [...acc, ...curr.required_training];
+            }
+            return acc;
+          }, []);
+          setPreviousTrainings(allTrainings);
+        }
       }
     };
 
     fetchPreviousTrainings();
-  }, [formData.id]);
+  }, [formData?.id]);
 
   const handleAddSingleTraining = async () => {
     if (newTraining.requirement && newTraining.description && newTraining.frequency) {
@@ -101,4 +118,3 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
     </div>
   );
 };
-
