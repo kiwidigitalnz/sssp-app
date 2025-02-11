@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap } from "lucide-react";
@@ -11,7 +12,7 @@ interface TrainingRequirementsProps {
   setFormData: (data: any) => void;
 }
 
-export const TrainingRequirements = ({ formData, setFormData }: TrainingRequirementsProps) => {
+const TrainingRequirements = ({ formData, setFormData }: TrainingRequirementsProps) => {
   const { handleFieldChange } = useTrainingForm({ formData, setFormData });
 
   return (
@@ -32,3 +33,5 @@ export const TrainingRequirements = ({ formData, setFormData }: TrainingRequirem
     </div>
   );
 };
+
+export default TrainingRequirements;
