@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -8,6 +9,7 @@ import { PasswordReset } from "@/components/auth/PasswordReset";
 import { UpdatePassword } from "@/components/auth/UpdatePassword";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Auth() {
   const [showPasswordReset, setShowPasswordReset] = useState(false);
@@ -16,6 +18,15 @@ export default function Auth() {
   const inviteToken = searchParams.get("invite");
   const type = searchParams.get("type");
   const { toast } = useToast();
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (session) {
+      navigate("/");
+    }
+  }, [session, navigate]);
 
   useEffect(() => {
     if (inviteToken) {
@@ -30,7 +41,6 @@ export default function Auth() {
     if (!inviteToken) return;
 
     try {
-      // First verify the invitation is valid
       const { data: invitation, error: inviteError } = await supabase
         .from("sssp_invitations")
         .select("*")
@@ -42,7 +52,6 @@ export default function Auth() {
         throw new Error("Invalid or expired invitation");
       }
 
-      // Create access record
       const { error: accessError } = await supabase
         .from("sssp_access")
         .insert({
@@ -53,7 +62,6 @@ export default function Auth() {
 
       if (accessError) throw accessError;
 
-      // Update invitation status
       const { error: updateError } = await supabase
         .from("sssp_invitations")
         .update({ status: "accepted" })
@@ -61,7 +69,6 @@ export default function Auth() {
 
       if (updateError) throw updateError;
 
-      // Log activity
       await supabase.from("sssp_activity").insert({
         sssp_id: invitation.sssp_id,
         user_id: userId,
@@ -82,7 +89,6 @@ export default function Auth() {
     }
   };
 
-  // Show update password form if we're in recovery mode
   if (type === "recovery") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -97,7 +103,6 @@ export default function Auth() {
     );
   }
 
-  // Show password reset form if requested
   if (showPasswordReset) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
