@@ -27,14 +27,16 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   const lastSavedRef = useRef<string | null>(null);
   const storageRetryCount = useRef(0);
 
-  // Use React Query for data fetching and caching
+  // Optimize data fetching with better error handling and stale-while-revalidate
   const { data, isLoading, error } = useQuery({
     queryKey: ['sssp', options.key],
     queryFn: () => options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/) 
       ? fetchSSSP(options.key)
       : Promise.resolve(options.initialData),
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const [formData, setFormData] = useState<T>(() => {
@@ -50,7 +52,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     }
   });
 
-  // Mutation for saving form data
+  // Optimize mutation handling
   const mutation = useMutation({
     mutationFn: async (newData: T) => {
       if (options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
