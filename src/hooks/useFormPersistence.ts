@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -19,7 +18,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   const { toast } = useToast();
   const lastSavedRef = useRef<string | null>(null);
 
-  // If the key is a UUID, it's an existing SSSP, so fetch from Supabase
   useEffect(() => {
     const fetchSSSP = async () => {
       if (options.key && options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
@@ -35,9 +33,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           
           if (sssp) {
             console.log('Fetched SSSP data from Supabase:', sssp);
-            // Properly handle type conversion
             setData((sssp as unknown) as T);
-            // Update lastSavedRef with the initial Supabase data
             lastSavedRef.current = JSON.stringify(sssp);
           } else {
             console.log('No SSSP found with ID:', options.key);
@@ -74,9 +70,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   useEffect(() => {
     if (data && !isLoading) {
       const currentData = JSON.stringify(data);
-      // Only save if the data has actually changed
       if (currentData !== lastSavedRef.current) {
-        console.log('Saving form data to localStorage:', data);
         localStorage.setItem(options.key, currentData);
         lastSavedRef.current = currentData;
       }
@@ -86,7 +80,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   const updateFormData = useCallback((newData: T) => {
     setData((prevData) => {
       const newDataString = JSON.stringify(newData);
-      // Only update if the data has actually changed
       if (newDataString !== lastSavedRef.current) {
         return newData;
       }

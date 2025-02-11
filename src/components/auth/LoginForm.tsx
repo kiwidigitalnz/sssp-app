@@ -30,7 +30,6 @@ export const LoginForm = ({
   const handleQuickLogin = async () => {
     setLoading(true);
     try {
-      console.log("Attempting quick login with demo user...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email: "demo@sssp.dev",
         password: "demo123456",
@@ -45,7 +44,6 @@ export const LoginForm = ({
         throw new Error("No user data returned");
       }
 
-      console.log("Quick login successful:", data.user.email);
       navigate("/");
       toast({
         title: "Welcome to the demo!",
@@ -68,7 +66,6 @@ export const LoginForm = ({
     setLoading(true);
     
     try {
-      console.log("Attempting login with email:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -87,7 +84,6 @@ export const LoginForm = ({
         await handleInvitation(data.user.id);
       }
 
-      console.log("Login successful:", data.user.email);
       navigate("/");
       toast({
         title: "Welcome back!",
