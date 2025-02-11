@@ -39,22 +39,31 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
   } = useForm<HealthAndSafetyFormData>({
     resolver: zodResolver(healthAndSafetySchema),
     defaultValues: {
-      drug_and_alcohol: formData.drug_and_alcohol || "",
-      fatigue_management: formData.fatigue_management || "",
-      ppe: formData.ppe || "",
-      mobile_phone: formData.mobile_phone || ""
+      drug_and_alcohol: formData?.drug_and_alcohol || "",
+      fatigue_management: formData?.fatigue_management || "",
+      ppe: formData?.ppe || "",
+      mobile_phone: formData?.mobile_phone || ""
     }
   });
 
   useEffect(() => {
-    setValue("drug_and_alcohol", formData.drug_and_alcohol || "");
-    setValue("fatigue_management", formData.fatigue_management || "");
-    setValue("ppe", formData.ppe || "");
-    setValue("mobile_phone", formData.mobile_phone || "");
+    if (formData) {
+      console.log("Setting form values with:", {
+        drug_and_alcohol: formData.drug_and_alcohol,
+        fatigue_management: formData.fatigue_management,
+        ppe: formData.ppe,
+        mobile_phone: formData.mobile_phone
+      });
+      setValue("drug_and_alcohol", formData.drug_and_alcohol || "");
+      setValue("fatigue_management", formData.fatigue_management || "");
+      setValue("ppe", formData.ppe || "");
+      setValue("mobile_phone", formData.mobile_phone || "");
+    }
   }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
-    setFormData({ ...formData, [field]: value });
+    const updatedData = { ...formData, [field]: value };
+    setFormData(updatedData);
     setValue(field, value);
     const result = await trigger(field);
     if (!result && errors[field]) {
@@ -94,6 +103,7 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
               className={`min-h-[100px] resize-none ${errors.drug_and_alcohol ? "border-destructive" : ""}`}
               placeholder="Detail your company's drug and alcohol policies..."
               onChange={(e) => handleFieldChange("drug_and_alcohol", e.target.value)}
+              value={formData?.drug_and_alcohol || ""}
             />
             {errors.drug_and_alcohol && (
               <p className="text-sm text-destructive mt-1">{errors.drug_and_alcohol.message}</p>
@@ -118,6 +128,7 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
               className={`min-h-[100px] resize-none ${errors.fatigue_management ? "border-destructive" : ""}`}
               placeholder="Outline fatigue management procedures and policies..."
               onChange={(e) => handleFieldChange("fatigue_management", e.target.value)}
+              value={formData?.fatigue_management || ""}
             />
             {errors.fatigue_management && (
               <p className="text-sm text-destructive mt-1">{errors.fatigue_management.message}</p>
@@ -142,6 +153,7 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
               className={`min-h-[100px] resize-none ${errors.ppe ? "border-destructive" : ""}`}
               placeholder="List required Personal Protective Equipment..."
               onChange={(e) => handleFieldChange("ppe", e.target.value)}
+              value={formData?.ppe || ""}
             />
             {errors.ppe && (
               <p className="text-sm text-destructive mt-1">{errors.ppe.message}</p>
@@ -166,6 +178,7 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
               className={`min-h-[100px] resize-none ${errors.mobile_phone ? "border-destructive" : ""}`}
               placeholder="Specify mobile phone usage rules and restrictions..."
               onChange={(e) => handleFieldChange("mobile_phone", e.target.value)}
+              value={formData?.mobile_phone || ""}
             />
             {errors.mobile_phone && (
               <p className="text-sm text-destructive mt-1">{errors.mobile_phone.message}</p>
