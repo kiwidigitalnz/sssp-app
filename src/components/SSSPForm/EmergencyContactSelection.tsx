@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,25 +12,20 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
-
-interface EmergencyContact {
-  name: string;
-  number: string;
-  type: string;
-}
+import type { EmergencyContactFormData } from "@/types/sssp/forms";
 
 interface EmergencyContactSelectionProps {
-  previousContacts: EmergencyContact[];
-  onSelect: (selectedContacts: EmergencyContact[]) => void;
+  previousContacts: EmergencyContactFormData[];
+  onSelect: (selectedContacts: EmergencyContactFormData[]) => void;
 }
 
 export const EmergencyContactSelection = ({
   previousContacts,
   onSelect,
 }: EmergencyContactSelectionProps) => {
-  const [selectedContacts, setSelectedContacts] = React.useState<EmergencyContact[]>([]);
+  const [selectedContacts, setSelectedContacts] = React.useState<EmergencyContactFormData[]>([]);
 
-  const handleSelect = (contact: EmergencyContact) => {
+  const handleSelect = (contact: EmergencyContactFormData) => {
     if (selectedContacts.includes(contact)) {
       setSelectedContacts(selectedContacts.filter((c) => c !== contact));
     } else {
@@ -73,7 +69,7 @@ export const EmergencyContactSelection = ({
                         {contact.name}
                       </label>
                       <p className="text-sm text-muted-foreground">
-                        {contact.number} ({contact.type})
+                        {contact.phone} ({contact.role})
                       </p>
                     </div>
                   </div>

@@ -11,8 +11,7 @@ import { EmergencyEquipment } from "./EmergencyComponents/EmergencyEquipment";
 import { IncidentReporting } from "./EmergencyComponents/IncidentReporting";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
-import type { EmergencyContactFormData } from "@/types/sssp/forms";
-import type { SSSPFormData } from "@/types/sssp/forms";
+import type { EmergencyContactFormData, SSSPFormData } from "@/types/sssp/forms";
 
 interface EmergencyProceduresProps {
   formData: SSSPFormData;
@@ -46,16 +45,17 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
         }
 
         if (data) {
+          const emergencyContacts = data.emergency_contacts as EmergencyContactFormData[] || [];
           setFormData({
             ...formData,
             emergencyPlan: data.emergency_plan || '',
-            emergencyContacts: data.emergency_contacts || [],
+            emergencyContacts,
             assemblyPoints: data.assembly_points || '',
             emergencyEquipment: data.emergency_equipment || '',
             incidentReporting: data.incident_reporting || ''
           });
 
-          setContacts(data.emergency_contacts || []);
+          setContacts(emergencyContacts);
         }
       }
     };
@@ -81,7 +81,7 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
       const allContacts: EmergencyContactFormData[] = [];
       sssps.forEach((sssp: any) => {
         if (sssp.emergency_contacts) {
-          allContacts.push(...sssp.emergency_contacts);
+          allContacts.push(...(sssp.emergency_contacts as EmergencyContactFormData[]));
         }
       });
 
@@ -181,4 +181,3 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
     </div>
   );
 };
-
