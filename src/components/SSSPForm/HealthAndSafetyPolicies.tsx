@@ -30,6 +30,8 @@ type HealthAndSafetyFormData = z.infer<typeof healthAndSafetySchema>;
 
 export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
   const { toast } = useToast();
+  console.log("HealthAndSafetyPolicies - Received formData:", formData);
+
   const {
     register,
     handleSubmit,
@@ -62,6 +64,7 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
   }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
+    console.log(`Updating ${field} with:`, value);
     const updatedData = { ...formData, [field]: value };
     setFormData(updatedData);
     setValue(field, value);
