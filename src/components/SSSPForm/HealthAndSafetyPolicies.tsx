@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
@@ -18,23 +19,23 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="drugAndAlcohol" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="drug_and_alcohol" className="text-lg font-semibold flex items-center gap-2">
                 <Wine className="h-4 w-4" />
                 Drug and Alcohol Policy
               </Label>
               <QuickFillButton
-                fieldId="drugAndAlcohol"
+                fieldId="drug_and_alcohol"
                 fieldName="Drug and Alcohol Policy"
                 onSelect={(value) =>
-                  setFormData({ ...formData, drugAndAlcohol: value })
+                  setFormData({ ...formData, drug_and_alcohol: value })
                 }
               />
             </div>
             <Textarea
-              id="drugAndAlcohol"
-              value={formData.drugAndAlcohol || ""}
+              id="drug_and_alcohol"
+              value={formData.drug_and_alcohol || ""}
               onChange={(e) =>
-                setFormData({ ...formData, drugAndAlcohol: e.target.value })
+                setFormData({ ...formData, drug_and_alcohol: e.target.value })
               }
               placeholder="Detail your company's drug and alcohol policies..."
               className="min-h-[100px] resize-none"
@@ -43,23 +44,23 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="fatigueManagement" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="fatigue_management" className="text-lg font-semibold flex items-center gap-2">
                 <Moon className="h-4 w-4" />
                 Fatigue Management
               </Label>
               <QuickFillButton
-                fieldId="fatigueManagement"
+                fieldId="fatigue_management"
                 fieldName="Fatigue Management"
                 onSelect={(value) =>
-                  setFormData({ ...formData, fatigueManagement: value })
+                  setFormData({ ...formData, fatigue_management: value })
                 }
               />
             </div>
             <Textarea
-              id="fatigueManagement"
-              value={formData.fatigueManagement || ""}
+              id="fatigue_management"
+              value={formData.fatigue_management || ""}
               onChange={(e) =>
-                setFormData({ ...formData, fatigueManagement: e.target.value })
+                setFormData({ ...formData, fatigue_management: e.target.value })
               }
               placeholder="Outline fatigue management procedures and policies..."
               className="min-h-[100px] resize-none"
@@ -93,23 +94,23 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="mobilePhone" className="text-lg font-semibold flex items-center gap-2">
+              <Label htmlFor="mobile_phone" className="text-lg font-semibold flex items-center gap-2">
                 <Phone className="h-4 w-4" />
                 Mobile Phone Usage
               </Label>
               <QuickFillButton
-                fieldId="mobilePhone"
+                fieldId="mobile_phone"
                 fieldName="Mobile Phone Usage"
                 onSelect={(value) =>
-                  setFormData({ ...formData, mobilePhone: value })
+                  setFormData({ ...formData, mobile_phone: value })
                 }
               />
             </div>
             <Textarea
-              id="mobilePhone"
-              value={formData.mobilePhone || ""}
+              id="mobile_phone"
+              value={formData.mobile_phone || ""}
               onChange={(e) =>
-                setFormData({ ...formData, mobilePhone: e.target.value })
+                setFormData({ ...formData, mobile_phone: e.target.value })
               }
               placeholder="Specify mobile phone usage rules and restrictions..."
               className="min-h-[100px] resize-none"
