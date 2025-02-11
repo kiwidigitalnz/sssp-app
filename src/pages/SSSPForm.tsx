@@ -126,13 +126,14 @@ const SSSPForm = () => {
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Update the useEffect for preloading
+  // Update the useEffect for preloading with proper type checking
   useEffect(() => {
     if (currentStep < formSteps.length - 1) {
       const nextComponent = formSteps[currentStep + 1].Component;
-      if (nextComponent && typeof nextComponent === 'function' && 'preload' in nextComponent) {
+      const preloadableComponent = nextComponent as unknown as { preload?: () => Promise<void> };
+      if (preloadableComponent.preload) {
         try {
-          nextComponent.preload();
+          preloadableComponent.preload();
         } catch (error) {
           console.warn('Preload not available:', error);
         }
