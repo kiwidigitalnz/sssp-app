@@ -1,14 +1,7 @@
 
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
-
-interface TextSectionProps {
-  title: string;
-  fieldId: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}
+import type { TextSectionProps } from "@/types/sssp/ui";
 
 export const TextSection = ({ title, fieldId, value, onChange, placeholder }: TextSectionProps) => {
   return (

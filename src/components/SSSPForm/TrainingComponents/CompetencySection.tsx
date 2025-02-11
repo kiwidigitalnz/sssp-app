@@ -42,4 +42,3 @@ export const CompetencySection = ({ formData, onFieldChange }: CompetencySection
     </div>
   );
 };
-

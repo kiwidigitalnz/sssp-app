@@ -72,4 +72,3 @@ export const useTrainingForm = ({ formData, setFormData }: TrainingFormProps) =>
     handleFieldChange
   };
 };
-

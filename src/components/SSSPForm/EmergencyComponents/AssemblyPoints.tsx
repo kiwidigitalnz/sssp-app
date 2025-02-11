@@ -3,13 +3,9 @@ import React from "react";
 import { Users } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import type { SectionComponentProps } from "@/types/sssp/ui";
 
-interface AssemblyPointsProps {
-  value: string;
-  onChange: (value: string) => void;
-}
-
-export const AssemblyPoints = ({ value, onChange }: AssemblyPointsProps) => {
+export const AssemblyPoints = ({ value, onChange }: SectionComponentProps) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 border-b pb-2">

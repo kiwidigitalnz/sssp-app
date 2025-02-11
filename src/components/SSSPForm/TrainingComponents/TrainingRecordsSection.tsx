@@ -42,4 +42,3 @@ export const TrainingRecordsSection = ({ formData, onFieldChange }: TrainingReco
     </div>
   );
 };
-
