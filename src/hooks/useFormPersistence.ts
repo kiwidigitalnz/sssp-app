@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,7 +12,6 @@ export interface FormPersistenceOptions {
 export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersistenceOptions) {
   const [data, setData] = useState<T>(() => {
     const savedData = localStorage.getItem(options.key);
-    console.log('Initial form data from localStorage:', savedData ? JSON.parse(savedData) : options.initialData);
     return savedData ? JSON.parse(savedData) : options.initialData;
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -22,7 +22,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     const fetchSSSP = async () => {
       if (options.key && options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
         try {
-          console.log('Fetching SSSP with ID:', options.key);
           const { data: sssp, error } = await supabase
             .from('sssps')
             .select('*')
@@ -32,11 +31,9 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           if (error) throw error;
           
           if (sssp) {
-            console.log('Fetched SSSP data from Supabase:', sssp);
             setData((sssp as unknown) as T);
             lastSavedRef.current = JSON.stringify(sssp);
           } else {
-            console.log('No SSSP found with ID:', options.key);
             toast({
               variant: "destructive",
               title: "SSSP not found",
