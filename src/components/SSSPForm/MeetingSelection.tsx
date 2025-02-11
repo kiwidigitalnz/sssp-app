@@ -1,97 +1,230 @@
-import React from "react";
+
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface Meeting {
-  type: string;
-  frequency: string;
-  attendees: string;
-}
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, Trash2, Edit2 } from "lucide-react";
+import type { Meeting, MeetingFrequency } from "@/types/meetings";
+import { toast } from "@/components/ui/use-toast";
 
 interface MeetingSelectionProps {
-  previousMeetings: Meeting[];
-  onSelect: (selectedMeetings: Meeting[]) => void;
+  meetings: Meeting[];
+  onMeetingsChange: (meetings: Meeting[]) => void;
 }
 
 export const MeetingSelection = ({
-  previousMeetings,
-  onSelect,
+  meetings,
+  onMeetingsChange,
 }: MeetingSelectionProps) => {
-  const [selected, setSelected] = React.useState<Set<number>>(new Set());
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number>(-1);
 
-  const handleToggle = (index: number) => {
-    const newSelected = new Set(selected);
-    if (selected.has(index)) {
-      newSelected.delete(index);
-    } else {
-      newSelected.add(index);
+  const [newMeeting, setNewMeeting] = useState<Meeting>({
+    type: "",
+    frequency: "weekly",
+    attendees: "",
+    description: "",
+  });
+
+  const handleAddMeeting = () => {
+    if (!newMeeting.type || !newMeeting.attendees) {
+      toast({
+        title: "Required Fields Missing",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
     }
-    setSelected(newSelected);
+
+    if (editingIndex > -1) {
+      const updatedMeetings = [...meetings];
+      updatedMeetings[editingIndex] = newMeeting;
+      onMeetingsChange(updatedMeetings);
+    } else {
+      onMeetingsChange([...meetings, newMeeting]);
+    }
+
+    setNewMeeting({
+      type: "",
+      frequency: "weekly",
+      attendees: "",
+      description: "",
+    });
+    setEditingIndex(-1);
+    setIsDialogOpen(false);
   };
 
-  const handleAdd = () => {
-    const selectedItems = Array.from(selected).map(
-      (index) => previousMeetings[index]
-    );
-    onSelect(selectedItems);
-    setSelected(new Set());
+  const handleEditMeeting = (meeting: Meeting, index: number) => {
+    setEditingMeeting(meeting);
+    setEditingIndex(index);
+    setNewMeeting(meeting);
+    setIsDialogOpen(true);
   };
+
+  const handleDeleteMeeting = (index: number) => {
+    const updatedMeetings = meetings.filter((_, i) => i !== index);
+    onMeetingsChange(updatedMeetings);
+  };
+
+  const frequencies: MeetingFrequency[] = [
+    "daily",
+    "weekly",
+    "biweekly",
+    "monthly",
+    "quarterly",
+    "asneeded",
+  ];
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="mt-4">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Multiple Meetings
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Select Meetings from Previous Entries</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-4">
-            {previousMeetings.map((meeting, index) => (
-              <div
-                key={index}
-                className="flex items-start space-x-3 border p-4 rounded-lg"
-              >
-                <Checkbox
-                  id={`meeting-${index}`}
-                  checked={selected.has(index)}
-                  onCheckedChange={() => handleToggle(index)}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Meeting
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingIndex > -1 ? "Edit Meeting" : "Add New Meeting"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="type">Meeting Type *</Label>
+                <Input
+                  id="type"
+                  value={newMeeting.type}
+                  onChange={(e) =>
+                    setNewMeeting({ ...newMeeting, type: e.target.value })
+                  }
+                  placeholder="e.g., Safety Committee Meeting"
                 />
-                <div className="space-y-1">
-                  <Label htmlFor={`meeting-${index}`}>
-                    <div className="font-medium">{meeting.type}</div>
-                    <div className="text-sm text-muted-foreground">
-                      Frequency: {meeting.frequency}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Attendees: {meeting.attendees}
-                    </div>
-                  </Label>
-                </div>
               </div>
-            ))}
-          </div>
-        </ScrollArea>
-        <div className="flex justify-end">
-          <Button onClick={handleAdd} disabled={selected.size === 0}>
-            Add Selected ({selected.size})
-          </Button>
+
+              <div className="space-y-2">
+                <Label htmlFor="frequency">Frequency *</Label>
+                <Select
+                  value={newMeeting.frequency}
+                  onValueChange={(value: MeetingFrequency) =>
+                    setNewMeeting({ ...newMeeting, frequency: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {frequencies.map((freq) => (
+                      <SelectItem key={freq} value={freq}>
+                        {freq.charAt(0).toUpperCase() + freq.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="attendees">Attendees *</Label>
+                <Input
+                  id="attendees"
+                  value={newMeeting.attendees}
+                  onChange={(e) =>
+                    setNewMeeting({ ...newMeeting, attendees: e.target.value })
+                  }
+                  placeholder="e.g., All site workers"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newMeeting.description}
+                  onChange={(e) =>
+                    setNewMeeting({ ...newMeeting, description: e.target.value })
+                  }
+                  placeholder="Meeting details and objectives..."
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddMeeting}>
+                {editingIndex > -1 ? "Update" : "Add"} Meeting
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <ScrollArea className="h-[300px] rounded-md border">
+        <div className="p-4 space-y-4">
+          {meetings.map((meeting, index) => (
+            <div
+              key={index}
+              className="flex items-start justify-between p-4 rounded-lg border bg-card"
+            >
+              <div className="space-y-1">
+                <h4 className="font-medium">{meeting.type}</h4>
+                <p className="text-sm text-muted-foreground">
+                  Frequency: {meeting.frequency}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Attendees: {meeting.attendees}
+                </p>
+                {meeting.description && (
+                  <p className="text-sm text-muted-foreground">
+                    {meeting.description}
+                  </p>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEditMeeting(meeting, index)}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeleteMeeting(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          {meetings.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              No meetings scheduled. Click "Add Meeting" to create one.
+            </div>
+          )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ScrollArea>
+    </div>
   );
 };

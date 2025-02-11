@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { MeetingSelection } from "./MeetingSelection";
+import type { Meeting } from "@/types/meetings";
 
 const communicationSchema = z.object({
   communication_methods: z.string()
@@ -28,7 +29,18 @@ const communicationSchema = z.object({
 
 type CommunicationFormData = z.infer<typeof communicationSchema>;
 
-export const Communication = ({ formData, setFormData }: any) => {
+interface CommunicationProps {
+  formData: {
+    communication_methods?: string;
+    toolbox_meetings?: string;
+    reporting_procedures?: string;
+    communication_protocols?: string;
+    meetings_schedule?: Meeting[];
+  };
+  setFormData: (data: any) => void;
+}
+
+export const Communication = ({ formData, setFormData }: CommunicationProps) => {
   const { toast } = useToast();
   const {
     register,
@@ -66,7 +78,7 @@ export const Communication = ({ formData, setFormData }: any) => {
     }
   };
 
-  const handleMeetingsChange = (meetings: any[]) => {
+  const handleMeetingsChange = (meetings: Meeting[]) => {
     setFormData({ ...formData, meetings_schedule: meetings });
   };
 
@@ -179,8 +191,8 @@ export const Communication = ({ formData, setFormData }: any) => {
           <div className="space-y-2">
             <Label className="text-base font-medium">Scheduled Meetings</Label>
             <MeetingSelection
-              previousMeetings={formData.meetings_schedule || []}
-              onSelect={handleMeetingsChange}
+              meetings={formData.meetings_schedule || []}
+              onMeetingsChange={handleMeetingsChange}
             />
           </div>
         </div>

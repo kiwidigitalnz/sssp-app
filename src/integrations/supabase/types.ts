@@ -357,6 +357,13 @@ export type Database = {
     }
     Enums: {
       company_role: "owner" | "admin" | "editor" | "viewer"
+      meeting_frequency:
+        | "daily"
+        | "weekly"
+        | "biweekly"
+        | "monthly"
+        | "quarterly"
+        | "asneeded"
       team_member_role: "admin" | "editor" | "viewer"
     }
     CompositeTypes: {
