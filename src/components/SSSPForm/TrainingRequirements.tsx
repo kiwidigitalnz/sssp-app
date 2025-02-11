@@ -10,9 +10,14 @@ import { useTrainingForm } from "./TrainingComponents/TrainingForm";
 interface TrainingRequirementsProps {
   formData: any;
   setFormData: (data: any) => void;
+  isLoading: boolean;
 }
 
-const TrainingRequirements = ({ formData, setFormData }: TrainingRequirementsProps) => {
+const TrainingRequirements: React.FC<TrainingRequirementsProps> = ({ 
+  formData, 
+  setFormData,
+  isLoading 
+}) => {
   const { handleFieldChange } = useTrainingForm({ formData, setFormData });
 
   return (
@@ -35,3 +40,4 @@ const TrainingRequirements = ({ formData, setFormData }: TrainingRequirementsPro
 };
 
 export default TrainingRequirements;
+
