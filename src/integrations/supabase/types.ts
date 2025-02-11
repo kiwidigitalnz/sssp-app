@@ -222,6 +222,7 @@ export type Database = {
           end_date: string | null
           fatigue_management: string | null
           hazards: Json[] | null
+          housekeeping_rules: string | null
           id: string
           incident_reporting: string | null
           locations: string | null
@@ -230,8 +231,11 @@ export type Database = {
           pcbu_duties: string | null
           ppe: string | null
           required_training: Json[] | null
+          security_requirements: string | null
           services: string | null
+          site_access_rules: string | null
           site_supervisor_duties: string | null
+          smoking_policy: string | null
           start_date: string | null
           status: string
           title: string
@@ -262,6 +266,7 @@ export type Database = {
           end_date?: string | null
           fatigue_management?: string | null
           hazards?: Json[] | null
+          housekeeping_rules?: string | null
           id?: string
           incident_reporting?: string | null
           locations?: string | null
@@ -270,8 +275,11 @@ export type Database = {
           pcbu_duties?: string | null
           ppe?: string | null
           required_training?: Json[] | null
+          security_requirements?: string | null
           services?: string | null
+          site_access_rules?: string | null
           site_supervisor_duties?: string | null
+          smoking_policy?: string | null
           start_date?: string | null
           status?: string
           title: string
@@ -302,6 +310,7 @@ export type Database = {
           end_date?: string | null
           fatigue_management?: string | null
           hazards?: Json[] | null
+          housekeeping_rules?: string | null
           id?: string
           incident_reporting?: string | null
           locations?: string | null
@@ -310,8 +319,11 @@ export type Database = {
           pcbu_duties?: string | null
           ppe?: string | null
           required_training?: Json[] | null
+          security_requirements?: string | null
           services?: string | null
+          site_access_rules?: string | null
           site_supervisor_duties?: string | null
+          smoking_policy?: string | null
           start_date?: string | null
           status?: string
           title?: string

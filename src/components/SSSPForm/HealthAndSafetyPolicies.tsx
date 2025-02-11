@@ -5,8 +5,67 @@ import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Wine, Moon, Shield, Phone } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+
+const healthAndSafetySchema = z.object({
+  drug_and_alcohol: z.string()
+    .min(10, "Drug and alcohol policy must be at least 10 characters long")
+    .max(1000, "Drug and alcohol policy must not exceed 1000 characters"),
+  fatigue_management: z.string()
+    .min(10, "Fatigue management must be at least 10 characters long")
+    .max(1000, "Fatigue management must not exceed 1000 characters"),
+  ppe: z.string()
+    .min(10, "PPE requirements must be at least 10 characters long")
+    .max(500, "PPE requirements must not exceed 500 characters"),
+  mobile_phone: z.string()
+    .min(10, "Mobile phone usage policy must be at least 10 characters long")
+    .max(500, "Mobile phone usage policy must not exceed 500 characters")
+});
+
+type HealthAndSafetyFormData = z.infer<typeof healthAndSafetySchema>;
 
 export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
+  const { toast } = useToast();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    trigger
+  } = useForm<HealthAndSafetyFormData>({
+    resolver: zodResolver(healthAndSafetySchema),
+    defaultValues: {
+      drug_and_alcohol: formData.drug_and_alcohol || "",
+      fatigue_management: formData.fatigue_management || "",
+      ppe: formData.ppe || "",
+      mobile_phone: formData.mobile_phone || ""
+    }
+  });
+
+  useEffect(() => {
+    setValue("drug_and_alcohol", formData.drug_and_alcohol || "");
+    setValue("fatigue_management", formData.fatigue_management || "");
+    setValue("ppe", formData.ppe || "");
+    setValue("mobile_phone", formData.mobile_phone || "");
+  }, [formData, setValue]);
+
+  const handleFieldChange = async (field: keyof HealthAndSafetyFormData, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    setValue(field, value);
+    const result = await trigger(field);
+    if (!result && errors[field]) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errors[field]?.message
+      });
+    }
+  };
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="space-y-1">
@@ -26,20 +85,19 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="drug_and_alcohol"
                 fieldName="Drug and Alcohol Policy"
-                onSelect={(value) =>
-                  setFormData({ ...formData, drug_and_alcohol: value })
-                }
+                onSelect={(value) => handleFieldChange("drug_and_alcohol", value)}
               />
             </div>
             <Textarea
               id="drug_and_alcohol"
-              value={formData.drug_and_alcohol || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, drug_and_alcohol: e.target.value })
-              }
+              {...register("drug_and_alcohol")}
+              className={`min-h-[100px] resize-none ${errors.drug_and_alcohol ? "border-destructive" : ""}`}
               placeholder="Detail your company's drug and alcohol policies..."
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("drug_and_alcohol", e.target.value)}
             />
+            {errors.drug_and_alcohol && (
+              <p className="text-sm text-destructive mt-1">{errors.drug_and_alcohol.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -51,20 +109,19 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="fatigue_management"
                 fieldName="Fatigue Management"
-                onSelect={(value) =>
-                  setFormData({ ...formData, fatigue_management: value })
-                }
+                onSelect={(value) => handleFieldChange("fatigue_management", value)}
               />
             </div>
             <Textarea
               id="fatigue_management"
-              value={formData.fatigue_management || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, fatigue_management: e.target.value })
-              }
+              {...register("fatigue_management")}
+              className={`min-h-[100px] resize-none ${errors.fatigue_management ? "border-destructive" : ""}`}
               placeholder="Outline fatigue management procedures and policies..."
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("fatigue_management", e.target.value)}
             />
+            {errors.fatigue_management && (
+              <p className="text-sm text-destructive mt-1">{errors.fatigue_management.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -76,20 +133,19 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="ppe"
                 fieldName="PPE Requirements"
-                onSelect={(value) =>
-                  setFormData({ ...formData, ppe: value })
-                }
+                onSelect={(value) => handleFieldChange("ppe", value)}
               />
             </div>
             <Textarea
               id="ppe"
-              value={formData.ppe || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, ppe: e.target.value })
-              }
+              {...register("ppe")}
+              className={`min-h-[100px] resize-none ${errors.ppe ? "border-destructive" : ""}`}
               placeholder="List required Personal Protective Equipment..."
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("ppe", e.target.value)}
             />
+            {errors.ppe && (
+              <p className="text-sm text-destructive mt-1">{errors.ppe.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -101,20 +157,19 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
               <QuickFillButton
                 fieldId="mobile_phone"
                 fieldName="Mobile Phone Usage"
-                onSelect={(value) =>
-                  setFormData({ ...formData, mobile_phone: value })
-                }
+                onSelect={(value) => handleFieldChange("mobile_phone", value)}
               />
             </div>
             <Textarea
               id="mobile_phone"
-              value={formData.mobile_phone || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, mobile_phone: e.target.value })
-              }
+              {...register("mobile_phone")}
+              className={`min-h-[100px] resize-none ${errors.mobile_phone ? "border-destructive" : ""}`}
               placeholder="Specify mobile phone usage rules and restrictions..."
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("mobile_phone", e.target.value)}
             />
+            {errors.mobile_phone && (
+              <p className="text-sm text-destructive mt-1">{errors.mobile_phone.message}</p>
+            )}
           </div>
         </div>
       </CardContent>
