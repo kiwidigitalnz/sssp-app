@@ -84,3 +84,4 @@ export interface HealthAndSafetyPoliciesProps {
   setFormData: (data: any) => void;
   isLoading?: boolean;
 }
+

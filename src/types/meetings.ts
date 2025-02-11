@@ -8,3 +8,4 @@ export interface Meeting {
   participants: string[];
   description?: string;
 }
+
