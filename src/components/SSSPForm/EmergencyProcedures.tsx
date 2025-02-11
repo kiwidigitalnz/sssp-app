@@ -11,11 +11,25 @@ import { EmergencyEquipment } from "./EmergencyComponents/EmergencyEquipment";
 import { IncidentReporting } from "./EmergencyComponents/IncidentReporting";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
+import type { EmergencyContactFormData } from "@/types/sssp/forms";
+import type { SSSPFormData } from "@/types/sssp/forms";
 
-export const EmergencyProcedures = ({ formData, setFormData }: any) => {
+interface EmergencyProceduresProps {
+  formData: SSSPFormData;
+  setFormData: (data: SSSPFormData) => void;
+  isLoading?: boolean;
+}
+
+export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({ 
+  formData, 
+  setFormData,
+  isLoading = false
+}) => {
   const { id } = useParams();
-  const [contacts, setContacts] = useState(formData.emergencyContacts || []);
-  const [previousContacts, setPreviousContacts] = useState([]);
+  const [contacts, setContacts] = useState<EmergencyContactFormData[]>(
+    formData.emergencyContacts || []
+  );
+  const [previousContacts, setPreviousContacts] = useState<EmergencyContactFormData[]>([]);
 
   useEffect(() => {
     const fetchSSSPData = async () => {
@@ -32,7 +46,6 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
         }
 
         if (data) {
-          // Update formData with the fetched data
           setFormData({
             ...formData,
             emergencyPlan: data.emergency_plan || '',
@@ -42,7 +55,6 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
             incidentReporting: data.incident_reporting || ''
           });
 
-          // Update local contacts state
           setContacts(data.emergency_contacts || []);
         }
       }
@@ -66,7 +78,7 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
         return;
       }
 
-      const allContacts = [];
+      const allContacts: EmergencyContactFormData[] = [];
       sssps.forEach((sssp: any) => {
         if (sssp.emergency_contacts) {
           allContacts.push(...sssp.emergency_contacts);
@@ -80,12 +92,17 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
   }, [id]);
 
   const addContact = () => {
-    const newContacts = [...contacts, { name: "", role: "", phone: "" }];
+    const newContact: EmergencyContactFormData = {
+      name: "",
+      role: "",
+      phone: ""
+    };
+    const newContacts = [...contacts, newContact];
     setContacts(newContacts);
     setFormData({ ...formData, emergencyContacts: newContacts });
   };
 
-  const updateContact = (index: number, field: string, value: string) => {
+  const updateContact = (index: number, field: keyof EmergencyContactFormData, value: string) => {
     const newContacts = [...contacts];
     newContacts[index] = { ...newContacts[index], [field]: value };
     setContacts(newContacts);
@@ -98,7 +115,7 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
     setFormData({ ...formData, emergencyContacts: newContacts });
   };
 
-  const addMultipleContacts = (selectedContacts: any[]) => {
+  const addMultipleContacts = (selectedContacts: EmergencyContactFormData[]) => {
     const newContacts = [...contacts, ...selectedContacts];
     setContacts(newContacts);
     setFormData({ ...formData, emergencyContacts: newContacts });
@@ -164,3 +181,4 @@ export const EmergencyProcedures = ({ formData, setFormData }: any) => {
     </div>
   );
 };
+
