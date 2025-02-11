@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,9 +10,17 @@ export interface FormPersistenceOptions {
 
 export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersistenceOptions) {
   const [data, setData] = useState<T>(() => {
-    const savedData = localStorage.getItem(options.key);
-    return savedData ? JSON.parse(savedData) : options.initialData;
+    if (options.initialData) return options.initialData;
+    
+    try {
+      const savedData = localStorage.getItem(options.key);
+      return savedData ? JSON.parse(savedData) : options.initialData;
+    } catch (error) {
+      console.warn('Error reading from localStorage:', error);
+      return options.initialData;
+    }
   });
+  
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const lastSavedRef = useRef<string | null>(null);
@@ -32,6 +39,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           
           if (sssp) {
             setData((sssp as unknown) as T);
+            // Don't store the full SSSP in localStorage, just keep track of last saved state
             lastSavedRef.current = JSON.stringify(sssp);
           } else {
             toast({
@@ -59,17 +67,44 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   }, [options.key, toast]);
 
   const clearSavedData = useCallback(() => {
-    localStorage.removeItem(options.key);
-    setData(options.initialData);
-    lastSavedRef.current = null;
+    try {
+      localStorage.removeItem(options.key);
+      setData(options.initialData);
+      lastSavedRef.current = null;
+    } catch (error) {
+      console.warn('Error clearing localStorage:', error);
+    }
   }, [options.key, options.initialData]);
 
   useEffect(() => {
     if (data && !isLoading) {
       const currentData = JSON.stringify(data);
       if (currentData !== lastSavedRef.current) {
-        localStorage.setItem(options.key, currentData);
-        lastSavedRef.current = currentData;
+        try {
+          // Only store a minimal version of the data for draft/temporary purposes
+          const minimalData = {
+            id: data.id,
+            title: data.title,
+            lastModified: new Date().toISOString(),
+            isDraft: true
+          };
+          localStorage.setItem(options.key, JSON.stringify(minimalData));
+          lastSavedRef.current = currentData;
+        } catch (error) {
+          console.warn('Error writing to localStorage:', error);
+          // If we hit quota, clear old data
+          try {
+            localStorage.clear();
+            localStorage.setItem(options.key, JSON.stringify({
+              id: data.id,
+              title: data.title,
+              lastModified: new Date().toISOString(),
+              isDraft: true
+            }));
+          } catch (secondError) {
+            console.error('Failed to write to localStorage even after clearing:', secondError);
+          }
+        }
       }
     }
   }, [data, options.key, isLoading]);
