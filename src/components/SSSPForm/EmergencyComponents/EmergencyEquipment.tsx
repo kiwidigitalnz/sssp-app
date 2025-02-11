@@ -3,13 +3,9 @@ import React from "react";
 import { FireExtinguisher } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import type { SectionComponentProps } from "@/types/sssp/ui";
 
-interface EmergencyEquipmentProps {
-  value: string;
-  onChange: (value: string) => void;
-}
-
-export const EmergencyEquipment = ({ value, onChange }: EmergencyEquipmentProps) => {
+export const EmergencyEquipment = ({ value, onChange }: SectionComponentProps) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 border-b pb-2">

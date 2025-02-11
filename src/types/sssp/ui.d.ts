@@ -44,3 +44,16 @@ export interface EmergencyContactsTableProps {
   onUpdate: (index: number, field: string, value: string) => void;
   onRemove: (index: number) => void;
 }
+
+export interface SectionComponentProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export interface TextSectionProps {
+  title: string;
+  fieldId: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}
