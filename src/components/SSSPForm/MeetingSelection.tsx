@@ -30,7 +30,7 @@ interface MeetingSelectionProps {
 }
 
 export const MeetingSelection = ({
-  meetings,
+  meetings = [],
   onMeetingsChange,
 }: MeetingSelectionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -44,7 +44,7 @@ export const MeetingSelection = ({
   });
 
   const handleAddMeeting = () => {
-    if (!newMeeting.type || newMeeting.participants.length === 0) {
+    if (!newMeeting.type || !newMeeting.participants?.length) {
       toast({
         title: "Required Fields Missing",
         description: "Please fill in all required fields",
@@ -55,10 +55,16 @@ export const MeetingSelection = ({
 
     if (editingIndex > -1) {
       const updatedMeetings = [...meetings];
-      updatedMeetings[editingIndex] = newMeeting;
+      updatedMeetings[editingIndex] = {
+        ...newMeeting,
+        participants: newMeeting.participants || []
+      };
       onMeetingsChange(updatedMeetings);
     } else {
-      onMeetingsChange([...meetings, newMeeting]);
+      onMeetingsChange([...meetings, {
+        ...newMeeting,
+        participants: newMeeting.participants || []
+      }]);
     }
 
     setNewMeeting({
@@ -73,7 +79,10 @@ export const MeetingSelection = ({
 
   const handleEditMeeting = (meeting: Meeting, index: number) => {
     setEditingIndex(index);
-    setNewMeeting(meeting);
+    setNewMeeting({
+      ...meeting,
+      participants: meeting.participants || []
+    });
     setIsDialogOpen(true);
   };
 
@@ -145,7 +154,7 @@ export const MeetingSelection = ({
                 <Label htmlFor="participants">Participants *</Label>
                 <Input
                   id="participants"
-                  value={newMeeting.participants.join(", ")}
+                  value={(newMeeting.participants || []).join(", ")}
                   onChange={(e) =>
                     setNewMeeting({
                       ...newMeeting,
@@ -182,7 +191,7 @@ export const MeetingSelection = ({
 
       <ScrollArea className="h-[300px] rounded-md border">
         <div className="p-4 space-y-4">
-          {meetings.map((meeting, index) => (
+          {(meetings || []).map((meeting, index) => (
             <div
               key={index}
               className="flex items-start justify-between p-4 rounded-lg border bg-card"
@@ -193,7 +202,7 @@ export const MeetingSelection = ({
                   Frequency: {meeting.frequency}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Participants: {meeting.participants.join(", ")}
+                  Participants: {(meeting.participants || []).join(", ")}
                 </p>
                 {meeting.description && (
                   <p className="text-sm text-muted-foreground">
@@ -219,7 +228,7 @@ export const MeetingSelection = ({
               </div>
             </div>
           ))}
-          {meetings.length === 0 && (
+          {!meetings?.length && (
             <div className="text-center py-8 text-muted-foreground">
               No meetings scheduled. Click "Add Meeting" to create one.
             </div>
@@ -229,3 +238,4 @@ export const MeetingSelection = ({
     </div>
   );
 };
+
