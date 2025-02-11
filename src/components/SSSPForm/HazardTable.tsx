@@ -18,21 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Hazard {
-  hazard: string;
-  risk: string;
-  controlMeasures: string;
-}
-
-interface HazardTableProps {
-  hazards: Hazard[];
-  previousHazards: Hazard[];
-  previousRisks: string[];
-  previousControls: string[];
-  updateHazard: (index: number, field: keyof Hazard, value: string) => void;
-  removeHazard: (index: number) => void;
-}
+import type { HazardFormData } from "@/types/sssp/forms";
+import type { HazardTableProps } from "@/types/sssp/ui";
 
 export const HazardTable = ({
   hazards,
@@ -54,7 +41,7 @@ export const HazardTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {hazards.map((hazard: Hazard, index: number) => (
+          {hazards.map((hazard: HazardFormData, index: number) => (
             <TableRow key={index} className="hover:bg-muted/50">
               <TableCell className="align-top">
                 <Input
@@ -66,8 +53,8 @@ export const HazardTable = ({
               </TableCell>
               <TableCell className="align-top">
                 <Select
-                  value={hazard.risk}
-                  onValueChange={(value) => updateHazard(index, "risk", value)}
+                  value={hazard.riskLevel}
+                  onValueChange={(value) => updateHazard(index, "riskLevel", value)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select risk" />
