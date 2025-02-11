@@ -35,7 +35,8 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           
           if (sssp) {
             console.log('Fetched SSSP data from Supabase:', sssp);
-            setData(sssp as T);
+            // Properly handle type conversion
+            setData((sssp as unknown) as T);
             // Update lastSavedRef with the initial Supabase data
             lastSavedRef.current = JSON.stringify(sssp);
           } else {
