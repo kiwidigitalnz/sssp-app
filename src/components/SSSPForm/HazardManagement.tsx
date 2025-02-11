@@ -5,6 +5,8 @@ import { HazardActions } from "./HazardActions";
 import { RiskLevelGuide } from "./RiskLevelGuide";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useParams } from "react-router-dom";
 
 interface Hazard {
   hazard: string;
@@ -24,12 +26,39 @@ export const HazardManagement = ({
   formData,
   setFormData,
 }: HazardManagementProps) => {
+  const { id } = useParams();
   console.log("HazardManagement - Received formData:", formData);
   
   const hazards = formData.hazards || [];
   const [previousHazards, setPreviousHazards] = useState<Hazard[]>([]);
   const [previousRisks, setPreviousRisks] = useState<string[]>([]);
   const [previousControls, setPreviousControls] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchSSSPData = async () => {
+      if (id) {
+        const { data, error } = await supabase
+          .from('sssps')
+          .select('hazards')
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching SSSP data:', error);
+          return;
+        }
+
+        if (data && data.hazards) {
+          // If we have hazards data and formData doesn't, update formData
+          if (!formData.hazards || formData.hazards.length === 0) {
+            setFormData({ ...formData, hazards: data.hazards });
+          }
+        }
+      }
+    };
+
+    fetchSSSPData();
+  }, [id]);
 
   useEffect(() => {
     const storedSSSPs = localStorage.getItem("sssps");
