@@ -13,7 +13,7 @@ interface TrainingRequirementsProps {
   isLoading: boolean;
 }
 
-const TrainingRequirements: React.FC<TrainingRequirementsProps> = ({ 
+export const TrainingRequirements: React.FC<TrainingRequirementsProps> = ({ 
   formData, 
   setFormData,
   isLoading 
@@ -40,4 +40,3 @@ const TrainingRequirements: React.FC<TrainingRequirementsProps> = ({
 };
 
 export default TrainingRequirements;
-

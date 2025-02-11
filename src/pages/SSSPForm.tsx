@@ -17,7 +17,7 @@ const ScopeOfWork = lazy(() => import("@/components/features/sssp/ScopeOfWork").
 const HealthAndSafety = lazy(() => import("@/components/features/sssp/HealthAndSafety").then(module => ({ default: module.HealthAndSafety })));
 const HazardManagement = lazy(() => import("@/components/SSSPForm/HazardManagement").then(module => ({ default: module.HazardManagement })));
 const EmergencyProcedures = lazy(() => import("@/components/SSSPForm/EmergencyProcedures").then(module => ({ default: module.EmergencyProcedures })));
-const TrainingRequirements = lazy(() => import("@/components/SSSPForm/TrainingRequirements").then(module => ({ default: module.TrainingRequirements })));
+const TrainingRequirements = lazy(() => import("@/components/SSSPForm/TrainingRequirements"));
 const HealthAndSafetyPolicies = lazy(() => import("@/components/features/sssp/HealthAndSafetyPolicies").then(module => ({ default: module.HealthAndSafetyPolicies })));
 const SiteSafetyRules = lazy(() => import("@/components/features/sssp/SiteSafetyRules").then(module => ({ default: module.SiteSafetyRules })));
 const Communication = lazy(() => import("@/components/SSSPForm/Communication").then(module => ({ default: module.Communication })));
