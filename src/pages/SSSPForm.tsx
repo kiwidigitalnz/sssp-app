@@ -1,4 +1,5 @@
-import { useState, useEffect, Suspense } from "react";
+
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FormHeader } from "@/components/SSSPForm/FormHeader";
 import { FormProgress } from "@/components/SSSPForm/FormProgress";
@@ -18,7 +19,6 @@ const LoadingFallback = () => (
 );
 
 interface SSSPFormData {
-  // Add your form data structure here
   [key: string]: any;
 }
 
@@ -28,6 +28,7 @@ const SSSPForm = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   const {
     formData,
@@ -39,18 +40,15 @@ const SSSPForm = () => {
     initialData: {}
   });
 
-  console.log("SSSPForm - Current formData:", formData);
-  console.log("SSSPForm - Current step:", currentStep);
-
   const handleSave = async () => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
       localStorage.setItem(`sssp-${id || 'draft'}`, JSON.stringify(formData));
       toast({
         title: "Progress saved",
         description: "Your SSSP has been saved successfully",
       });
-      clearSavedData(); // Clear autosave data after successful save
+      clearSavedData();
       navigate("/");
     } catch (error) {
       toast({
@@ -91,8 +89,35 @@ const SSSPForm = () => {
     navigate("/");
   };
 
+  useEffect(() => {
+    let resizeObserver: ResizeObserver;
+    const container = containerRef.current;
+
+    if (container) {
+      resizeObserver = new ResizeObserver((entries) => {
+        // Using requestAnimationFrame to throttle updates
+        requestAnimationFrame(() => {
+          for (const entry of entries) {
+            if (entry.target === container) {
+              // Handle resize if needed
+            }
+          }
+        });
+      });
+
+      resizeObserver.observe(container);
+    }
+
+    return () => {
+      if (resizeObserver && container) {
+        resizeObserver.unobserve(container);
+        resizeObserver.disconnect();
+      }
+    };
+  }, []);
+
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4" ref={containerRef}>
       <div className="max-w-4xl mx-auto">
         <FormHeader
           id={id}

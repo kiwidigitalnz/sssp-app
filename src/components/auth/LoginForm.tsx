@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +37,6 @@ export const LoginForm = ({
       });
 
       if (error) {
-        console.error("Quick login error:", error);
         throw error;
       }
 
@@ -50,7 +50,6 @@ export const LoginForm = ({
         description: "You have successfully logged in as the demo user.",
       });
     } catch (error: any) {
-      console.error("Quick login error:", error);
       toast({
         title: "Quick Login Failed",
         description: error.message || "An error occurred during quick login",
@@ -72,7 +71,6 @@ export const LoginForm = ({
       });
 
       if (error) {
-        console.error("Login error:", error);
         throw error;
       }
 
@@ -90,7 +88,6 @@ export const LoginForm = ({
         description: "You have successfully logged in.",
       });
     } catch (error: any) {
-      console.error("Login error:", error);
       toast({
         title: "Login Failed",
         description: error.message || "An error occurred during login",
@@ -140,6 +137,7 @@ export const LoginForm = ({
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             required
           />
         </div>
@@ -151,6 +149,7 @@ export const LoginForm = ({
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
             required
           />
         </div>
