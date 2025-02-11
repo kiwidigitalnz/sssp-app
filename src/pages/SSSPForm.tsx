@@ -40,7 +40,7 @@ const SSSPForm = () => {
     initialData: {}
   });
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       localStorage.setItem(`sssp-${id || 'draft'}`, JSON.stringify(formData));
@@ -57,9 +57,9 @@ const SSSPForm = () => {
         description: "There was an error saving your progress",
       });
     }
-  };
+  }, [id, formData, toast, clearSavedData, navigate]);
 
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     if (currentStep < formSteps.length - 1) {
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -76,7 +76,7 @@ const SSSPForm = () => {
         });
       }
     }
-  };
+  }, [currentStep, toast]);
 
   const handlePrevious = useCallback(() => {
     if (currentStep > 0) {
@@ -90,36 +90,40 @@ const SSSPForm = () => {
   }, [clearSavedData, navigate]);
 
   useEffect(() => {
-    let resizeObserver: ResizeObserver | null = null;
-    const container = containerRef.current;
-
     const handleResize = (entries: ResizeObserverEntry[]) => {
+      const entry = entries[0];
+      if (!entry) return;
+      
       requestAnimationFrame(() => {
-        for (const entry of entries) {
-          if (entry.target === container) {
-            // Only update if size actually changed
-            const { width, height } = entry.contentRect;
-            if (container.dataset.prevWidth !== width.toString() || 
-                container.dataset.prevHeight !== height.toString()) {
-              container.dataset.prevWidth = width.toString();
-              container.dataset.prevHeight = height.toString();
-            }
-          }
+        const container = containerRef.current;
+        if (!container) return;
+
+        const { width, height } = entry.contentRect;
+        const currentWidth = container.dataset.prevWidth;
+        const currentHeight = container.dataset.prevHeight;
+
+        if (currentWidth !== width.toString() || currentHeight !== height.toString()) {
+          container.dataset.prevWidth = width.toString();
+          container.dataset.prevHeight = height.toString();
         }
       });
     };
 
+    const resizeObserver = new ResizeObserver(handleResize);
+    const container = containerRef.current;
+
     if (container) {
-      resizeObserver = new ResizeObserver(handleResize);
       resizeObserver.observe(container);
     }
 
     return () => {
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
+      resizeObserver.disconnect();
     };
   }, []);
+
+  if (isLoading) {
+    return <LoadingFallback />;
+  }
 
   return (
     <div className="container mx-auto py-8 px-4" ref={containerRef}>
