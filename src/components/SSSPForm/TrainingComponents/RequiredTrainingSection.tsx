@@ -23,37 +23,22 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
 
   useEffect(() => {
     const fetchPreviousTrainings = async () => {
-      // Only fetch if we have a valid ID
+      let query = supabase.from('sssps').select('required_training');
+      
       if (formData?.id) {
-        const { data, error } = await supabase
-          .from('sssps')
-          .select('required_training')
-          .neq('id', formData.id);
+        query = query.neq('id', formData.id);
+      }
 
-        if (!error && data) {
-          const allTrainings = data.reduce((acc: any[], curr: any) => {
-            if (curr.required_training) {
-              return [...acc, ...curr.required_training];
-            }
-            return acc;
-          }, []);
-          setPreviousTrainings(allTrainings);
-        }
-      } else {
-        // If no ID (new form), fetch all training data
-        const { data, error } = await supabase
-          .from('sssps')
-          .select('required_training');
+      const { data, error } = await query;
 
-        if (!error && data) {
-          const allTrainings = data.reduce((acc: any[], curr: any) => {
-            if (curr.required_training) {
-              return [...acc, ...curr.required_training];
-            }
-            return acc;
-          }, []);
-          setPreviousTrainings(allTrainings);
-        }
+      if (!error && data) {
+        const allTrainings = data.reduce((acc: any[], curr: any) => {
+          if (curr.required_training && Array.isArray(curr.required_training)) {
+            return [...acc, ...curr.required_training];
+          }
+          return acc;
+        }, []);
+        setPreviousTrainings(allTrainings);
       }
     };
 
@@ -63,8 +48,16 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
   const handleAddSingleTraining = async () => {
     if (newTraining.requirement && newTraining.description && newTraining.frequency) {
       const updatedTraining = [...(formData.required_training || []), newTraining];
-      setFormData({ ...formData, required_training: updatedTraining });
+      setFormData({ 
+        ...formData, 
+        required_training: updatedTraining 
+      });
       setNewTraining({ requirement: "", description: "", frequency: "" });
+      
+      toast({
+        title: "Training added",
+        description: "New training requirement has been added successfully"
+      });
     } else {
       toast({
         variant: "destructive",
@@ -73,6 +66,8 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
       });
     }
   };
+
+  console.log("Current training data:", formData.required_training);
 
   return (
     <div className="space-y-4">
