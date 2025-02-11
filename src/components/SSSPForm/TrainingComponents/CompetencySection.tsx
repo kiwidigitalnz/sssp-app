@@ -30,7 +30,7 @@ export const CompetencySection = ({ formData, onFieldChange }: CompetencySection
           />
         </div>
         <Textarea
-          value={formData.competency_requirements || ""}
+          value={formData?.competency_requirements || ""}
           onChange={(e) =>
             onFieldChange("competency_requirements", e.target.value)
           }

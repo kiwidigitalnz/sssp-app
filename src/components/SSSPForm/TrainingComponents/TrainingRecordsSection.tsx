@@ -30,7 +30,7 @@ export const TrainingRecordsSection = ({ formData, onFieldChange }: TrainingReco
           />
         </div>
         <Textarea
-          value={formData.training_records || ""}
+          value={formData?.training_records || ""}
           onChange={(e) =>
             onFieldChange("training_records", e.target.value)
           }
