@@ -1,5 +1,7 @@
 
 // UI-specific type definitions
+import type { Meeting } from '../meetings';
+
 export interface FormStepProps {
   currentStep: number;
   formData: any;
@@ -68,14 +70,6 @@ export interface CommunicationProps {
   };
   setFormData: (data: any) => void;
   isLoading?: boolean;
-}
-
-export interface Meeting {
-  id?: string;
-  type: string;
-  frequency: string;
-  participants: string[];
-  description?: string;
 }
 
 export interface HealthAndSafetyPoliciesProps {
