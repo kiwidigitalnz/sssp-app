@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import type { SSSP } from '@/types/sssp';
@@ -17,6 +17,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
 
   // If the key is a UUID, it's an existing SSSP, so fetch from Supabase
   useEffect(() => {
@@ -28,19 +29,27 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
             .from('sssps')
             .select('*')
             .eq('id', options.key)
-            .single();
+            .maybeSingle();
 
           if (error) throw error;
           
-          console.log('Fetched SSSP data from Supabase:', sssp);
-          // Use double assertion to safely convert the type
-          setData(sssp as Partial<SSSP> as T);
-        } catch (error) {
+          if (sssp) {
+            console.log('Fetched SSSP data from Supabase:', sssp);
+            setData(sssp as Partial<SSSP> as T);
+          } else {
+            console.log('No SSSP found with ID:', options.key);
+            toast({
+              variant: "destructive",
+              title: "SSSP not found",
+              description: "The requested SSSP could not be found."
+            });
+          }
+        } catch (error: any) {
           console.error('Error fetching SSSP:', error);
           toast({
             variant: "destructive",
             title: "Error loading SSSP",
-            description: "There was a problem loading the SSSP data."
+            description: error.message || "There was a problem loading the SSSP data."
           });
         } finally {
           setIsLoading(false);
@@ -51,23 +60,32 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     };
 
     fetchSSSP();
-  }, [options.key]);
+  }, [options.key, toast]);
 
-  const clearSavedData = () => {
+  const clearSavedData = useCallback(() => {
     localStorage.removeItem(options.key);
     setData(options.initialData);
-  };
+    setLastSaved(null);
+  }, [options.key, options.initialData]);
 
   useEffect(() => {
     if (data && !isLoading) {
-      console.log('Saving form data to localStorage:', data);
-      localStorage.setItem(options.key, JSON.stringify(data));
+      const currentData = JSON.stringify(data);
+      if (currentData !== lastSaved) {
+        console.log('Saving form data to localStorage:', data);
+        localStorage.setItem(options.key, currentData);
+        setLastSaved(currentData);
+      }
     }
-  }, [data, options.key, isLoading]);
+  }, [data, options.key, isLoading, lastSaved]);
+
+  const updateFormData = useCallback((newData: T) => {
+    setData(newData);
+  }, []);
 
   return {
     formData: data,
-    setFormData: setData,
+    setFormData: updateFormData,
     clearSavedData,
     isLoading
   };
