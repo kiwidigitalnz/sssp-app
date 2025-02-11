@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 const trainingSchema = z.object({
   competencyRequirements: z.string()
@@ -42,6 +44,28 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
     description: "",
     frequency: "",
   });
+  const [previousTrainings, setPreviousTrainings] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchPreviousTrainings = async () => {
+      const { data, error } = await supabase
+        .from('sssps')
+        .select('required_training')
+        .not('id', 'eq', formData.id);
+
+      if (!error && data) {
+        const allTrainings = data.reduce((acc: any[], curr: any) => {
+          if (curr.required_training) {
+            return [...acc, ...curr.required_training];
+          }
+          return acc;
+        }, []);
+        setPreviousTrainings(allTrainings);
+      }
+    };
+
+    fetchPreviousTrainings();
+  }, [formData.id]);
 
   const {
     register,
@@ -52,29 +76,41 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
   } = useForm<TrainingFormData>({
     resolver: zodResolver(trainingSchema),
     defaultValues: {
-      competencyRequirements: formData.competencyRequirements || "",
-      trainingRecords: formData.trainingRecords || "",
-      requiredTraining: formData.requiredTraining || [],
+      competencyRequirements: formData.competency_requirements || "",
+      trainingRecords: formData.training_records || "",
+      requiredTraining: formData.required_training || [],
     }
   });
 
-  const handleFieldChange = async (field: keyof TrainingFormData, value: string) => {
-    setFormData({ ...formData, [field]: value });
-    setValue(field, value);
-    const result = await trigger(field);
-    if (!result && errors[field]) {
+  const handleFieldChange = async (field: string, value: string) => {
+    const updatedFormData = { ...formData };
+    
+    // Map component field names to database column names
+    const fieldMapping: { [key: string]: string } = {
+      competencyRequirements: 'competency_requirements',
+      trainingRecords: 'training_records',
+      requiredTraining: 'required_training'
+    };
+
+    const dbField = fieldMapping[field] || field;
+    updatedFormData[dbField] = value;
+    
+    setFormData(updatedFormData);
+    setValue(field as keyof TrainingFormData, value);
+    const result = await trigger(field as keyof TrainingFormData);
+    if (!result && errors[field as keyof TrainingFormData]) {
       toast({
         variant: "destructive",
         title: "Validation Error",
-        description: errors[field]?.message
+        description: errors[field as keyof TrainingFormData]?.message
       });
     }
   };
 
   const handleAddSingleTraining = async () => {
     if (newTraining.requirement && newTraining.description && newTraining.frequency) {
-      const updatedTraining = [...(formData.requiredTraining || []), newTraining];
-      setFormData({ ...formData, requiredTraining: updatedTraining });
+      const updatedTraining = [...(formData.required_training || []), newTraining];
+      setFormData({ ...formData, required_training: updatedTraining });
       setValue("requiredTraining", updatedTraining);
       setNewTraining({ requirement: "", description: "", frequency: "" });
       
@@ -178,15 +214,15 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
                     </DialogContent>
                   </Dialog>
                   <TrainingSelection
-                    previousTrainings={formData.requiredTraining || []}
+                    previousTrainings={previousTrainings}
                     onSelect={(training) =>
-                      setFormData({ ...formData, requiredTraining: training })
+                      setFormData({ ...formData, required_training: training })
                     }
                   />
                 </div>
-                {formData.requiredTraining && formData.requiredTraining.length > 0 && (
+                {formData.required_training && formData.required_training.length > 0 && (
                   <div className="space-y-2 mt-4">
-                    {formData.requiredTraining.map((training: any, index: number) => (
+                    {formData.required_training.map((training: any, index: number) => (
                       <div
                         key={index}
                         className="p-4 border rounded-lg space-y-2"
@@ -221,17 +257,14 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
                   fieldId="competencyRequirements"
                   fieldName="Competency Requirements"
                   onSelect={(value) =>
-                    setFormData({ ...formData, competencyRequirements: value })
+                    handleFieldChange("competencyRequirements", value)
                   }
                 />
               </div>
               <Textarea
-                value={formData.competencyRequirements || ""}
+                value={formData.competency_requirements || ""}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    competencyRequirements: e.target.value,
-                  })
+                  handleFieldChange("competencyRequirements", e.target.value)
                 }
                 placeholder="List required certifications, licenses, and experience levels..."
                 className="min-h-[150px]"
@@ -254,14 +287,14 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
                   fieldId="trainingRecords"
                   fieldName="Training Records"
                   onSelect={(value) =>
-                    setFormData({ ...formData, trainingRecords: value })
+                    handleFieldChange("trainingRecords", value)
                   }
                 />
               </div>
               <Textarea
-                value={formData.trainingRecords || ""}
+                value={formData.training_records || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, trainingRecords: e.target.value })
+                  handleFieldChange("trainingRecords", e.target.value)
                 }
                 placeholder="Describe how training records will be maintained and verified..."
                 className="min-h-[150px]"

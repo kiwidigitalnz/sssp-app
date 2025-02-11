@@ -209,6 +209,7 @@ export type Database = {
           company_contact_name: string | null
           company_contact_phone: string | null
           company_name: string
+          competency_requirements: string | null
           considerations: string | null
           contractor_duties: string | null
           created_at: string
@@ -224,11 +225,13 @@ export type Database = {
           locations: string | null
           modified_by: string
           pcbu_duties: string | null
+          required_training: Json[] | null
           services: string | null
           site_supervisor_duties: string | null
           start_date: string | null
           status: string
           title: string
+          training_records: string | null
           updated_at: string
           version: number
           version_history: Json[] | null
@@ -242,6 +245,7 @@ export type Database = {
           company_contact_name?: string | null
           company_contact_phone?: string | null
           company_name: string
+          competency_requirements?: string | null
           considerations?: string | null
           contractor_duties?: string | null
           created_at?: string
@@ -257,11 +261,13 @@ export type Database = {
           locations?: string | null
           modified_by: string
           pcbu_duties?: string | null
+          required_training?: Json[] | null
           services?: string | null
           site_supervisor_duties?: string | null
           start_date?: string | null
           status?: string
           title: string
+          training_records?: string | null
           updated_at?: string
           version?: number
           version_history?: Json[] | null
@@ -275,6 +281,7 @@ export type Database = {
           company_contact_name?: string | null
           company_contact_phone?: string | null
           company_name?: string
+          competency_requirements?: string | null
           considerations?: string | null
           contractor_duties?: string | null
           created_at?: string
@@ -290,11 +297,13 @@ export type Database = {
           locations?: string | null
           modified_by?: string
           pcbu_duties?: string | null
+          required_training?: Json[] | null
           services?: string | null
           site_supervisor_duties?: string | null
           start_date?: string | null
           status?: string
           title?: string
+          training_records?: string | null
           updated_at?: string
           version?: number
           version_history?: Json[] | null
