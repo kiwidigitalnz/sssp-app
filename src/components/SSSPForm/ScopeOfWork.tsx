@@ -21,6 +21,7 @@ const scopeOfWorkSchema = z.object({
 
 type ScopeOfWorkFormData = z.infer<typeof scopeOfWorkSchema>;
 
+// Export the component with named export
 export const ScopeOfWork = ({ formData, setFormData }: any) => {
   const { id } = useParams();
   const { toast } = useToast();

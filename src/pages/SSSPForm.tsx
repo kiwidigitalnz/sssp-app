@@ -1,4 +1,3 @@
-
 import { useState, useEffect, lazy, Suspense, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FormHeader } from "@/components/SSSPForm/FormHeader";
@@ -11,19 +10,19 @@ import { useToast } from "@/hooks/use-toast";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
 import { useMemo } from "react";
 
-// Lazy load form steps
-const ProjectDetails = lazy(() => import("@/components/SSSPForm/ProjectDetails"));
-const CompanyInfo = lazy(() => import("@/components/SSSPForm/CompanyInfo"));
-const ScopeOfWork = lazy(() => import("@/components/SSSPForm/ScopeOfWork"));
-const HealthAndSafety = lazy(() => import("@/components/SSSPForm/HealthAndSafety"));
-const HazardManagement = lazy(() => import("@/components/SSSPForm/HazardManagement"));
-const EmergencyProcedures = lazy(() => import("@/components/SSSPForm/EmergencyProcedures"));
-const TrainingRequirements = lazy(() => import("@/components/SSSPForm/TrainingRequirements"));
-const HealthAndSafetyPolicies = lazy(() => import("@/components/SSSPForm/HealthAndSafetyPolicies"));
-const SiteSafetyRules = lazy(() => import("@/components/SSSPForm/SiteSafetyRules"));
-const Communication = lazy(() => import("@/components/SSSPForm/Communication"));
-const MonitoringReview = lazy(() => import("@/components/SSSPForm/MonitoringReview"));
-const SummaryScreen = lazy(() => import("@/components/SSSPForm/SummaryScreen"));
+// Lazy load form steps with correct type assertions
+const ProjectDetails = lazy(() => import("@/components/SSSPForm/ProjectDetails").then(module => ({ default: module.ProjectDetails })));
+const CompanyInfo = lazy(() => import("@/components/SSSPForm/CompanyInfo").then(module => ({ default: module.CompanyInfo })));
+const ScopeOfWork = lazy(() => import("@/components/SSSPForm/ScopeOfWork").then(module => ({ default: module.ScopeOfWork })));
+const HealthAndSafety = lazy(() => import("@/components/SSSPForm/HealthAndSafety").then(module => ({ default: module.HealthAndSafety })));
+const HazardManagement = lazy(() => import("@/components/SSSPForm/HazardManagement").then(module => ({ default: module.HazardManagement })));
+const EmergencyProcedures = lazy(() => import("@/components/SSSPForm/EmergencyProcedures").then(module => ({ default: module.EmergencyProcedures })));
+const TrainingRequirements = lazy(() => import("@/components/SSSPForm/TrainingRequirements").then(module => ({ default: module.TrainingRequirements })));
+const HealthAndSafetyPolicies = lazy(() => import("@/components/SSSPForm/HealthAndSafetyPolicies").then(module => ({ default: module.HealthAndSafetyPolicies })));
+const SiteSafetyRules = lazy(() => import("@/components/SSSPForm/SiteSafetyRules").then(module => ({ default: module.SiteSafetyRules })));
+const Communication = lazy(() => import("@/components/SSSPForm/Communication").then(module => ({ default: module.Communication })));
+const MonitoringReview = lazy(() => import("@/components/SSSPForm/MonitoringReview").then(module => ({ default: module.MonitoringReview })));
+const SummaryScreen = lazy(() => import("@/components/SSSPForm/SummaryScreen").then(module => ({ default: module.SummaryScreen })));
 
 const LoadingFallback = () => (
   <div className="space-y-4">

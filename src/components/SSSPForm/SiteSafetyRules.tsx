@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
@@ -27,6 +26,7 @@ const siteSafetyRulesSchema = z.object({
 
 type SiteSafetyRulesFormData = z.infer<typeof siteSafetyRulesSchema>;
 
+// Export the component with named export
 export const SiteSafetyRules = ({ formData, setFormData }: any) => {
   const { toast } = useToast();
   const {

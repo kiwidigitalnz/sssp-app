@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap } from "lucide-react";
@@ -7,7 +6,12 @@ import { CompetencySection } from "./TrainingComponents/CompetencySection";
 import { TrainingRecordsSection } from "./TrainingComponents/TrainingRecordsSection";
 import { useTrainingForm } from "./TrainingComponents/TrainingForm";
 
-export const TrainingRequirements = ({ formData, setFormData }: any) => {
+interface TrainingRequirementsProps {
+  formData: any;
+  setFormData: (data: any) => void;
+}
+
+export const TrainingRequirements = ({ formData, setFormData }: TrainingRequirementsProps) => {
   const { handleFieldChange } = useTrainingForm({ formData, setFormData });
 
   return (
@@ -28,4 +32,3 @@ export const TrainingRequirements = ({ formData, setFormData }: any) => {
     </div>
   );
 };
-
