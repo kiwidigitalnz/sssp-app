@@ -23,6 +23,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     const fetchSSSP = async () => {
       if (options.key && options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
         try {
+          console.log('Fetching SSSP with ID:', options.key);
           const { data: sssp, error } = await supabase
             .from('sssps')
             .select('*')
