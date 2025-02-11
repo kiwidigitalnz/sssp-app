@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { TrainingRequirementFormData } from "@/types/sssp/forms";
 
 const trainingSchema = z.object({
   competency_requirements: z.string()
@@ -22,8 +23,8 @@ const trainingSchema = z.object({
 export type TrainingFormData = z.infer<typeof trainingSchema>;
 
 interface TrainingFormProps {
-  formData: any;
-  setFormData: (data: any) => void;
+  formData: TrainingFormData;
+  setFormData: (data: TrainingFormData) => void;
 }
 
 export const useTrainingForm = ({ formData, setFormData }: TrainingFormProps) => {
@@ -71,3 +72,4 @@ export const useTrainingForm = ({ formData, setFormData }: TrainingFormProps) =>
     handleFieldChange
   };
 };
+

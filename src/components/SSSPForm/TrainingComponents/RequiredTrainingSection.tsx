@@ -7,17 +7,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddTrainingDialog } from "./AddTrainingDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useParams } from "react-router-dom";
+import type { TrainingRequirementFormData, SSSPFormData } from "@/types/sssp/forms";
 
 interface RequiredTrainingSectionProps {
-  formData: any;
-  setFormData: (data: any) => void;
+  formData: SSSPFormData;
+  setFormData: (data: SSSPFormData) => void;
 }
 
 export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrainingSectionProps) => {
-  const [previousTrainings, setPreviousTrainings] = useState<any[]>([]);
+  const [previousTrainings, setPreviousTrainings] = useState<TrainingRequirementFormData[]>([]);
   const { toast } = useToast();
   const { id } = useParams();
-  const [newTraining, setNewTraining] = React.useState({
+  const [newTraining, setNewTraining] = React.useState<TrainingRequirementFormData>({
     requirement: "",
     description: "",
     frequency: "",
@@ -34,7 +35,7 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
       const { data, error } = await query;
 
       if (!error && data) {
-        const allTrainings = data.reduce((acc: any[], curr: any) => {
+        const allTrainings = data.reduce((acc: TrainingRequirementFormData[], curr: any) => {
           if (curr.required_training && Array.isArray(curr.required_training)) {
             return [...acc, ...curr.required_training];
           }
@@ -110,7 +111,7 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
           </div>
           {formData.required_training && formData.required_training.length > 0 && (
             <div className="space-y-2 mt-4">
-              {formData.required_training.map((training: any, index: number) => (
+              {formData.required_training.map((training: TrainingRequirementFormData, index: number) => (
                 <div
                   key={index}
                   className="p-4 border rounded-lg space-y-2"
@@ -131,3 +132,4 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
     </div>
   );
 };
+

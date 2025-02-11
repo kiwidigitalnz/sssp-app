@@ -2,14 +2,11 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { MonitoringReviewFormData } from "@/types/sssp/forms";
 
 interface CorrectiveActionsProps {
-  data: {
-    process: string;
-    tracking_method: string;
-    responsible_person: string | null;
-  };
-  onChange: (data: any) => void;
+  data: MonitoringReviewFormData["corrective_actions"];
+  onChange: (data: MonitoringReviewFormData["corrective_actions"]) => void;
 }
 
 export const CorrectiveActions = ({ data, onChange }: CorrectiveActionsProps) => {

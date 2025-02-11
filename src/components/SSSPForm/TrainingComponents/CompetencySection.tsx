@@ -3,9 +3,10 @@ import React from "react";
 import { Award } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+import type { SSSPFormData } from "@/types/sssp/forms";
 
 interface CompetencySectionProps {
-  formData: any;
+  formData: SSSPFormData;
   onFieldChange: (field: string, value: string) => void;
 }
 
@@ -41,3 +42,4 @@ export const CompetencySection = ({ formData, onFieldChange }: CompetencySection
     </div>
   );
 };
+
