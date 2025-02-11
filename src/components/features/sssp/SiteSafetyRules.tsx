@@ -1,4 +1,4 @@
-// Move from src/components/SSSPForm/SiteSafetyRules.tsx
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
@@ -11,16 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
 const siteSafetyRulesSchema = z.object({
-  entryExitProcedures: z.string()
+  entry_exit_procedures: z.string()
     .min(10, "Entry/Exit procedures must be at least 10 characters long")
     .max(1000, "Entry/Exit procedures must not exceed 1000 characters"),
-  speedLimits: z.string()
+  speed_limits: z.string()
     .min(10, "Speed limits description must be at least 10 characters long")
     .max(500, "Speed limits description must not exceed 500 characters"),
-  parkingRules: z.string()
+  parking_rules: z.string()
     .min(10, "Parking rules must be at least 10 characters long")
     .max(500, "Parking rules must not exceed 500 characters"),
-  sitePPE: z.string()
+  site_specific_ppe: z.string()
     .min(10, "Site PPE requirements must be at least 10 characters long")
     .max(500, "Site PPE requirements must not exceed 500 characters")
 });
@@ -38,18 +38,19 @@ export const SiteSafetyRules = ({ formData, setFormData }: any) => {
   } = useForm<SiteSafetyRulesFormData>({
     resolver: zodResolver(siteSafetyRulesSchema),
     defaultValues: {
-      entryExitProcedures: formData.entryExitProcedures || "",
-      speedLimits: formData.speedLimits || "",
-      parkingRules: formData.parkingRules || "",
-      sitePPE: formData.sitePPE || ""
+      entry_exit_procedures: formData?.entry_exit_procedures || "",
+      speed_limits: formData?.speed_limits || "",
+      parking_rules: formData?.parking_rules || "",
+      site_specific_ppe: formData?.site_specific_ppe || ""
     }
   });
 
   useEffect(() => {
-    setValue("entryExitProcedures", formData.entryExitProcedures || "");
-    setValue("speedLimits", formData.speedLimits || "");
-    setValue("parkingRules", formData.parkingRules || "");
-    setValue("sitePPE", formData.sitePPE || "");
+    console.log("SiteSafetyRules - Current formData:", formData);
+    setValue("entry_exit_procedures", formData?.entry_exit_procedures || "");
+    setValue("speed_limits", formData?.speed_limits || "");
+    setValue("parking_rules", formData?.parking_rules || "");
+    setValue("site_specific_ppe", formData?.site_specific_ppe || "");
   }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof SiteSafetyRulesFormData, value: string) => {
@@ -77,97 +78,97 @@ export const SiteSafetyRules = ({ formData, setFormData }: any) => {
         <div className="space-y-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="entryExitProcedures" className="text-base font-medium flex items-center gap-2">
+              <Label htmlFor="entry_exit_procedures" className="text-base font-medium flex items-center gap-2">
                 <DoorOpen className="h-4 w-4" />
                 Entry/Exit Procedures
               </Label>
               <QuickFillButton
-                fieldId="entryExitProcedures"
+                fieldId="entry_exit_procedures"
                 fieldName="Entry/Exit Procedures"
-                onSelect={(value) => handleFieldChange("entryExitProcedures", value)}
+                onSelect={(value) => handleFieldChange("entry_exit_procedures", value)}
               />
             </div>
             <Textarea
-              id="entryExitProcedures"
-              {...register("entryExitProcedures")}
-              className={`min-h-[100px] resize-none ${errors.entryExitProcedures ? "border-destructive" : ""}`}
+              id="entry_exit_procedures"
+              {...register("entry_exit_procedures")}
+              className={`min-h-[100px] resize-none ${errors.entry_exit_procedures ? "border-destructive" : ""}`}
               placeholder="Detail site entry and exit procedures..."
-              onChange={(e) => handleFieldChange("entryExitProcedures", e.target.value)}
+              onChange={(e) => handleFieldChange("entry_exit_procedures", e.target.value)}
             />
-            {errors.entryExitProcedures && (
-              <p className="text-sm text-destructive mt-1">{errors.entryExitProcedures.message}</p>
+            {errors.entry_exit_procedures && (
+              <p className="text-sm text-destructive mt-1">{errors.entry_exit_procedures.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="speedLimits" className="text-base font-medium flex items-center gap-2">
+              <Label htmlFor="speed_limits" className="text-base font-medium flex items-center gap-2">
                 <Car className="h-4 w-4" />
                 Speed Limits
               </Label>
               <QuickFillButton
-                fieldId="speedLimits"
+                fieldId="speed_limits"
                 fieldName="Speed Limits"
-                onSelect={(value) => handleFieldChange("speedLimits", value)}
+                onSelect={(value) => handleFieldChange("speed_limits", value)}
               />
             </div>
             <Textarea
-              id="speedLimits"
-              {...register("speedLimits")}
-              className={`min-h-[100px] resize-none ${errors.speedLimits ? "border-destructive" : ""}`}
+              id="speed_limits"
+              {...register("speed_limits")}
+              className={`min-h-[100px] resize-none ${errors.speed_limits ? "border-destructive" : ""}`}
               placeholder="Specify site speed limits and vehicle rules..."
-              onChange={(e) => handleFieldChange("speedLimits", e.target.value)}
+              onChange={(e) => handleFieldChange("speed_limits", e.target.value)}
             />
-            {errors.speedLimits && (
-              <p className="text-sm text-destructive mt-1">{errors.speedLimits.message}</p>
+            {errors.speed_limits && (
+              <p className="text-sm text-destructive mt-1">{errors.speed_limits.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="parkingRules" className="text-base font-medium flex items-center gap-2">
+              <Label htmlFor="parking_rules" className="text-base font-medium flex items-center gap-2">
                 <Car className="h-4 w-4" />
                 Parking Rules
               </Label>
               <QuickFillButton
-                fieldId="parkingRules"
+                fieldId="parking_rules"
                 fieldName="Parking Rules"
-                onSelect={(value) => handleFieldChange("parkingRules", value)}
+                onSelect={(value) => handleFieldChange("parking_rules", value)}
               />
             </div>
             <Textarea
-              id="parkingRules"
-              {...register("parkingRules")}
-              className={`min-h-[100px] resize-none ${errors.parkingRules ? "border-destructive" : ""}`}
+              id="parking_rules"
+              {...register("parking_rules")}
+              className={`min-h-[100px] resize-none ${errors.parking_rules ? "border-destructive" : ""}`}
               placeholder="Detail parking regulations and designated areas..."
-              onChange={(e) => handleFieldChange("parkingRules", e.target.value)}
+              onChange={(e) => handleFieldChange("parking_rules", e.target.value)}
             />
-            {errors.parkingRules && (
-              <p className="text-sm text-destructive mt-1">{errors.parkingRules.message}</p>
+            {errors.parking_rules && (
+              <p className="text-sm text-destructive mt-1">{errors.parking_rules.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="sitePPE" className="text-base font-medium flex items-center gap-2">
+              <Label htmlFor="site_specific_ppe" className="text-base font-medium flex items-center gap-2">
                 <HardHat className="h-4 w-4" />
                 Site-Specific PPE Requirements
               </Label>
               <QuickFillButton
-                fieldId="sitePPE"
+                fieldId="site_specific_ppe"
                 fieldName="Site-Specific PPE Requirements"
-                onSelect={(value) => handleFieldChange("sitePPE", value)}
+                onSelect={(value) => handleFieldChange("site_specific_ppe", value)}
               />
             </div>
             <Textarea
-              id="sitePPE"
-              {...register("sitePPE")}
-              className={`min-h-[100px] resize-none ${errors.sitePPE ? "border-destructive" : ""}`}
+              id="site_specific_ppe"
+              {...register("site_specific_ppe")}
+              className={`min-h-[100px] resize-none ${errors.site_specific_ppe ? "border-destructive" : ""}`}
               placeholder="List required PPE for specific site areas..."
-              onChange={(e) => handleFieldChange("sitePPE", e.target.value)}
+              onChange={(e) => handleFieldChange("site_specific_ppe", e.target.value)}
             />
-            {errors.sitePPE && (
-              <p className="text-sm text-destructive mt-1">{errors.sitePPE.message}</p>
+            {errors.site_specific_ppe && (
+              <p className="text-sm text-destructive mt-1">{errors.site_specific_ppe.message}</p>
             )}
           </div>
         </div>
