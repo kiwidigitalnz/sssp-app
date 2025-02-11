@@ -21,6 +21,8 @@ export interface HazardFormData {
   controlMeasures: string;
 }
 
+export type Hazard = HazardFormData;
+
 export interface EmergencyContactFormData {
   name: string;
   role: string;
@@ -60,3 +62,4 @@ export interface MonitoringReviewFormData {
     access_details: string;
   };
 }
+

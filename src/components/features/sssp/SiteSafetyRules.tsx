@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
-import type { SSSPFormData } from "@/types/sssp";
+import type { SSSPFormData } from "@/types/sssp/forms";
 
 const siteSafetyRulesSchema = z.object({
   entry_exit_procedures: z.string()
@@ -27,7 +27,12 @@ const siteSafetyRulesSchema = z.object({
 
 type SiteSafetyRulesFormData = z.infer<typeof siteSafetyRulesSchema>;
 
-export const SiteSafetyRules = ({ formData, setFormData }: any) => {
+interface SiteSafetyRulesProps {
+  formData: SSSPFormData;
+  setFormData: (data: SSSPFormData) => void;
+}
+
+export const SiteSafetyRules = ({ formData, setFormData }: SiteSafetyRulesProps) => {
   const { toast } = useToast();
   const {
     register,
