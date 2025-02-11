@@ -1,5 +1,5 @@
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FormHeader } from "@/components/SSSPForm/FormHeader";
 import { FormProgress } from "@/components/SSSPForm/FormProgress";
@@ -63,7 +63,7 @@ const SSSPForm = () => {
     if (currentStep < formSteps.length - 1) {
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
-        setCurrentStep(currentStep + 1);
+        setCurrentStep(prevStep => prevStep + 1);
         toast({
           title: "Progress saved",
           description: "Your changes have been saved",
@@ -78,39 +78,44 @@ const SSSPForm = () => {
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep(prevStep => prevStep - 1);
     }
-  };
+  }, [currentStep]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     clearSavedData();
     navigate("/");
-  };
+  }, [clearSavedData, navigate]);
 
   useEffect(() => {
-    let resizeObserver: ResizeObserver;
+    let resizeObserver: ResizeObserver | null = null;
     const container = containerRef.current;
 
-    if (container) {
-      resizeObserver = new ResizeObserver((entries) => {
-        // Using requestAnimationFrame to throttle updates
-        requestAnimationFrame(() => {
-          for (const entry of entries) {
-            if (entry.target === container) {
-              // Handle resize if needed
+    const handleResize = (entries: ResizeObserverEntry[]) => {
+      requestAnimationFrame(() => {
+        for (const entry of entries) {
+          if (entry.target === container) {
+            // Only update if size actually changed
+            const { width, height } = entry.contentRect;
+            if (container.dataset.prevWidth !== width.toString() || 
+                container.dataset.prevHeight !== height.toString()) {
+              container.dataset.prevWidth = width.toString();
+              container.dataset.prevHeight = height.toString();
             }
           }
-        });
+        }
       });
+    };
 
+    if (container) {
+      resizeObserver = new ResizeObserver(handleResize);
       resizeObserver.observe(container);
     }
 
     return () => {
-      if (resizeObserver && container) {
-        resizeObserver.unobserve(container);
+      if (resizeObserver) {
         resizeObserver.disconnect();
       }
     };
