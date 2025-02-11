@@ -1,15 +1,29 @@
 
-import { useState, useEffect, Suspense, useRef, useCallback } from "react";
+import { useState, useEffect, lazy, Suspense, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FormHeader } from "@/components/SSSPForm/FormHeader";
 import { FormProgress } from "@/components/SSSPForm/FormProgress";
 import { FormNavigation } from "@/components/SSSPForm/FormNavigation";
-import { FormSteps, formSteps } from "@/components/SSSPForm/FormSteps";
 import { FormDialogs } from "@/components/SSSPForm/FormDialogs";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
+import { useMemo } from "react";
+
+// Lazy load form steps
+const ProjectDetails = lazy(() => import("@/components/SSSPForm/ProjectDetails"));
+const CompanyInfo = lazy(() => import("@/components/SSSPForm/CompanyInfo"));
+const ScopeOfWork = lazy(() => import("@/components/SSSPForm/ScopeOfWork"));
+const HealthAndSafety = lazy(() => import("@/components/SSSPForm/HealthAndSafety"));
+const HazardManagement = lazy(() => import("@/components/SSSPForm/HazardManagement"));
+const EmergencyProcedures = lazy(() => import("@/components/SSSPForm/EmergencyProcedures"));
+const TrainingRequirements = lazy(() => import("@/components/SSSPForm/TrainingRequirements"));
+const HealthAndSafetyPolicies = lazy(() => import("@/components/SSSPForm/HealthAndSafetyPolicies"));
+const SiteSafetyRules = lazy(() => import("@/components/SSSPForm/SiteSafetyRules"));
+const Communication = lazy(() => import("@/components/SSSPForm/Communication"));
+const MonitoringReview = lazy(() => import("@/components/SSSPForm/MonitoringReview"));
+const SummaryScreen = lazy(() => import("@/components/SSSPForm/SummaryScreen"));
 
 const LoadingFallback = () => (
   <div className="space-y-4">
@@ -21,6 +35,22 @@ const LoadingFallback = () => (
 interface SSSPFormData {
   [key: string]: any;
 }
+
+// Memoize form steps configuration
+const formSteps = [
+  { title: "Project Details", Component: ProjectDetails },
+  { title: "Company Information", Component: CompanyInfo },
+  { title: "Scope of Work", Component: ScopeOfWork },
+  { title: "Health and Safety Responsibilities", Component: HealthAndSafety },
+  { title: "Hazard and Risk Management", Component: HazardManagement },
+  { title: "Incident and Emergency Procedures", Component: EmergencyProcedures },
+  { title: "Training and Competency Requirements", Component: TrainingRequirements },
+  { title: "Health and Safety Policies", Component: HealthAndSafetyPolicies },
+  { title: "Site-Specific Safety Rules", Component: SiteSafetyRules },
+  { title: "Communication and Consultation", Component: Communication },
+  { title: "Monitoring and Review", Component: MonitoringReview },
+  { title: "Review and Submit", Component: SummaryScreen }
+];
 
 const SSSPForm = () => {
   const { id } = useParams();
@@ -34,49 +64,39 @@ const SSSPForm = () => {
     formData,
     setFormData,
     clearSavedData,
-    isLoading
+    isLoading,
+    save,
+    error
   } = useFormPersistence<SSSPFormData>({
     key: id || 'new-form',
     initialData: {}
   });
 
+  // Memoize current step component
+  const CurrentStepComponent = useMemo(() => {
+    const { Component } = formSteps[currentStep];
+    return Component;
+  }, [currentStep]);
+
   const handleSave = useCallback(async () => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      localStorage.setItem(`sssp-${id || 'draft'}`, JSON.stringify(formData));
-      toast({
-        title: "Progress saved",
-        description: "Your SSSP has been saved successfully",
-      });
+      await save();
       clearSavedData();
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error saving",
-        description: "There was an error saving your progress",
+        description: error.message || "There was an error saving your progress",
       });
     }
-  }, [id, formData, toast, clearSavedData, navigate]);
+  }, [save, clearSavedData, navigate, toast]);
 
-  const handleNext = useCallback(async () => {
+  const handleNext = useCallback(() => {
     if (currentStep < formSteps.length - 1) {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setCurrentStep(prevStep => prevStep + 1);
-        toast({
-          title: "Progress saved",
-          description: "Your changes have been saved",
-        });
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "There was an error saving your progress",
-        });
-      }
+      setCurrentStep(prevStep => prevStep + 1);
     }
-  }, [currentStep, toast]);
+  }, [currentStep]);
 
   const handlePrevious = useCallback(() => {
     if (currentStep > 0) {
@@ -89,37 +109,39 @@ const SSSPForm = () => {
     navigate("/");
   }, [clearSavedData, navigate]);
 
+  // Optimize resize observer
   useEffect(() => {
-    const handleResize = (entries: ResizeObserverEntry[]) => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry) return;
       
-      requestAnimationFrame(() => {
-        const container = containerRef.current;
-        if (!container) return;
+      const { width, height } = entry.contentRect;
+      container.dataset.prevWidth = width.toString();
+      container.dataset.prevHeight = height.toString();
+    });
 
-        const { width, height } = entry.contentRect;
-        const currentWidth = container.dataset.prevWidth;
-        const currentHeight = container.dataset.prevHeight;
-
-        if (currentWidth !== width.toString() || currentHeight !== height.toString()) {
-          container.dataset.prevWidth = width.toString();
-          container.dataset.prevHeight = height.toString();
-        }
-      });
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-    const container = containerRef.current;
-
-    if (container) {
-      resizeObserver.observe(container);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
   }, []);
+
+  // Preload next step component
+  useEffect(() => {
+    if (currentStep < formSteps.length - 1) {
+      const nextStep = formSteps[currentStep + 1];
+      const prefetchComponent = async () => {
+        try {
+          // @ts-ignore - TypeScript doesn't know about the _prefetch method
+          await nextStep.Component._prefetch();
+        } catch (error) {
+          console.warn('Error prefetching next step:', error);
+        }
+      };
+      prefetchComponent();
+    }
+  }, [currentStep]);
 
   if (isLoading) {
     return <LoadingFallback />;
@@ -144,8 +166,7 @@ const SSSPForm = () => {
 
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
-              <FormSteps
-                currentStep={currentStep}
+              <CurrentStepComponent
                 formData={formData}
                 setFormData={setFormData}
                 onStepChange={setCurrentStep}
