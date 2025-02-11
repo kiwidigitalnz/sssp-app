@@ -1,8 +1,6 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Mail, MapPin, User, Phone } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +9,9 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CompanyNameSection } from "./CompanyComponents/CompanyNameSection";
+import { AddressSection } from "./CompanyComponents/AddressSection";
+import { ContactDetails } from "./CompanyComponents/ContactDetails";
 
 const companyInfoSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
@@ -110,131 +111,30 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
           Company Information
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="companyName" className="text-base font-medium">Company Name</Label>
-              <QuickFillButton
-                fieldId="companyName"
-                fieldName="Company Name"
-                onSelect={(value) => handleFieldChange("companyName", value)}
-              />
-            </div>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="companyName"
-                {...register("companyName")}
-                className={`pl-9 ${errors.companyName ? "border-destructive" : ""}`}
-                placeholder="Enter company name"
-                onChange={(e) => handleFieldChange("companyName", e.target.value)}
-              />
-              {errors.companyName && (
-                <p className="text-sm text-destructive mt-1">{errors.companyName.message}</p>
-              )}
-            </div>
-          </div>
+      <CardContent className="space-y-6">
+        <CompanyNameSection
+          value={formData.companyName || ""}
+          onChange={(value) => handleFieldChange("companyName", value)}
+          error={errors.companyName?.message}
+        />
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="address" className="text-base font-medium">Address</Label>
-              <QuickFillButton
-                fieldId="address"
-                fieldName="Address"
-                onSelect={(value) => handleFieldChange("address", value)}
-              />
-            </div>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="address"
-                {...register("address")}
-                className={`pl-9 ${errors.address ? "border-destructive" : ""}`}
-                placeholder="Enter company address"
-                onChange={(e) => handleFieldChange("address", e.target.value)}
-              />
-              {errors.address && (
-                <p className="text-sm text-destructive mt-1">{errors.address.message}</p>
-              )}
-            </div>
-          </div>
+        <AddressSection
+          value={formData.address || ""}
+          onChange={(value) => handleFieldChange("address", value)}
+          error={errors.address?.message}
+        />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="contactPerson" className="text-base font-medium">Contact Person</Label>
-                <QuickFillButton
-                  fieldId="contactPerson"
-                  fieldName="Contact Person"
-                  onSelect={(value) => handleFieldChange("contactPerson", value)}
-                />
-              </div>
-              <div className="relative">
-                <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="contactPerson"
-                  {...register("contactPerson")}
-                  className={`pl-9 ${errors.contactPerson ? "border-destructive" : ""}`}
-                  placeholder="Enter contact person name"
-                  onChange={(e) => handleFieldChange("contactPerson", e.target.value)}
-                />
-                {errors.contactPerson && (
-                  <p className="text-sm text-destructive mt-1">{errors.contactPerson.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="contactEmail" className="text-base font-medium">Contact Email</Label>
-                <QuickFillButton
-                  fieldId="contactEmail"
-                  fieldName="Contact Email"
-                  onSelect={(value) => handleFieldChange("contactEmail", value)}
-                />
-              </div>
-              <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="contactEmail"
-                  type="email"
-                  {...register("contactEmail")}
-                  className={`pl-9 ${errors.contactEmail ? "border-destructive" : ""}`}
-                  placeholder="Enter contact email"
-                  onChange={(e) => handleFieldChange("contactEmail", e.target.value)}
-                />
-                {errors.contactEmail && (
-                  <p className="text-sm text-destructive mt-1">{errors.contactEmail.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="contactPhone" className="text-base font-medium">Contact Phone</Label>
-                <QuickFillButton
-                  fieldId="contactPhone"
-                  fieldName="Contact Phone"
-                  onSelect={(value) => handleFieldChange("contactPhone", value)}
-                />
-              </div>
-              <div className="relative">
-                <Phone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="contactPhone"
-                  {...register("contactPhone")}
-                  className={`pl-9 ${errors.contactPhone ? "border-destructive" : ""}`}
-                  placeholder="Enter contact phone"
-                  onChange={(e) => handleFieldChange("contactPhone", e.target.value)}
-                />
-                {errors.contactPhone && (
-                  <p className="text-sm text-destructive mt-1">{errors.contactPhone.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ContactDetails
+          contactPerson={formData.contactPerson || ""}
+          contactEmail={formData.contactEmail || ""}
+          contactPhone={formData.contactPhone || ""}
+          onUpdate={handleFieldChange}
+          errors={{
+            contactPerson: errors.contactPerson?.message,
+            contactEmail: errors.contactEmail?.message,
+            contactPhone: errors.contactPhone?.message
+          }}
+        />
       </CardContent>
     </Card>
   );
