@@ -34,18 +34,17 @@ export const MeetingSelection = ({
   onMeetingsChange,
 }: MeetingSelectionProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [editingIndex, setEditingIndex] = useState<number>(-1);
 
   const [newMeeting, setNewMeeting] = useState<Meeting>({
     type: "",
     frequency: "weekly",
-    attendees: "",
+    participants: [],
     description: "",
   });
 
   const handleAddMeeting = () => {
-    if (!newMeeting.type || !newMeeting.attendees) {
+    if (!newMeeting.type || newMeeting.participants.length === 0) {
       toast({
         title: "Required Fields Missing",
         description: "Please fill in all required fields",
@@ -65,7 +64,7 @@ export const MeetingSelection = ({
     setNewMeeting({
       type: "",
       frequency: "weekly",
-      attendees: "",
+      participants: [],
       description: "",
     });
     setEditingIndex(-1);
@@ -73,7 +72,6 @@ export const MeetingSelection = ({
   };
 
   const handleEditMeeting = (meeting: Meeting, index: number) => {
-    setEditingMeeting(meeting);
     setEditingIndex(index);
     setNewMeeting(meeting);
     setIsDialogOpen(true);
@@ -144,14 +142,17 @@ export const MeetingSelection = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="attendees">Attendees *</Label>
+                <Label htmlFor="participants">Participants *</Label>
                 <Input
-                  id="attendees"
-                  value={newMeeting.attendees}
+                  id="participants"
+                  value={newMeeting.participants.join(", ")}
                   onChange={(e) =>
-                    setNewMeeting({ ...newMeeting, attendees: e.target.value })
+                    setNewMeeting({
+                      ...newMeeting,
+                      participants: e.target.value.split(",").map(p => p.trim()).filter(Boolean)
+                    })
                   }
-                  placeholder="e.g., All site workers"
+                  placeholder="e.g., All site workers, Safety Officer"
                 />
               </div>
 
@@ -192,7 +193,7 @@ export const MeetingSelection = ({
                   Frequency: {meeting.frequency}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Attendees: {meeting.attendees}
+                  Participants: {meeting.participants.join(", ")}
                 </p>
                 {meeting.description && (
                   <p className="text-sm text-muted-foreground">

@@ -3,20 +3,67 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Wine, Moon, Shield, Phone } from "lucide-react";
+import type { HealthAndSafetyPoliciesProps } from "@/types/sssp/ui";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
-export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
-  console.log("HealthAndSafetyPolicies - Current formData:", {
-    drug_and_alcohol: formData.drug_and_alcohol,
-    fatigue_management: formData.fatigue_management,
-    ppe: formData.ppe,
-    mobile_phone: formData.mobile_phone
+const healthAndSafetyPoliciesSchema = z.object({
+  drug_and_alcohol: z.string()
+    .min(10, "Drug and alcohol policy must be at least 10 characters long")
+    .max(1000, "Drug and alcohol policy must not exceed 1000 characters"),
+  fatigue_management: z.string()
+    .min(10, "Fatigue management must be at least 10 characters long")
+    .max(1000, "Fatigue management must not exceed 1000 characters"),
+  ppe: z.string()
+    .min(10, "PPE requirements must be at least 10 characters long")
+    .max(500, "PPE requirements must not exceed 500 characters"),
+  mobile_phone: z.string()
+    .min(10, "Mobile phone usage policy must be at least 10 characters long")
+    .max(500, "Mobile phone usage policy must not exceed 500 characters")
+});
+
+type HealthAndSafetyPoliciesFormData = z.infer<typeof healthAndSafetyPoliciesSchema>;
+
+export const HealthAndSafetyPolicies = ({ formData, setFormData, isLoading = false }: HealthAndSafetyPoliciesProps) => {
+  const { toast } = useToast();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    trigger
+  } = useForm<HealthAndSafetyPoliciesFormData>({
+    resolver: zodResolver(healthAndSafetyPoliciesSchema),
+    defaultValues: {
+      drug_and_alcohol: formData.drug_and_alcohol || "",
+      fatigue_management: formData.fatigue_management || "",
+      ppe: formData.ppe || "",
+      mobile_phone: formData.mobile_phone || ""
+    }
   });
 
-  const handleFieldChange = (field: string, value: string) => {
-    console.log(`Updating ${field} with:`, value);
+  useEffect(() => {
+    setValue("drug_and_alcohol", formData.drug_and_alcohol || "");
+    setValue("fatigue_management", formData.fatigue_management || "");
+    setValue("ppe", formData.ppe || "");
+    setValue("mobile_phone", formData.mobile_phone || "");
+  }, [formData, setValue]);
+
+  const handleFieldChange = async (field: keyof HealthAndSafetyPoliciesFormData, value: string) => {
     setFormData({ ...formData, [field]: value });
+    setValue(field, value);
+    const result = await trigger(field);
+    if (!result && errors[field]) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: errors[field]?.message
+      });
+    }
   };
 
   return (
@@ -43,11 +90,14 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
             </div>
             <Textarea
               id="drug_and_alcohol"
-              value={formData.drug_and_alcohol || ""}
-              onChange={(e) => handleFieldChange("drug_and_alcohol", e.target.value)}
+              {...register("drug_and_alcohol")}
+              className={`min-h-[100px] resize-none ${errors.drug_and_alcohol ? "border-destructive" : ""}`}
               placeholder="Detail your company's drug and alcohol policies..."
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("drug_and_alcohol", e.target.value)}
             />
+            {errors.drug_and_alcohol && (
+              <p className="text-sm text-destructive mt-1">{errors.drug_and_alcohol.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -64,11 +114,14 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
             </div>
             <Textarea
               id="fatigue_management"
-              value={formData.fatigue_management || ""}
-              onChange={(e) => handleFieldChange("fatigue_management", e.target.value)}
+              {...register("fatigue_management")}
+              className={`min-h-[100px] resize-none ${errors.fatigue_management ? "border-destructive" : ""}`}
               placeholder="Outline fatigue management procedures and policies..."
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("fatigue_management", e.target.value)}
             />
+            {errors.fatigue_management && (
+              <p className="text-sm text-destructive mt-1">{errors.fatigue_management.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -85,11 +138,14 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
             </div>
             <Textarea
               id="ppe"
-              value={formData.ppe || ""}
-              onChange={(e) => handleFieldChange("ppe", e.target.value)}
+              {...register("ppe")}
+              className={`min-h-[100px] resize-none ${errors.ppe ? "border-destructive" : ""}`}
               placeholder="List required Personal Protective Equipment..."
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("ppe", e.target.value)}
             />
+            {errors.ppe && (
+              <p className="text-sm text-destructive mt-1">{errors.ppe.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -106,11 +162,14 @@ export const HealthAndSafetyPolicies = ({ formData, setFormData }: any) => {
             </div>
             <Textarea
               id="mobile_phone"
-              value={formData.mobile_phone || ""}
-              onChange={(e) => handleFieldChange("mobile_phone", e.target.value)}
+              {...register("mobile_phone")}
+              className={`min-h-[100px] resize-none ${errors.mobile_phone ? "border-destructive" : ""}`}
               placeholder="Specify mobile phone usage rules and restrictions..."
-              className="min-h-[100px] resize-none"
+              onChange={(e) => handleFieldChange("mobile_phone", e.target.value)}
             />
+            {errors.mobile_phone && (
+              <p className="text-sm text-destructive mt-1">{errors.mobile_phone.message}</p>
+            )}
           </div>
         </div>
       </CardContent>

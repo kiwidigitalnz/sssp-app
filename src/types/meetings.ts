@@ -2,8 +2,9 @@
 export type MeetingFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'asneeded';
 
 export interface Meeting {
+  id?: string;
   type: string;
   frequency: MeetingFrequency;
-  attendees: string;
-  description: string;
+  participants: string[];
+  description?: string;
 }

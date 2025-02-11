@@ -78,3 +78,13 @@ export interface Meeting {
   description?: string;
 }
 
+export interface HealthAndSafetyPoliciesProps {
+  formData: {
+    drug_and_alcohol?: string;
+    fatigue_management?: string;
+    ppe?: string;
+    mobile_phone?: string;
+  };
+  setFormData: (data: any) => void;
+  isLoading?: boolean;
+}
