@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface Hazard {
   hazard: string;
@@ -27,8 +28,7 @@ export const HazardManagement = ({
   setFormData,
 }: HazardManagementProps) => {
   const { id } = useParams();
-  console.log("HazardManagement - Received formData:", formData);
-  
+  const { toast } = useToast();
   const hazards = formData.hazards || [];
   const [previousHazards, setPreviousHazards] = useState<Hazard[]>([]);
   const [previousRisks, setPreviousRisks] = useState<string[]>([]);
@@ -45,11 +45,15 @@ export const HazardManagement = ({
 
         if (error) {
           console.error('Error fetching SSSP data:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load hazard data"
+          });
           return;
         }
 
-        if (data && data.hazards) {
-          // If we have hazards data and formData doesn't, update formData
+        if (data?.hazards && Array.isArray(data.hazards)) {
           if (!formData.hazards || formData.hazards.length === 0) {
             setFormData({ ...formData, hazards: data.hazards });
           }
@@ -59,30 +63,6 @@ export const HazardManagement = ({
 
     fetchSSSPData();
   }, [id]);
-
-  useEffect(() => {
-    const storedSSSPs = localStorage.getItem("sssps");
-    if (storedSSSPs) {
-      const sssps = JSON.parse(storedSSSPs);
-      const allHazards: Hazard[] = [];
-      const allRisks = new Set<string>();
-      const allControls = new Set<string>();
-
-      sssps.forEach((sssp: any) => {
-        sssp.hazards?.forEach((h: Hazard) => {
-          if (h.hazard && h.risk && h.controlMeasures) {
-            allHazards.push(h);
-          }
-          if (h.risk) allRisks.add(h.risk);
-          if (h.controlMeasures) allControls.add(h.controlMeasures);
-        });
-      });
-
-      setPreviousHazards(allHazards);
-      setPreviousRisks(Array.from(allRisks));
-      setPreviousControls(Array.from(allControls));
-    }
-  }, []);
 
   const addHazard = () => {
     const updatedHazards = [

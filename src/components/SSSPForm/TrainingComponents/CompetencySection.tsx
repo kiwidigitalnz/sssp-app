@@ -22,17 +22,17 @@ export const CompetencySection = ({ formData, onFieldChange }: CompetencySection
             Specify required competencies and qualifications
           </p>
           <QuickFillButton
-            fieldId="competencyRequirements"
+            fieldId="competency_requirements"
             fieldName="Competency Requirements"
             onSelect={(value) =>
-              onFieldChange("competencyRequirements", value)
+              onFieldChange("competency_requirements", value)
             }
           />
         </div>
         <Textarea
           value={formData.competency_requirements || ""}
           onChange={(e) =>
-            onFieldChange("competencyRequirements", e.target.value)
+            onFieldChange("competency_requirements", e.target.value)
           }
           placeholder="List required certifications, licenses, and experience levels..."
           className="min-h-[150px]"

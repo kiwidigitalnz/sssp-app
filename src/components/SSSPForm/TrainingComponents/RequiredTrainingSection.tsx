@@ -6,6 +6,7 @@ import { TrainingSelection } from "../TrainingSelection";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTrainingDialog } from "./AddTrainingDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useParams } from "react-router-dom";
 
 interface RequiredTrainingSectionProps {
   formData: any;
@@ -15,6 +16,7 @@ interface RequiredTrainingSectionProps {
 export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrainingSectionProps) => {
   const [previousTrainings, setPreviousTrainings] = useState<any[]>([]);
   const { toast } = useToast();
+  const { id } = useParams();
   const [newTraining, setNewTraining] = React.useState({
     requirement: "",
     description: "",
@@ -25,8 +27,8 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
     const fetchPreviousTrainings = async () => {
       let query = supabase.from('sssps').select('required_training');
       
-      if (formData?.id) {
-        query = query.neq('id', formData.id);
+      if (id) {
+        query = query.neq('id', id);
       }
 
       const { data, error } = await query;
@@ -42,8 +44,26 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
       }
     };
 
+    const fetchCurrentTraining = async () => {
+      if (id && (!formData.required_training || formData.required_training.length === 0)) {
+        const { data, error } = await supabase
+          .from('sssps')
+          .select('required_training')
+          .eq('id', id)
+          .single();
+
+        if (!error && data?.required_training) {
+          setFormData({ 
+            ...formData, 
+            required_training: data.required_training 
+          });
+        }
+      }
+    };
+
     fetchPreviousTrainings();
-  }, [formData?.id]);
+    fetchCurrentTraining();
+  }, [id, formData?.id]);
 
   const handleAddSingleTraining = async () => {
     if (newTraining.requirement && newTraining.description && newTraining.frequency) {
@@ -66,8 +86,6 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
       });
     }
   };
-
-  console.log("Current training data:", formData.required_training);
 
   return (
     <div className="space-y-4">

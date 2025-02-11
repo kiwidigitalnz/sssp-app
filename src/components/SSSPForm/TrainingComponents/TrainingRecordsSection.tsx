@@ -22,17 +22,17 @@ export const TrainingRecordsSection = ({ formData, onFieldChange }: TrainingReco
             Document training record keeping procedures
           </p>
           <QuickFillButton
-            fieldId="trainingRecords"
+            fieldId="training_records"
             fieldName="Training Records"
             onSelect={(value) =>
-              onFieldChange("trainingRecords", value)
+              onFieldChange("training_records", value)
             }
           />
         </div>
         <Textarea
           value={formData.training_records || ""}
           onChange={(e) =>
-            onFieldChange("trainingRecords", e.target.value)
+            onFieldChange("training_records", e.target.value)
           }
           placeholder="Describe how training records will be maintained and verified..."
           className="min-h-[150px]"
