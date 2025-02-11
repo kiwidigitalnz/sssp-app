@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { HazardTable } from "./HazardTable";
 import { HazardActions } from "./HazardActions";
@@ -14,6 +15,7 @@ interface Hazard {
 interface HazardManagementProps {
   formData: {
     hazards?: Hazard[];
+    [key: string]: any;
   };
   setFormData: (data: any) => void;
 }
@@ -22,6 +24,8 @@ export const HazardManagement = ({
   formData,
   setFormData,
 }: HazardManagementProps) => {
+  console.log("HazardManagement - Received formData:", formData);
+  
   const hazards = formData.hazards || [];
   const [previousHazards, setPreviousHazards] = useState<Hazard[]>([]);
   const [previousRisks, setPreviousRisks] = useState<string[]>([]);
@@ -52,17 +56,16 @@ export const HazardManagement = ({
   }, []);
 
   const addHazard = () => {
-    setFormData({
-      ...formData,
-      hazards: [...hazards, { hazard: "", risk: "", controlMeasures: "" }],
-    });
+    const updatedHazards = [
+      ...hazards,
+      { hazard: "", risk: "", controlMeasures: "" },
+    ];
+    setFormData({ ...formData, hazards: updatedHazards });
   };
 
   const addMultipleHazards = (selectedHazards: Hazard[]) => {
-    setFormData({
-      ...formData,
-      hazards: [...hazards, ...selectedHazards],
-    });
+    const updatedHazards = [...hazards, ...selectedHazards];
+    setFormData({ ...formData, hazards: updatedHazards });
   };
 
   const removeHazard = (index: number) => {

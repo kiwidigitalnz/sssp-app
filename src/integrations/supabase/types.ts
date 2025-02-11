@@ -214,6 +214,7 @@ export type Database = {
           created_by: string
           description: string | null
           end_date: string | null
+          hazards: Json[] | null
           id: string
           locations: string | null
           modified_by: string
@@ -241,6 +242,7 @@ export type Database = {
           created_by: string
           description?: string | null
           end_date?: string | null
+          hazards?: Json[] | null
           id?: string
           locations?: string | null
           modified_by: string
@@ -268,6 +270,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           end_date?: string | null
+          hazards?: Json[] | null
           id?: string
           locations?: string | null
           modified_by?: string

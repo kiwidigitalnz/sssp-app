@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
@@ -48,7 +49,6 @@ export const HazardTable = ({
           <TableRow className="bg-muted/50">
             <TableHead className="w-[25%] min-w-[200px]">Hazard/Risk Source</TableHead>
             <TableHead className="w-[15%] min-w-[120px]">Risk Level</TableHead>
-            <TableHead className="w-[25%] min-w-[200px]">Potential Harm</TableHead>
             <TableHead className="w-[30%] min-w-[250px]">Control Measures</TableHead>
             <TableHead className="w-[5%] min-w-[60px]">Actions</TableHead>
           </TableRow>
@@ -82,14 +82,6 @@ export const HazardTable = ({
               </TableCell>
               <TableCell className="align-top">
                 <Input
-                  value={hazard.risk}
-                  onChange={(e) => updateHazard(index, "risk", e.target.value)}
-                  placeholder="Describe potential harm"
-                  className="w-full"
-                />
-              </TableCell>
-              <TableCell className="align-top">
-                <Input
                   value={hazard.controlMeasures}
                   onChange={(e) =>
                     updateHazard(index, "controlMeasures", e.target.value)
@@ -112,7 +104,7 @@ export const HazardTable = ({
           ))}
           {hazards.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                 No hazards added yet. Click "Add Single Hazard" to begin.
               </TableCell>
             </TableRow>
