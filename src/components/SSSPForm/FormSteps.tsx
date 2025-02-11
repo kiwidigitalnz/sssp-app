@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { ProjectDetails } from "./ProjectDetails";
 import { CompanyInfo } from "./CompanyInfo";
 import { ScopeOfWork } from "./ScopeOfWork";
-import { HealthAndSafety } from "./HealthAndSafety";
+import { HealthAndSafety } from "@/components/features/sssp/HealthAndSafety";
 import { HazardManagement } from "./HazardManagement";
 import { EmergencyProcedures } from "./EmergencyProcedures";
 import TrainingRequirements from "./TrainingRequirements";
