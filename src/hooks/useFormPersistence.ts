@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -24,6 +25,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const lastSavedRef = useRef<string | null>(null);
+  const storageRetryCount = useRef(0);
 
   useEffect(() => {
     const fetchSSSP = async () => {
@@ -39,8 +41,12 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           
           if (sssp) {
             setData((sssp as unknown) as T);
-            // Don't store the full SSSP in localStorage, just keep track of last saved state
-            lastSavedRef.current = JSON.stringify(sssp);
+            // Only store the lastSavedRef for comparison
+            lastSavedRef.current = JSON.stringify({
+              id: sssp.id,
+              version: sssp.version,
+              updated_at: sssp.updated_at
+            });
           } else {
             toast({
               variant: "destructive",
@@ -71,48 +77,82 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       localStorage.removeItem(options.key);
       setData(options.initialData);
       lastSavedRef.current = null;
+      storageRetryCount.current = 0;
     } catch (error) {
       console.warn('Error clearing localStorage:', error);
     }
   }, [options.key, options.initialData]);
 
+  const clearOldData = useCallback(() => {
+    const keys = Object.keys(localStorage);
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    keys.forEach(key => {
+      try {
+        const item = localStorage.getItem(key);
+        if (item) {
+          const data = JSON.parse(item);
+          if (data.lastModified && new Date(data.lastModified) < oneWeekAgo) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (e) {
+        // If we can't parse the item, it's probably safe to remove it
+        localStorage.removeItem(key);
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (data && !isLoading) {
-      const currentData = JSON.stringify(data);
-      if (currentData !== lastSavedRef.current) {
+      const updateStorage = () => {
         try {
-          // Only store a minimal version of the data for draft/temporary purposes
+          // Store minimal data for draft state
           const minimalData = {
             id: data.id,
             title: data.title,
             lastModified: new Date().toISOString(),
             isDraft: true
           };
-          localStorage.setItem(options.key, JSON.stringify(minimalData));
-          lastSavedRef.current = currentData;
+          
+          const storageStr = JSON.stringify(minimalData);
+          
+          // Check if the data is actually different before storing
+          const currentStored = localStorage.getItem(options.key);
+          if (currentStored !== storageStr) {
+            localStorage.setItem(options.key, storageStr);
+            lastSavedRef.current = JSON.stringify(data);
+            storageRetryCount.current = 0;
+          }
         } catch (error) {
-          console.warn('Error writing to localStorage:', error);
-          // If we hit quota, clear old data
-          try {
-            localStorage.clear();
-            localStorage.setItem(options.key, JSON.stringify({
-              id: data.id,
-              title: data.title,
-              lastModified: new Date().toISOString(),
-              isDraft: true
-            }));
-          } catch (secondError) {
-            console.error('Failed to write to localStorage even after clearing:', secondError);
+          console.warn('Storage error:', error);
+          
+          // If we hit quota, try to clear space and retry once
+          if (error instanceof Error && error.name === 'QuotaExceededError' && storageRetryCount.current < 1) {
+            clearOldData();
+            storageRetryCount.current++;
+            updateStorage(); // Retry storage operation
+          } else {
+            console.error('Failed to save to localStorage after cleanup:', error);
+            // Notify user that their progress might not be saved locally
+            toast({
+              variant: "destructive",
+              title: "Storage Warning",
+              description: "Unable to save progress locally. Your changes will only be saved when you submit the form."
+            });
           }
         }
-      }
+      };
+
+      updateStorage();
     }
-  }, [data, options.key, isLoading]);
+  }, [data, options.key, isLoading, toast, clearOldData]);
 
   const updateFormData = useCallback((newData: T) => {
     setData((prevData) => {
-      const newDataString = JSON.stringify(newData);
-      if (newDataString !== lastSavedRef.current) {
+      // Only update if data has actually changed
+      if (JSON.stringify(newData) !== JSON.stringify(prevData)) {
         return newData;
       }
       return prevData;
