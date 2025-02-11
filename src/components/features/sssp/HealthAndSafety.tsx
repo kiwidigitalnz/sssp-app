@@ -137,3 +137,5 @@ export const HealthAndSafety = ({ formData, setFormData }: HealthAndSafetyProps)
     </Card>
   );
 };
+
+export default HealthAndSafety;
