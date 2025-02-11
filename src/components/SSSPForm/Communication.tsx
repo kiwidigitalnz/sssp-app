@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
@@ -10,7 +9,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { MeetingSelection } from "./MeetingSelection";
-import type { CommunicationProps, Meeting } from "@/types/sssp/ui";
+import type { CommunicationProps } from "@/types/sssp/ui";
+import type { Meeting } from "@/types/meetings";
 
 const communicationSchema = z.object({
   communication_methods: z.string()
@@ -189,4 +189,3 @@ export const Communication = ({ formData, setFormData, isLoading = false }: Comm
     </Card>
   );
 };
-
