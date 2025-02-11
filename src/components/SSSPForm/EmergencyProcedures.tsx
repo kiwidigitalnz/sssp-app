@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,26 +9,75 @@ import { EmergencyResponsePlan } from "./EmergencyComponents/EmergencyResponsePl
 import { AssemblyPoints } from "./EmergencyComponents/AssemblyPoints";
 import { EmergencyEquipment } from "./EmergencyComponents/EmergencyEquipment";
 import { IncidentReporting } from "./EmergencyComponents/IncidentReporting";
+import { supabase } from "@/integrations/supabase/client";
+import { useParams } from "react-router-dom";
 
 export const EmergencyProcedures = ({ formData, setFormData }: any) => {
+  const { id } = useParams();
   const [contacts, setContacts] = useState(formData.emergencyContacts || []);
   const [previousContacts, setPreviousContacts] = useState([]);
 
   useEffect(() => {
-    const storedSSSPs = localStorage.getItem("sssps");
-    if (storedSSSPs) {
-      const sssps = JSON.parse(storedSSSPs);
+    const fetchSSSPData = async () => {
+      if (id) {
+        const { data, error } = await supabase
+          .from('sssps')
+          .select('emergency_plan, emergency_contacts, assembly_points, emergency_equipment, incident_reporting')
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching SSSP data:', error);
+          return;
+        }
+
+        if (data) {
+          // Update formData with the fetched data
+          setFormData({
+            ...formData,
+            emergencyPlan: data.emergency_plan || '',
+            emergencyContacts: data.emergency_contacts || [],
+            assemblyPoints: data.assembly_points || '',
+            emergencyEquipment: data.emergency_equipment || '',
+            incidentReporting: data.incident_reporting || ''
+          });
+
+          // Update local contacts state
+          setContacts(data.emergency_contacts || []);
+        }
+      }
+    };
+
+    if (!formData.emergencyPlan) {
+      fetchSSSPData();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    const fetchPreviousContacts = async () => {
+      const { data: sssps, error } = await supabase
+        .from('sssps')
+        .select('emergency_contacts')
+        .not('id', 'eq', id)
+        .not('emergency_contacts', 'is', null);
+
+      if (error) {
+        console.error('Error fetching previous contacts:', error);
+        return;
+      }
+
       const allContacts = [];
-      
       sssps.forEach((sssp: any) => {
-        if (sssp.emergencyContacts) {
-          allContacts.push(...sssp.emergencyContacts);
+        if (sssp.emergency_contacts) {
+          allContacts.push(...sssp.emergency_contacts);
         }
       });
-      
+
       setPreviousContacts(allContacts);
-    }
-  }, []);
+    };
+
+    fetchPreviousContacts();
+  }, [id]);
 
   const addContact = () => {
     const newContacts = [...contacts, { name: "", role: "", phone: "" }];

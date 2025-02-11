@@ -203,6 +203,7 @@ export type Database = {
       }
       sssps: {
         Row: {
+          assembly_points: string | null
           company_address: string | null
           company_contact_email: string | null
           company_contact_name: string | null
@@ -213,9 +214,13 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          emergency_contacts: Json[] | null
+          emergency_equipment: string | null
+          emergency_plan: string | null
           end_date: string | null
           hazards: Json[] | null
           id: string
+          incident_reporting: string | null
           locations: string | null
           modified_by: string
           pcbu_duties: string | null
@@ -231,6 +236,7 @@ export type Database = {
           worker_duties: string | null
         }
         Insert: {
+          assembly_points?: string | null
           company_address?: string | null
           company_contact_email?: string | null
           company_contact_name?: string | null
@@ -241,9 +247,13 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          emergency_contacts?: Json[] | null
+          emergency_equipment?: string | null
+          emergency_plan?: string | null
           end_date?: string | null
           hazards?: Json[] | null
           id?: string
+          incident_reporting?: string | null
           locations?: string | null
           modified_by: string
           pcbu_duties?: string | null
@@ -259,6 +269,7 @@ export type Database = {
           worker_duties?: string | null
         }
         Update: {
+          assembly_points?: string | null
           company_address?: string | null
           company_contact_email?: string | null
           company_contact_name?: string | null
@@ -269,9 +280,13 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          emergency_contacts?: Json[] | null
+          emergency_equipment?: string | null
+          emergency_plan?: string | null
           end_date?: string | null
           hazards?: Json[] | null
           id?: string
+          incident_reporting?: string | null
           locations?: string | null
           modified_by?: string
           pcbu_duties?: string | null
