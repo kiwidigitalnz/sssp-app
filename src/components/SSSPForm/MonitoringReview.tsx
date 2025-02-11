@@ -20,10 +20,10 @@ const auditSchema = z.object({
 
 const monitoringSchema = z.object({
   audits: z.array(auditSchema).min(1, "At least one audit is required"),
-  correctiveActions: z.string()
+  correctiveactions: z.string()
     .min(10, "Corrective actions must be at least 10 characters long")
     .max(1000, "Corrective actions must not exceed 1000 characters"),
-  annualReview: z.string()
+  annualreview: z.string()
     .min(10, "Annual review process must be at least 10 characters long")
     .max(1000, "Annual review process must not exceed 1000 characters")
 });
@@ -75,17 +75,23 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
     resolver: zodResolver(monitoringSchema),
     defaultValues: {
       audits: formData.audits || [],
-      correctiveActions: formData.correctiveActions || "",
-      annualReview: formData.annualReview || ""
+      correctiveactions: formData.correctiveactions || "",
+      annualreview: formData.annualreview || ""
     }
   });
 
   useEffect(() => {
-    if (!formData.audits || formData.audits.length === 0) {
-      setFormData({ ...formData, audits });
-      setValue("audits", audits);
+    if (formData.audits && formData.audits.length > 0) {
+      setAudits(formData.audits);
+      setValue("audits", formData.audits);
     }
-  }, []);
+    if (formData.correctiveactions) {
+      setValue("correctiveactions", formData.correctiveactions);
+    }
+    if (formData.annualreview) {
+      setValue("annualreview", formData.annualreview);
+    }
+  }, [formData, setValue]);
 
   const updateAudit = async (index: number, field: string, value: string) => {
     const newAudits = [...audits];
@@ -141,17 +147,17 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
 
           <TextSection
             title="Corrective Actions"
-            fieldId="correctiveActions"
-            value={formData.correctiveActions || ""}
-            onChange={(value) => setFormData({ ...formData, correctiveActions: value })}
+            fieldId="correctiveactions"
+            value={formData.correctiveactions || ""}
+            onChange={(value) => setFormData({ ...formData, correctiveactions: value })}
             placeholder="Document how corrective actions are managed and tracked..."
           />
 
           <TextSection
             title="Annual Review Process"
-            fieldId="annualReview"
-            value={formData.annualReview || ""}
-            onChange={(value) => setFormData({ ...formData, annualReview: value })}
+            fieldId="annualreview"
+            value={formData.annualreview || ""}
+            onChange={(value) => setFormData({ ...formData, annualreview: value })}
             placeholder="Document the annual SSSP review process..."
           />
         </CardContent>
