@@ -32,7 +32,8 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           if (error) throw error;
           
           console.log('Fetched SSSP data from Supabase:', sssp);
-          setData(sssp as T);
+          // Use double assertion to safely convert the type
+          setData(sssp as Partial<SSSP> as T);
         } catch (error) {
           console.error('Error fetching SSSP:', error);
           toast({
