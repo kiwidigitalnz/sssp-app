@@ -69,7 +69,9 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
       }
 
       const allAudits = sssps?.flatMap(sssp => sssp.audits || []) || [];
-      const uniqueAudits = Array.from(new Set(allAudits.map(JSON.stringify)))
+      // Fix: Create a stringifier function that matches the expected type signature
+      const stringifyAudit = (audit: any) => JSON.stringify(audit);
+      const uniqueAudits = Array.from(new Set(allAudits.map(stringifyAudit)))
         .map(str => JSON.parse(str));
       
       setPreviousAudits(uniqueAudits);
