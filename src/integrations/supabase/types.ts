@@ -203,9 +203,7 @@ export type Database = {
       }
       sssps: {
         Row: {
-          annualreview: string | null
           assembly_points: string | null
-          audits: Json[] | null
           communication_methods: string | null
           communication_protocols: string | null
           company_address: string | null
@@ -216,7 +214,6 @@ export type Database = {
           competency_requirements: string | null
           considerations: string | null
           contractor_duties: string | null
-          correctiveactions: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -234,6 +231,7 @@ export type Database = {
           meetings_schedule: Json[] | null
           mobile_phone: string | null
           modified_by: string
+          monitoring_review: Json | null
           parking_rules: string | null
           pcbu_duties: string | null
           ppe: string | null
@@ -254,9 +252,7 @@ export type Database = {
           worker_duties: string | null
         }
         Insert: {
-          annualreview?: string | null
           assembly_points?: string | null
-          audits?: Json[] | null
           communication_methods?: string | null
           communication_protocols?: string | null
           company_address?: string | null
@@ -267,7 +263,6 @@ export type Database = {
           competency_requirements?: string | null
           considerations?: string | null
           contractor_duties?: string | null
-          correctiveactions?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -285,6 +280,7 @@ export type Database = {
           meetings_schedule?: Json[] | null
           mobile_phone?: string | null
           modified_by: string
+          monitoring_review?: Json | null
           parking_rules?: string | null
           pcbu_duties?: string | null
           ppe?: string | null
@@ -305,9 +301,7 @@ export type Database = {
           worker_duties?: string | null
         }
         Update: {
-          annualreview?: string | null
           assembly_points?: string | null
-          audits?: Json[] | null
           communication_methods?: string | null
           communication_protocols?: string | null
           company_address?: string | null
@@ -318,7 +312,6 @@ export type Database = {
           competency_requirements?: string | null
           considerations?: string | null
           contractor_duties?: string | null
-          correctiveactions?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -336,6 +329,7 @@ export type Database = {
           meetings_schedule?: Json[] | null
           mobile_phone?: string | null
           modified_by?: string
+          monitoring_review?: Json | null
           parking_rules?: string | null
           pcbu_duties?: string | null
           ppe?: string | null

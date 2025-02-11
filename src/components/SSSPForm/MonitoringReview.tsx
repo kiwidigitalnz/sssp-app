@@ -1,34 +1,22 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useState, useEffect } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useToast } from "@/hooks/use-toast";
-import { AuditTable } from "./MonitoringComponents/AuditTable";
-import { TextSection } from "./MonitoringComponents/TextSection";
-
-const auditSchema = z.object({
-  type: z.string().min(1, "Audit type is required"),
-  frequency: z.string().min(1, "Frequency is required"),
-  responsible: z.string().min(1, "Responsible person is required"),
-  lastDate: z.string().min(1, "Last audit date is required"),
-  nextDate: z.string().min(1, "Next audit date is required")
-});
-
-const monitoringSchema = z.object({
-  audits: z.array(auditSchema).min(1, "At least one audit is required"),
-  correctiveactions: z.string()
-    .min(10, "Corrective actions must be at least 10 characters long")
-    .max(1000, "Corrective actions must not exceed 1000 characters"),
-  annualreview: z.string()
-    .min(10, "Annual review process must be at least 10 characters long")
-    .max(1000, "Annual review process must not exceed 1000 characters")
-});
-
-type MonitoringFormData = z.infer<typeof monitoringSchema>;
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  CalendarRange,
+  ClipboardList,
+  Users,
+  GitCommit,
+  FileText,
+  BarChart3,
+  Bell,
+} from "lucide-react";
+import { ReviewSchedule } from "./MonitoringComponents/ReviewSchedule";
+import { KPIsSection } from "./MonitoringComponents/KPIsSection";
+import { CorrectiveActions } from "./MonitoringComponents/CorrectiveActions";
+import { AuditsSection } from "./MonitoringComponents/AuditsSection";
+import { WorkerConsultation } from "./MonitoringComponents/WorkerConsultation";
+import { ReviewTriggers } from "./MonitoringComponents/ReviewTriggers";
+import { Documentation } from "./MonitoringComponents/Documentation";
 
 interface MonitoringReviewProps {
   formData: any;
@@ -36,94 +24,14 @@ interface MonitoringReviewProps {
 }
 
 export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProps) => {
-  const { toast } = useToast();
-  const [audits, setAudits] = useState(() => {
-    if (formData.audits && formData.audits.length > 0) {
-      return formData.audits;
-    }
-    // Initialize with demo data if no audits exist
-    return [
-      {
-        type: "Site Safety Inspection",
-        frequency: "Weekly",
-        responsible: "Site Supervisor",
-        lastDate: "2024-02-01",
-        nextDate: "2024-02-08"
+  const handleUpdateMonitoring = (section: string, data: any) => {
+    setFormData({
+      ...formData,
+      monitoring_review: {
+        ...formData.monitoring_review,
+        [section]: data,
       },
-      {
-        type: "Equipment Safety Check",
-        frequency: "Monthly",
-        responsible: "Safety Officer",
-        lastDate: "2024-01-15",
-        nextDate: "2024-02-15"
-      },
-      {
-        type: "Emergency Response Drill",
-        frequency: "Quarterly",
-        responsible: "H&S Manager",
-        lastDate: "2024-01-01",
-        nextDate: "2024-04-01"
-      }
-    ];
-  });
-
-  const {
-    setValue,
-    trigger,
-    formState: { errors }
-  } = useForm<MonitoringFormData>({
-    resolver: zodResolver(monitoringSchema),
-    defaultValues: {
-      audits: formData.audits || [],
-      correctiveactions: formData.correctiveactions || "",
-      annualreview: formData.annualreview || ""
-    }
-  });
-
-  useEffect(() => {
-    if (formData.audits && formData.audits.length > 0) {
-      setAudits(formData.audits);
-      setValue("audits", formData.audits);
-    }
-    if (formData.correctiveactions) {
-      setValue("correctiveactions", formData.correctiveactions);
-    }
-    if (formData.annualreview) {
-      setValue("annualreview", formData.annualreview);
-    }
-  }, [formData, setValue]);
-
-  const updateAudit = async (index: number, field: string, value: string) => {
-    const newAudits = [...audits];
-    newAudits[index] = {
-      ...newAudits[index],
-      [field]: value
-    };
-    setAudits(newAudits);
-    setFormData({ ...formData, audits: newAudits });
-    setValue("audits", newAudits);
-    
-    const result = await trigger("audits");
-    if (!result) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Please check all audit fields"
-      });
-    }
-  };
-
-  const removeAudit = (index: number) => {
-    const newAudits = audits.filter((_, i) => i !== index);
-    setAudits(newAudits);
-    setFormData({ ...formData, audits: newAudits });
-  };
-
-  const addAudit = () => {
-    const newAudits = [...audits, { type: "", frequency: "", responsible: "", lastDate: "", nextDate: "" }];
-    setAudits(newAudits);
-    setFormData({ ...formData, audits: newAudits });
-    setValue("audits", newAudits);
+    });
   };
 
   return (
@@ -132,34 +40,88 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
         <CardHeader>
           <CardTitle>Monitoring and Review</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Audits and Inspections</h3>
-            <AuditTable 
-              audits={audits}
-              updateAudit={updateAudit}
-              removeAudit={removeAudit}
-            />
-            <Button onClick={addAudit} className="mt-4">
-              <Plus className="mr-2 h-4 w-4" /> Add Audit
-            </Button>
-          </div>
+        <CardContent>
+          <Tabs defaultValue="schedule" className="space-y-4">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+              <TabsTrigger value="schedule" className="space-x-2">
+                <CalendarRange className="h-4 w-4" />
+                <span>Schedule</span>
+              </TabsTrigger>
+              <TabsTrigger value="kpis" className="space-x-2">
+                <BarChart3 className="h-4 w-4" />
+                <span>KPIs</span>
+              </TabsTrigger>
+              <TabsTrigger value="actions" className="space-x-2">
+                <GitCommit className="h-4 w-4" />
+                <span>Actions</span>
+              </TabsTrigger>
+              <TabsTrigger value="audits" className="space-x-2">
+                <ClipboardList className="h-4 w-4" />
+                <span>Audits</span>
+              </TabsTrigger>
+              <TabsTrigger value="consultation" className="space-x-2">
+                <Users className="h-4 w-4" />
+                <span>Consultation</span>
+              </TabsTrigger>
+              <TabsTrigger value="triggers" className="space-x-2">
+                <Bell className="h-4 w-4" />
+                <span>Triggers</span>
+              </TabsTrigger>
+              <TabsTrigger value="documentation" className="space-x-2">
+                <FileText className="h-4 w-4" />
+                <span>Documentation</span>
+              </TabsTrigger>
+            </TabsList>
 
-          <TextSection
-            title="Corrective Actions"
-            fieldId="correctiveactions"
-            value={formData.correctiveactions || ""}
-            onChange={(value) => setFormData({ ...formData, correctiveactions: value })}
-            placeholder="Document how corrective actions are managed and tracked..."
-          />
+            <TabsContent value="schedule">
+              <ReviewSchedule
+                data={formData.monitoring_review?.review_schedule}
+                onChange={(data) => handleUpdateMonitoring("review_schedule", data)}
+              />
+            </TabsContent>
 
-          <TextSection
-            title="Annual Review Process"
-            fieldId="annualreview"
-            value={formData.annualreview || ""}
-            onChange={(value) => setFormData({ ...formData, annualreview: value })}
-            placeholder="Document the annual SSSP review process..."
-          />
+            <TabsContent value="kpis">
+              <KPIsSection
+                data={formData.monitoring_review?.kpis}
+                onChange={(data) => handleUpdateMonitoring("kpis", data)}
+              />
+            </TabsContent>
+
+            <TabsContent value="actions">
+              <CorrectiveActions
+                data={formData.monitoring_review?.corrective_actions}
+                onChange={(data) => handleUpdateMonitoring("corrective_actions", data)}
+              />
+            </TabsContent>
+
+            <TabsContent value="audits">
+              <AuditsSection
+                data={formData.monitoring_review?.audits}
+                onChange={(data) => handleUpdateMonitoring("audits", data)}
+              />
+            </TabsContent>
+
+            <TabsContent value="consultation">
+              <WorkerConsultation
+                data={formData.monitoring_review?.worker_consultation}
+                onChange={(data) => handleUpdateMonitoring("worker_consultation", data)}
+              />
+            </TabsContent>
+
+            <TabsContent value="triggers">
+              <ReviewTriggers
+                data={formData.monitoring_review?.review_triggers}
+                onChange={(data) => handleUpdateMonitoring("review_triggers", data)}
+              />
+            </TabsContent>
+
+            <TabsContent value="documentation">
+              <Documentation
+                data={formData.monitoring_review?.documentation}
+                onChange={(data) => handleUpdateMonitoring("documentation", data)}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
