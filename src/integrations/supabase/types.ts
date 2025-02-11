@@ -215,16 +215,20 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          drug_and_alcohol: string | null
           emergency_contacts: Json[] | null
           emergency_equipment: string | null
           emergency_plan: string | null
           end_date: string | null
+          fatigue_management: string | null
           hazards: Json[] | null
           id: string
           incident_reporting: string | null
           locations: string | null
+          mobile_phone: string | null
           modified_by: string
           pcbu_duties: string | null
+          ppe: string | null
           required_training: Json[] | null
           services: string | null
           site_supervisor_duties: string | null
@@ -251,16 +255,20 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          drug_and_alcohol?: string | null
           emergency_contacts?: Json[] | null
           emergency_equipment?: string | null
           emergency_plan?: string | null
           end_date?: string | null
+          fatigue_management?: string | null
           hazards?: Json[] | null
           id?: string
           incident_reporting?: string | null
           locations?: string | null
+          mobile_phone?: string | null
           modified_by: string
           pcbu_duties?: string | null
+          ppe?: string | null
           required_training?: Json[] | null
           services?: string | null
           site_supervisor_duties?: string | null
@@ -287,16 +295,20 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          drug_and_alcohol?: string | null
           emergency_contacts?: Json[] | null
           emergency_equipment?: string | null
           emergency_plan?: string | null
           end_date?: string | null
+          fatigue_management?: string | null
           hazards?: Json[] | null
           id?: string
           incident_reporting?: string | null
           locations?: string | null
+          mobile_phone?: string | null
           modified_by?: string
           pcbu_duties?: string | null
+          ppe?: string | null
           required_training?: Json[] | null
           services?: string | null
           site_supervisor_duties?: string | null
