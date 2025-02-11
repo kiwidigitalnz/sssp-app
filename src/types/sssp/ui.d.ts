@@ -2,6 +2,8 @@
 // UI-specific type definitions
 import type { Meeting } from '../meetings';
 
+export type { Meeting };
+
 export interface FormStepProps {
   currentStep: number;
   formData: any;
