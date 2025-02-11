@@ -203,7 +203,9 @@ export type Database = {
       }
       sssps: {
         Row: {
+          annualreview: string | null
           assembly_points: string | null
+          audits: Json[] | null
           communication_methods: string | null
           communication_protocols: string | null
           company_address: string | null
@@ -214,6 +216,7 @@ export type Database = {
           competency_requirements: string | null
           considerations: string | null
           contractor_duties: string | null
+          correctiveactions: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -251,7 +254,9 @@ export type Database = {
           worker_duties: string | null
         }
         Insert: {
+          annualreview?: string | null
           assembly_points?: string | null
+          audits?: Json[] | null
           communication_methods?: string | null
           communication_protocols?: string | null
           company_address?: string | null
@@ -262,6 +267,7 @@ export type Database = {
           competency_requirements?: string | null
           considerations?: string | null
           contractor_duties?: string | null
+          correctiveactions?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -299,7 +305,9 @@ export type Database = {
           worker_duties?: string | null
         }
         Update: {
+          annualreview?: string | null
           assembly_points?: string | null
+          audits?: Json[] | null
           communication_methods?: string | null
           communication_protocols?: string | null
           company_address?: string | null
@@ -310,6 +318,7 @@ export type Database = {
           competency_requirements?: string | null
           considerations?: string | null
           contractor_duties?: string | null
+          correctiveactions?: string | null
           created_at?: string
           created_by?: string
           description?: string | null

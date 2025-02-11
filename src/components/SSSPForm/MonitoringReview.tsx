@@ -1,7 +1,8 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuditSelection } from "./AuditSelection";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -9,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { AuditTable } from "./MonitoringComponents/AuditTable";
 import { TextSection } from "./MonitoringComponents/TextSection";
+import { supabase } from "@/integrations/supabase/client";
 
 const auditSchema = z.object({
   type: z.string().min(1, "Audit type is required"),
@@ -38,6 +40,7 @@ interface MonitoringReviewProps {
 export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProps) => {
   const { toast } = useToast();
   const [audits, setAudits] = useState(formData.audits || []);
+  const [previousAudits, setPreviousAudits] = useState<any[]>([]);
 
   const {
     setValue,
@@ -51,6 +54,29 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
       annualReview: formData.annualReview || ""
     }
   });
+
+  useEffect(() => {
+    const fetchPreviousAudits = async () => {
+      const { data: sssps, error } = await supabase
+        .from('sssps')
+        .select('audits')
+        .not('audits', 'is', null)
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching previous audits:', error);
+        return;
+      }
+
+      const allAudits = sssps?.flatMap(sssp => sssp.audits || []) || [];
+      const uniqueAudits = Array.from(new Set(allAudits.map(JSON.stringify)))
+        .map(str => JSON.parse(str));
+      
+      setPreviousAudits(uniqueAudits);
+    };
+
+    fetchPreviousAudits();
+  }, []);
 
   const updateAudit = async (index: number, field: string, value: string) => {
     const newAudits = [...audits];
@@ -119,7 +145,7 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
               <Plus className="mr-2 h-4 w-4" /> Add Audit
             </Button>
             <AuditSelection
-              previousAudits={[]}
+              previousAudits={previousAudits}
               onSelect={addMultipleAudits}
             />
           </div>
