@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { HazardTable } from "./HazardTable";
 import { HazardActions } from "./HazardActions";
@@ -8,19 +7,11 @@ import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
-interface Hazard {
-  hazard: string;
-  risk: string;
-  controlMeasures: string;
-}
+import type { HazardFormData, SSSPFormData } from "@/types/sssp";
 
 interface HazardManagementProps {
-  formData: {
-    hazards?: Hazard[];
-    [key: string]: any;
-  };
-  setFormData: (data: any) => void;
+  formData: SSSPFormData;
+  setFormData: (data: SSSPFormData) => void;
 }
 
 export const HazardManagement = ({

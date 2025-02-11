@@ -1,4 +1,3 @@
-
 import { ReactNode } from "react";
 import { ProjectDetails } from "./ProjectDetails";
 import { CompanyInfo } from "./CompanyInfo";
@@ -12,11 +11,9 @@ import { SiteSafetyRules } from "./SiteSafetyRules";
 import { Communication } from "./Communication";
 import { MonitoringReview } from "./MonitoringReview";
 import { SummaryScreen } from "./SummaryScreen";
+import type { Step, FormStepProps } from "@/types/sssp/ui";
 
-export interface Step {
-  title: string;
-  component: React.ComponentType<any>;
-}
+export { type Step };
 
 export const formSteps: Step[] = [
   { title: "Project Details", component: ProjectDetails },
@@ -33,21 +30,13 @@ export const formSteps: Step[] = [
   { title: "Review and Submit", component: SummaryScreen }
 ];
 
-interface FormStepsProps {
-  currentStep: number;
-  formData: any;
-  setFormData: (data: any) => void;
-  onStepChange: (step: number) => void;
-  isLoading: boolean;
-}
-
 export const FormSteps = ({ 
   currentStep, 
   formData, 
   setFormData, 
   onStepChange,
   isLoading 
-}: FormStepsProps) => {
+}: FormStepProps) => {
   const CurrentStepComponent = formSteps[currentStep].component;
 
   return (
