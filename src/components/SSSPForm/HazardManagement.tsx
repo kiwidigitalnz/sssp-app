@@ -27,39 +27,70 @@ export const HazardManagement = ({
   const [previousControls, setPreviousControls] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchSSSPData = async () => {
-      if (id) {
-        const { data, error } = await supabase
+    const fetchData = async () => {
+      try {
+        // Fetch previous SSPs excluding the current one
+        const { data: previousSSPs, error } = await supabase
           .from('sssps')
-          .select('hazards')
-          .eq('id', id)
-          .single();
+          .select('hazards, visitor_rules')
+          .neq('id', id || '')
+          .order('created_at', { ascending: false })
+          .limit(10);
 
         if (error) {
-          console.error('Error fetching SSSP data:', error);
+          console.error('Error fetching previous SSPs:', error);
           toast({
             variant: "destructive",
             title: "Error",
-            description: "Failed to load hazard data"
+            description: "Failed to load previous hazard data"
           });
           return;
         }
 
-        if (data?.hazards && Array.isArray(data.hazards)) {
-          if (!formData.hazards || formData.hazards.length === 0) {
-            setFormData({ ...formData, hazards: data.hazards });
-          }
+        // Process hazards from previous SSPs
+        const allHazards = previousSSPs?.flatMap(sssp => 
+          Array.isArray(sssp.hazards) ? sssp.hazards : []
+        ) || [];
+
+        setPreviousHazards(allHazards);
+
+        // Update current form with visitor rules if not already set
+        if (id && previousSSPs?.[0]?.visitor_rules && (!formData.visitor_rules || formData.visitor_rules.trim() === '')) {
+          setFormData({
+            ...formData,
+            visitor_rules: previousSSPs[0].visitor_rules
+          });
         }
+
+        // Extract unique risks and controls for suggestions
+        const risks = new Set<string>();
+        const controls = new Set<string>();
+
+        allHazards.forEach(hazard => {
+          if (hazard.riskLevel) risks.add(hazard.riskLevel);
+          if (hazard.controlMeasures) controls.add(hazard.controlMeasures);
+        });
+
+        setPreviousRisks(Array.from(risks));
+        setPreviousControls(Array.from(controls));
+
+      } catch (error) {
+        console.error('Error in fetchData:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load previous data"
+        });
       }
     };
 
-    fetchSSSPData();
-  }, [id]);
+    fetchData();
+  }, [id, toast]);
 
   const addHazard = () => {
     const updatedHazards = [
       ...hazards,
-      { hazard: "", risk: "", controlMeasures: "" },
+      { hazard: "", riskLevel: "", controlMeasures: "" },
     ];
     setFormData({ ...formData, hazards: updatedHazards });
   };
@@ -120,4 +151,3 @@ export const HazardManagement = ({
     </div>
   );
 };
-
