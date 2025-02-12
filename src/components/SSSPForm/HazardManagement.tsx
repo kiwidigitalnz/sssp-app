@@ -56,7 +56,6 @@ export const HazardManagement = ({
           .limit(10);
 
         if (error) {
-          console.error('Error fetching previous SSPs:', error);
           toast({
             variant: "destructive",
             title: "Error",
@@ -64,11 +63,6 @@ export const HazardManagement = ({
           });
           return;
         }
-
-        // Log visitor rules data for debugging
-        console.log('Previous SSPs visitor rules:', previousSSPs?.map(sssp => ({
-          visitor_rules: sssp.visitor_rules
-        })));
 
         // Process hazards from previous SSPs
         const allHazards = previousSSPs?.flatMap(sssp => 
@@ -82,14 +76,10 @@ export const HazardManagement = ({
         // Update current form with visitor rules if not already set
         const previousVisitorRules = previousSSPs?.[0]?.visitor_rules;
         if (id && previousVisitorRules && (!formData.visitor_rules || formData.visitor_rules.trim() === '')) {
-          console.log('Setting visitor rules from previous SSSP:', previousVisitorRules);
           setFormData({
             ...formData,
             visitor_rules: previousVisitorRules
           });
-        } else {
-          console.log('Current visitor rules:', formData.visitor_rules);
-          console.log('Previous visitor rules available:', previousVisitorRules);
         }
 
         // Extract unique risks and controls for suggestions
@@ -105,7 +95,6 @@ export const HazardManagement = ({
         setPreviousControls(Array.from(controls));
 
       } catch (error) {
-        console.error('Error in fetchData:', error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -181,3 +170,4 @@ export const HazardManagement = ({
     </div>
   );
 };
+
