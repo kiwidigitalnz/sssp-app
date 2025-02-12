@@ -8,6 +8,7 @@ import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import type { HazardFormData, SSSPFormData } from "@/types/sssp/forms";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -63,7 +64,7 @@ const transformHazard = (hazard: Json): HazardFormData => {
   };
 };
 
-export const HazardManagement = ({
+const HazardManagementContent = ({
   formData,
   setFormData,
 }: HazardManagementProps) => {
@@ -198,5 +199,13 @@ export const HazardManagement = ({
         </CardContent>
       </Card>
     </div>
+  );
+};
+
+export const HazardManagement = (props: HazardManagementProps) => {
+  return (
+    <ErrorBoundary>
+      <HazardManagementContent {...props} />
+    </ErrorBoundary>
   );
 };
