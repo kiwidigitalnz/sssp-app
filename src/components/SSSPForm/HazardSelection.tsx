@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Dialog,
@@ -11,16 +12,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, ListPlus } from "lucide-react";
 import { Label } from "@/components/ui/label";
-
-interface Hazard {
-  hazard: string;
-  risk: string;
-  controlMeasures: string;
-}
+import type { HazardFormData } from "@/types/sssp/forms";
 
 interface HazardSelectionProps {
-  previousHazards: Hazard[];
-  onSelect: (selectedHazards: Hazard[]) => void;
+  previousHazards: HazardFormData[];
+  onSelect: (selectedHazards: HazardFormData[]) => void;
 }
 
 export const HazardSelection = ({
@@ -87,7 +83,7 @@ export const HazardSelection = ({
                     {hazard.hazard}
                   </Label>
                   <div className="text-sm text-muted-foreground space-y-1">
-                    <p><span className="font-medium">Risk:</span> {hazard.risk}</p>
+                    <p><span className="font-medium">Risk Level:</span> {hazard.riskLevel}</p>
                     <p><span className="font-medium">Control Measures:</span> {hazard.controlMeasures}</p>
                   </div>
                 </div>
