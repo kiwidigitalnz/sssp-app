@@ -34,19 +34,19 @@ const Index = () => {
     queryFn: fetchSSSPs,
     enabled: !!session,
     retry: 3,
-    meta: {
-      errorMessage: "Failed to load SSSPs"
-    },
-    onSettled: (_data, error) => {
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error loading data",
-          description: error.message
-        });
-      }
-    }
+    gcTime: 5 * 60 * 1000
   });
+
+  // Handle error with useEffect
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error loading data",
+        description: error instanceof Error ? error.message : "Failed to load SSSPs"
+      });
+    }
+  }, [error, toast]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
