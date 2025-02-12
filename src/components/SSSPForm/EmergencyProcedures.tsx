@@ -144,9 +144,14 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b pb-2">
-              <Users className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">Emergency Contacts</h3>
+            <div className="flex items-center justify-between border-b pb-2">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">Emergency Contacts</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Add key personnel to contact in case of emergency
+              </p>
             </div>
             <Card className="border-dashed">
               <CardContent className="pt-6">
@@ -155,15 +160,16 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
                   onUpdate={updateContact}
                   onDelete={deleteContact}
                 />
-                <div className="mt-4 flex flex-wrap gap-4">
+                <div className="mt-6 flex flex-wrap items-center gap-4">
                   <Button
                     variant="outline"
                     onClick={addContact}
-                    className="gap-2"
+                    className="gap-2 bg-background hover:bg-muted"
                   >
                     <Plus className="h-4 w-4" />
                     Add Contact
                   </Button>
+                  <div className="h-6 w-px bg-muted" />
                   <EmergencyContactSelection
                     previousContacts={previousContacts}
                     onSelect={addMultipleContacts}
