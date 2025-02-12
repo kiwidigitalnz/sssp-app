@@ -8,7 +8,7 @@ import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import type { HazardFormData, SSSPFormData, Hazard } from "@/types/sssp/forms";
+import type { HazardFormData, SSSPFormData } from "@/types/sssp/forms";
 import type { Json } from "@/integrations/supabase/types";
 
 interface HazardManagementProps {
@@ -20,13 +20,15 @@ const transformHazard = (hazard: Json): HazardFormData => {
   if (typeof hazard === 'object' && hazard !== null) {
     return {
       hazard: (hazard as any).hazard || '',
-      riskLevel: (hazard as any).riskLevel || '',
+      risk: '',  // Initialize with empty string as it's a required field
+      riskLevel: ((hazard as any).riskLevel as "Low" | "Medium" | "High" | "Critical") || "Low",
       controlMeasures: (hazard as any).controlMeasures || ''
     };
   }
   return {
     hazard: '',
-    riskLevel: '',
+    risk: '',
+    riskLevel: "Low",
     controlMeasures: ''
   };
 };
@@ -63,6 +65,11 @@ export const HazardManagement = ({
           return;
         }
 
+        // Log visitor rules data for debugging
+        console.log('Previous SSPs visitor rules:', previousSSPs?.map(sssp => ({
+          visitor_rules: sssp.visitor_rules
+        })));
+
         // Process hazards from previous SSPs
         const allHazards = previousSSPs?.flatMap(sssp => 
           Array.isArray(sssp.hazards) 
@@ -73,11 +80,16 @@ export const HazardManagement = ({
         setPreviousHazards(allHazards);
 
         // Update current form with visitor rules if not already set
-        if (id && previousSSPs?.[0]?.visitor_rules && (!formData.visitor_rules || formData.visitor_rules.trim() === '')) {
+        const previousVisitorRules = previousSSPs?.[0]?.visitor_rules;
+        if (id && previousVisitorRules && (!formData.visitor_rules || formData.visitor_rules.trim() === '')) {
+          console.log('Setting visitor rules from previous SSSP:', previousVisitorRules);
           setFormData({
             ...formData,
-            visitor_rules: previousSSPs[0].visitor_rules
+            visitor_rules: previousVisitorRules
           });
+        } else {
+          console.log('Current visitor rules:', formData.visitor_rules);
+          console.log('Previous visitor rules available:', previousVisitorRules);
         }
 
         // Extract unique risks and controls for suggestions
@@ -108,7 +120,7 @@ export const HazardManagement = ({
   const addHazard = () => {
     const updatedHazards = [
       ...hazards,
-      { hazard: "", riskLevel: "", controlMeasures: "" },
+      { hazard: "", risk: "", riskLevel: "Low", controlMeasures: "" },
     ];
     setFormData({ ...formData, hazards: updatedHazards });
   };
