@@ -1,18 +1,14 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { HazardSelection } from "./HazardSelection";
-
-interface Hazard {
-  hazard: string;
-  risk: string;
-  controlMeasures: string;
-}
+import type { HazardFormData } from "@/types/sssp/forms";
 
 interface HazardActionsProps {
-  previousHazards: Hazard[];
+  previousHazards: HazardFormData[];
   addHazard: () => void;
-  addMultipleHazards: (hazards: Hazard[]) => void;
+  addMultipleHazards: (hazards: HazardFormData[]) => void;
 }
 
 export const HazardActions = ({
