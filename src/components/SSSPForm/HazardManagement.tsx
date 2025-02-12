@@ -16,13 +16,43 @@ interface HazardManagementProps {
   setFormData: (data: SSSPFormData) => void;
 }
 
+interface RawHazardData {
+  hazard: string;
+  riskLevel?: "Low" | "Medium" | "High" | "Critical";
+  controlMeasures?: string;
+}
+
+const isRawHazardData = (data: unknown): data is RawHazardData => {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+
+  const hazardData = data as Record<string, unknown>;
+  
+  if (typeof hazardData.hazard !== 'string') {
+    return false;
+  }
+
+  if (hazardData.riskLevel !== undefined && 
+      !['Low', 'Medium', 'High', 'Critical'].includes(hazardData.riskLevel as string)) {
+    return false;
+  }
+
+  if (hazardData.controlMeasures !== undefined && 
+      typeof hazardData.controlMeasures !== 'string') {
+    return false;
+  }
+
+  return true;
+};
+
 const transformHazard = (hazard: Json): HazardFormData => {
-  if (typeof hazard === 'object' && hazard !== null) {
+  if (isRawHazardData(hazard)) {
     return {
-      hazard: (hazard as any).hazard || '',
-      risk: '',  // Initialize with empty string as it's a required field
-      riskLevel: ((hazard as any).riskLevel as "Low" | "Medium" | "High" | "Critical") || "Low",
-      controlMeasures: (hazard as any).controlMeasures || ''
+      hazard: hazard.hazard,
+      risk: '', // Initialize with empty string as it's a required field
+      riskLevel: hazard.riskLevel || "Low",
+      controlMeasures: hazard.controlMeasures || ''
     };
   }
   return {
@@ -109,7 +139,7 @@ export const HazardManagement = ({
   const addHazard = () => {
     const updatedHazards = [
       ...hazards,
-      { hazard: "", risk: "", riskLevel: "Low", controlMeasures: "" },
+      { hazard: "", risk: "", riskLevel: "Low" as const, controlMeasures: "" },
     ];
     setFormData({ ...formData, hazards: updatedHazards });
   };
@@ -120,7 +150,7 @@ export const HazardManagement = ({
   };
 
   const removeHazard = (index: number) => {
-    const updatedHazards = hazards.filter((_: any, i: number) => i !== index);
+    const updatedHazards = hazards.filter((_, i) => i !== index);
     setFormData({ ...formData, hazards: updatedHazards });
   };
 
@@ -170,4 +200,3 @@ export const HazardManagement = ({
     </div>
   );
 };
-
