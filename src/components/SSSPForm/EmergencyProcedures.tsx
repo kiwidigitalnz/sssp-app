@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Siren, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Plus, Siren, Users } from "lucide-react";
 import { EmergencyContactSelection } from "./EmergencyContactSelection";
 import { EmergencyContactsTable } from "./EmergencyContactsTable";
 import { EmergencyResponsePlan } from "./EmergencyComponents/EmergencyResponsePlan";
@@ -102,6 +103,17 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
     fetchPreviousContacts();
   }, [id]);
 
+  const addContact = () => {
+    const newContact: EmergencyContactFormData = {
+      name: "",
+      role: "",
+      phone: ""
+    };
+    const newContacts = [...contacts, newContact];
+    setContacts(newContacts);
+    setFormData({ ...formData, emergencyContacts: newContacts });
+  };
+
   const updateContact = (index: number, field: keyof EmergencyContactFormData, value: string) => {
     const newContacts = [...contacts];
     newContacts[index] = { ...newContacts[index], [field]: value };
@@ -143,7 +155,15 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
                   onUpdate={updateContact}
                   onDelete={deleteContact}
                 />
-                <div className="mt-4">
+                <div className="mt-4 flex flex-wrap gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={addContact}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Contact
+                  </Button>
                   <EmergencyContactSelection
                     previousContacts={previousContacts}
                     onSelect={addMultipleContacts}
