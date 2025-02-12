@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +21,16 @@ const fetchSSSPs = async () => {
     throw new Error(error.message);
   }
   
-  return data as SSSP[];
+  const transformedData = data?.map(sssp => ({
+    ...sssp,
+    monitoring_review: sssp.monitoring_review as SSSP['monitoring_review'],
+    template_version: sssp.template_version ? {
+      version: sssp.template_version.version,
+      metadata: sssp.template_version.metadata
+    } : null
+  }));
+  
+  return transformedData as SSSP[];
 };
 
 const Index = () => {
@@ -37,7 +45,6 @@ const Index = () => {
     gcTime: 5 * 60 * 1000
   });
 
-  // Handle error with useEffect
   useEffect(() => {
     if (error) {
       toast({

@@ -40,31 +40,31 @@ export interface SSSP {
   hazards?: any[];
   meetings_schedule?: any[];
   monitoring_review?: {
-    review_schedule: {
-      frequency: string;
-      last_review: string | null;
-      next_review: string | null;
-      responsible_person: string | null;
+    review_schedule?: {
+      frequency?: string | null;
+      last_review?: string | null;
+      next_review?: string | null;
+      responsible_person?: string | null;
     };
-    kpis: any[];
-    corrective_actions: {
-      process: string;
-      tracking_method: string;
-      responsible_person: string | null;
+    kpis?: any[];
+    corrective_actions?: {
+      process?: string;
+      tracking_method?: string;
+      responsible_person?: string | null;
     };
-    audits: any[];
-    worker_consultation: {
-      method: string;
-      frequency: string;
-      last_consultation: string | null;
+    audits?: any[];
+    worker_consultation?: {
+      method?: string;
+      frequency?: string;
+      last_consultation?: string | null;
     };
-    review_triggers: any[];
-    documentation: {
-      storage_location: string;
-      retention_period: string;
-      access_details: string;
+    review_triggers?: any[];
+    documentation?: {
+      storage_location?: string;
+      retention_period?: string;
+      access_details?: string;
     };
-  };
+  } | null;
   status: string;
   created_by: string;
   modified_by: string;
@@ -74,5 +74,8 @@ export interface SSSP {
   end_date?: string;
   version: number;
   version_history?: any[];
-  template_version?: string | null;
+  template_version?: {
+    version: string;
+    metadata: any;
+  } | null;
 }
