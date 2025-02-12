@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 const fetchSSSPs = async () => {
   const { data, error } = await supabase
     .from('sssps')
-    .select('*')
+    .select('*, template_version(version, metadata)')
     .order('created_at', { ascending: false });
 
   if (error) {

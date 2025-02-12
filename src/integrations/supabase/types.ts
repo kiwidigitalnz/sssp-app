@@ -243,6 +243,7 @@ export type Database = {
           speed_limits: string | null
           start_date: string | null
           status: string
+          template_version: string | null
           title: string
           toolbox_meetings: string | null
           training_records: string | null
@@ -293,6 +294,7 @@ export type Database = {
           speed_limits?: string | null
           start_date?: string | null
           status?: string
+          template_version?: string | null
           title: string
           toolbox_meetings?: string | null
           training_records?: string | null
@@ -343,6 +345,7 @@ export type Database = {
           speed_limits?: string | null
           start_date?: string | null
           status?: string
+          template_version?: string | null
           title?: string
           toolbox_meetings?: string | null
           training_records?: string | null
@@ -351,6 +354,35 @@ export type Database = {
           version_history?: Json[] | null
           visitor_rules?: string | null
           worker_duties?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sssps_template_version_fkey"
+            columns: ["template_version"]
+            isOneToOne: false
+            referencedRelation: "template_version"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_version: {
+        Row: {
+          id: string
+          metadata: Json | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          updated_at?: string
+          version?: string
         }
         Relationships: []
       }
