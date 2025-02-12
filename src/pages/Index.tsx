@@ -34,12 +34,17 @@ const Index = () => {
     queryFn: fetchSSSPs,
     enabled: !!session,
     retry: 3,
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Error loading data",
-        description: error.message
-      });
+    meta: {
+      errorMessage: "Failed to load SSSPs"
+    },
+    onSettled: (_data, error) => {
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error loading data",
+          description: error.message
+        });
+      }
     }
   });
 
