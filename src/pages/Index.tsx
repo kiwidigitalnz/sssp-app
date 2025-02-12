@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,8 @@ import { SSSPTable } from "@/components/dashboard/SSSPTable";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { FileText, AlertTriangle, CheckCircle, ClipboardCheck } from "lucide-react";
-import { addDays, isPast } from "date-fns";
+import { addDays } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 const fetchSSSPs = async () => {
   const { data, error } = await supabase
@@ -16,17 +18,29 @@ const fetchSSSPs = async () => {
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(error.message);
+  }
+  
   return data as SSSP[];
 };
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
+  const { toast } = useToast();
 
-  const { data: sssps = [], isLoading } = useQuery({
+  const { data: sssps = [], isLoading, error } = useQuery({
     queryKey: ['sssps'],
     queryFn: fetchSSSPs,
-    enabled: !!session
+    enabled: !!session,
+    retry: 3,
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error loading data",
+        description: error.message
+      });
+    }
   });
 
   useEffect(() => {
@@ -61,6 +75,17 @@ const Index = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900">Error loading data</h2>
+          <p className="mt-2 text-gray-600">{error instanceof Error ? error.message : 'An unexpected error occurred'}</p>
+        </div>
+      </div>
+    );
+  }
+
   const stats = {
     total: sssps.length,
     draft: sssps.filter(s => s.status === "draft").length,
@@ -68,10 +93,20 @@ const Index = () => {
     needsReview: sssps.filter(s => {
       const thirtyDaysFromNow = addDays(new Date(), 30);
       const lastUpdated = new Date(s.updated_at);
-      const daysSinceUpdate = Math.floor((thirtyDaysFromNow.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60 * 24));
-      return daysSinceUpdate >= 30;
+      return thirtyDaysFromNow.getTime() - lastUpdated.getTime() >= 30 * 24 * 60 * 60 * 1000;
     }).length
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -79,7 +114,6 @@ const Index = () => {
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="grid grid-cols-1 gap-8">
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
               title="Total SSSPs"
@@ -107,7 +141,6 @@ const Index = () => {
             />
           </div>
 
-          {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <SSSPTable ssspList={sssps} />
