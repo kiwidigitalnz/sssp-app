@@ -9,11 +9,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import type { HazardFormData, SSSPFormData, Hazard } from "@/types/sssp/forms";
+import type { Json } from "@/integrations/supabase/types";
 
 interface HazardManagementProps {
   formData: SSSPFormData;
   setFormData: (data: SSSPFormData) => void;
 }
+
+const transformHazard = (hazard: Json): HazardFormData => {
+  if (typeof hazard === 'object' && hazard !== null) {
+    return {
+      hazard: (hazard as any).hazard || '',
+      riskLevel: (hazard as any).riskLevel || '',
+      controlMeasures: (hazard as any).controlMeasures || ''
+    };
+  }
+  return {
+    hazard: '',
+    riskLevel: '',
+    controlMeasures: ''
+  };
+};
 
 export const HazardManagement = ({
   formData,
@@ -22,7 +38,7 @@ export const HazardManagement = ({
   const { id } = useParams();
   const { toast } = useToast();
   const hazards = formData.hazards || [];
-  const [previousHazards, setPreviousHazards] = useState<Hazard[]>([]);
+  const [previousHazards, setPreviousHazards] = useState<HazardFormData[]>([]);
   const [previousRisks, setPreviousRisks] = useState<string[]>([]);
   const [previousControls, setPreviousControls] = useState<string[]>([]);
 
@@ -49,7 +65,9 @@ export const HazardManagement = ({
 
         // Process hazards from previous SSPs
         const allHazards = previousSSPs?.flatMap(sssp => 
-          Array.isArray(sssp.hazards) ? sssp.hazards : []
+          Array.isArray(sssp.hazards) 
+            ? sssp.hazards.map(hazard => transformHazard(hazard))
+            : []
         ) || [];
 
         setPreviousHazards(allHazards);
@@ -85,7 +103,7 @@ export const HazardManagement = ({
     };
 
     fetchData();
-  }, [id, toast]);
+  }, [id, toast, formData.visitor_rules]);
 
   const addHazard = () => {
     const updatedHazards = [
@@ -95,7 +113,7 @@ export const HazardManagement = ({
     setFormData({ ...formData, hazards: updatedHazards });
   };
 
-  const addMultipleHazards = (selectedHazards: Hazard[]) => {
+  const addMultipleHazards = (selectedHazards: HazardFormData[]) => {
     const updatedHazards = [...hazards, ...selectedHazards];
     setFormData({ ...formData, hazards: updatedHazards });
   };
@@ -105,8 +123,8 @@ export const HazardManagement = ({
     setFormData({ ...formData, hazards: updatedHazards });
   };
 
-  const updateHazard = (index: number, field: keyof Hazard, value: string) => {
-    const updatedHazards = hazards.map((hazard: Hazard, i: number) =>
+  const updateHazard = (index: number, field: keyof HazardFormData, value: string) => {
+    const updatedHazards = hazards.map((hazard: HazardFormData, i: number) =>
       i === index ? { ...hazard, [field]: value } : hazard
     );
     setFormData({ ...formData, hazards: updatedHazards });
