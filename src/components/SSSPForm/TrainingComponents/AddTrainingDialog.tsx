@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 
 interface AddTrainingDialogProps {
   newTraining: {
@@ -25,27 +25,40 @@ interface AddTrainingDialogProps {
     frequency: string;
   }) => void;
   onAdd: () => void;
+  isEditing?: boolean;
 }
 
 export const AddTrainingDialog = ({
   newTraining,
   setNewTraining,
   onAdd,
+  isEditing = false,
 }: AddTrainingDialogProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="gap-2 bg-background hover:bg-muted h-9 px-4"
+          className="gap-2 bg-background hover:bg-muted px-4"
         >
-          <Plus className="h-4 w-4" />
-          Add Training
+          {isEditing ? (
+            <>
+              <Pencil className="h-4 w-4" />
+              Update Training
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4" />
+              Add Training
+            </>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Training Requirement</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Edit Training Requirement" : "Add New Training Requirement"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -95,7 +108,7 @@ export const AddTrainingDialog = ({
             onClick={onAdd}
             className="w-full mt-4"
           >
-            Add Training
+            {isEditing ? "Update Training" : "Add Training"}
           </Button>
         </div>
       </DialogContent>

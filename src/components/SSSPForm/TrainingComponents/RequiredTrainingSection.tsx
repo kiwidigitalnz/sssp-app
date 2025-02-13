@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Pencil, Trash2 } from "lucide-react";
 import { TrainingSelection } from "../TrainingSelection";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTrainingDialog } from "./AddTrainingDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import type { TrainingRequirementFormData, SSSPFormData } from "@/types/sssp/forms";
 
 interface RequiredTrainingSectionProps {
@@ -23,6 +23,7 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
     description: "",
     frequency: "",
   });
+  const [editingTraining, setEditingTraining] = React.useState<{ index: number; training: TrainingRequirementFormData } | null>(null);
 
   useEffect(() => {
     const fetchPreviousTrainings = async () => {
@@ -88,6 +89,44 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
     }
   };
 
+  const handleEditTraining = (index: number) => {
+    const training = formData.required_training?.[index];
+    if (training) {
+      setEditingTraining({ index, training: { ...training } });
+    }
+  };
+
+  const handleUpdateTraining = (updatedTraining: TrainingRequirementFormData) => {
+    if (editingTraining === null) return;
+
+    const updatedTrainings = [...(formData.required_training || [])];
+    updatedTrainings[editingTraining.index] = updatedTraining;
+    
+    setFormData({
+      ...formData,
+      required_training: updatedTrainings
+    });
+    
+    setEditingTraining(null);
+    toast({
+      title: "Training updated",
+      description: "Training requirement has been updated successfully"
+    });
+  };
+
+  const handleDeleteTraining = (index: number) => {
+    const updatedTrainings = formData.required_training?.filter((_, i) => i !== index) || [];
+    setFormData({
+      ...formData,
+      required_training: updatedTrainings
+    });
+    
+    toast({
+      title: "Training deleted",
+      description: "Training requirement has been removed"
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between border-b pb-2">
@@ -102,18 +141,25 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
       <Card className="border-dashed">
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-4">
-            <AddTrainingDialog
-              newTraining={newTraining}
-              setNewTraining={setNewTraining}
-              onAdd={handleAddSingleTraining}
-            />
-            <div className="h-6 w-px bg-muted" />
-            <TrainingSelection
-              previousTrainings={previousTrainings}
-              onSelect={(training) =>
-                setFormData({ ...formData, required_training: training })
-              }
-            />
+            <div className="flex items-center gap-4 h-9">
+              <AddTrainingDialog
+                newTraining={editingTraining?.training || newTraining}
+                setNewTraining={training => 
+                  editingTraining 
+                    ? setEditingTraining({ ...editingTraining, training }) 
+                    : setNewTraining(training)
+                }
+                onAdd={editingTraining ? () => handleUpdateTraining(editingTraining.training) : handleAddSingleTraining}
+                isEditing={!!editingTraining}
+              />
+              <div className="h-6 w-px bg-muted" />
+              <TrainingSelection
+                previousTrainings={previousTrainings}
+                onSelect={(training) =>
+                  setFormData({ ...formData, required_training: training })
+                }
+              />
+            </div>
           </div>
           {formData.required_training && formData.required_training.length > 0 && (
             <div className="grid gap-3 mt-4">
@@ -122,13 +168,35 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
                   key={index}
                   className="p-4 border rounded-lg space-y-2 bg-muted/5 hover:bg-muted/10 transition-colors"
                 >
-                  <h4 className="font-medium text-base">{training.requirement}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {training.description}
-                  </p>
-                  <p className="text-sm font-medium text-primary">
-                    Frequency: {training.frequency}
-                  </p>
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-base">{training.requirement}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {training.description}
+                      </p>
+                      <p className="text-sm font-medium text-primary">
+                        Frequency: {training.frequency}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditTraining(index)}
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteTraining(index)}
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
