@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -218,15 +217,13 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  onClick={() => {}}
                                   className="h-8 w-8"
                                 >
+                                  <Share2 className="h-4 w-4" />
                                   <ShareSSSP 
                                     ssspId={sssp.id} 
                                     onShare={() => refetchSharing()} 
-                                  >
-                                    <Share2 className="h-4 w-4" />
-                                  </ShareSSSP>
+                                  />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
