@@ -32,6 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SSSPTableProps {
   ssspList: SSSP[];
@@ -42,6 +43,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
   const { toast } = useToast();
   const [ssspToDelete, setSsspToDelete] = useState<string | null>(null);
   const [ssspToClone, setSsspToClone] = useState<SSSP | null>(null);
+  const isMobile = useIsMobile();
 
   const { data: sharingInfo, refetch: refetchSharing } = useQuery({
     queryKey: ['sssp-sharing'],
@@ -141,29 +143,29 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
 
   return (
     <Card className="bg-white shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-4">
         <CardTitle>Site-Specific Safety Plans</CardTitle>
         <Button 
           onClick={() => navigate("/create-sssp")}
-          className="transition-all hover:scale-105"
+          className="w-full sm:w-auto transition-all hover:scale-105"
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           Create New SSSP
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
           <div className="inline-block min-w-full align-middle">
             <div className="rounded-lg border bg-card">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="min-w-[200px] font-semibold">Title</TableHead>
+                    <TableHead className="min-w-[140px] font-semibold">Title</TableHead>
                     <TableHead className="hidden sm:table-cell font-semibold">Created Date</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold w-[100px]">Status</TableHead>
                     <TableHead className="hidden sm:table-cell font-semibold">Shared With</TableHead>
                     <TableHead className="hidden sm:table-cell font-semibold">Last Modified</TableHead>
-                    <TableHead className="text-right font-semibold">Actions</TableHead>
+                    <TableHead className="text-right font-semibold w-[140px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -180,7 +182,14 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                       }}
                     >
                       <TableCell className="font-medium">
-                        {sssp.title}
+                        <div className="flex flex-col">
+                          <span className="truncate max-w-[200px]">{sssp.title}</span>
+                          {isMobile && (
+                            <span className="text-xs text-muted-foreground mt-1">
+                              {new Date(sssp.created_at).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {new Date(sssp.created_at).toLocaleDateString()}
@@ -209,16 +218,16 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                       <TableCell className="hidden sm:table-cell">
                         {new Date(sssp.updated_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right action-buttons">
+                      <TableCell className="text-right action-buttons p-2">
                         <TooltipProvider>
-                          <div className="flex items-center justify-end space-x-2">
+                          <div className="flex items-center justify-end gap-1">
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="inline-flex">
+                                <div className="inline-flex items-center justify-center">
                                   <Button
                                     variant="outline"
                                     size="icon"
-                                    className="h-8 w-8"
+                                    className="h-8 w-8 p-0"
                                   >
                                     <Share2 className="h-4 w-4" />
                                     <ShareSSSP 
@@ -233,37 +242,41 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                               </TooltipContent>
                             </Tooltip>
 
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => setSsspToClone(sssp)}
-                                  className="h-8 w-8"
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Clone SSSP</p>
-                              </TooltipContent>
-                            </Tooltip>
+                            {!isMobile && (
+                              <>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => setSsspToClone(sssp)}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <Copy className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Clone SSSP</p>
+                                  </TooltipContent>
+                                </Tooltip>
 
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleExportPDF(sssp)}
-                                  className="h-8 w-8"
-                                >
-                                  <Printer className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Export as PDF</p>
-                              </TooltipContent>
-                            </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => handleExportPDF(sssp)}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <Printer className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Export as PDF</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </>
+                            )}
 
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -271,7 +284,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                                   variant="outline"
                                   size="icon"
                                   onClick={() => setSsspToDelete(sssp.id)}
-                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
