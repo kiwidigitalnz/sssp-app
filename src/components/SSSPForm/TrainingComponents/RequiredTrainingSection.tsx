@@ -90,18 +90,24 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 border-b pb-2">
-        <BookOpen className="h-4 w-4" />
-        <h3 className="text-base font-medium">Required Training</h3>
+      <div className="flex items-center justify-between border-b pb-2">
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Required Training</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Add or select training requirements
+        </p>
       </div>
       <Card className="border-dashed">
         <CardContent className="pt-6 space-y-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <AddTrainingDialog
               newTraining={newTraining}
               setNewTraining={setNewTraining}
               onAdd={handleAddSingleTraining}
             />
+            <div className="h-6 w-px bg-muted" />
             <TrainingSelection
               previousTrainings={previousTrainings}
               onSelect={(training) =>
@@ -110,17 +116,17 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
             />
           </div>
           {formData.required_training && formData.required_training.length > 0 && (
-            <div className="space-y-2 mt-4">
+            <div className="grid gap-3 mt-4">
               {formData.required_training.map((training: TrainingRequirementFormData, index: number) => (
                 <div
                   key={index}
-                  className="p-4 border rounded-lg space-y-2"
+                  className="p-4 border rounded-lg space-y-2 bg-muted/5 hover:bg-muted/10 transition-colors"
                 >
-                  <h4 className="font-medium">{training.requirement}</h4>
+                  <h4 className="font-medium text-base">{training.requirement}</h4>
                   <p className="text-sm text-muted-foreground">
                     {training.description}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm font-medium text-primary">
                     Frequency: {training.frequency}
                   </p>
                 </div>
@@ -132,4 +138,3 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
     </div>
   );
 };
-

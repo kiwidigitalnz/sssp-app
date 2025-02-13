@@ -35,12 +35,15 @@ export const AddTrainingDialog = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Single Training
+        <Button
+          variant="outline"
+          className="gap-2 bg-background hover:bg-muted h-9 px-4"
+        >
+          <Plus className="h-4 w-4" />
+          Add Training
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Training Requirement</DialogTitle>
         </DialogHeader>
@@ -71,6 +74,7 @@ export const AddTrainingDialog = ({
                 })
               }
               placeholder="Enter training description"
+              className="min-h-[100px]"
             />
           </div>
           <div className="space-y-2">
@@ -88,8 +92,8 @@ export const AddTrainingDialog = ({
             />
           </div>
           <Button
-            className="w-full mt-4"
             onClick={onAdd}
+            className="w-full mt-4"
           >
             Add Training
           </Button>
@@ -98,4 +102,3 @@ export const AddTrainingDialog = ({
     </Dialog>
   );
 };
-
