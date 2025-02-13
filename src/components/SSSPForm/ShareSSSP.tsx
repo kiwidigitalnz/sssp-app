@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Share2, UserPlus, Users } from "lucide-react";
+import { UserPlus, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -70,10 +71,7 @@ export function ShareSSSP({ ssspId, onShare }: ShareSSSPProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Share2 className="mr-2 h-4 w-4" />
-          Share
-        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8" />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -124,3 +122,4 @@ export function ShareSSSP({ ssspId, onShare }: ShareSSSPProps) {
     </Dialog>
   );
 }
+

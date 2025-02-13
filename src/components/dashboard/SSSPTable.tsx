@@ -214,17 +214,19 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                           <div className="flex items-center justify-end space-x-2">
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <Share2 className="h-4 w-4" />
-                                  <ShareSSSP 
-                                    ssspId={sssp.id} 
-                                    onShare={() => refetchSharing()} 
-                                  />
-                                </Button>
+                                <div className="inline-flex">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                  >
+                                    <Share2 className="h-4 w-4" />
+                                    <ShareSSSP 
+                                      ssspId={sssp.id} 
+                                      onShare={() => refetchSharing()} 
+                                    />
+                                  </Button>
+                                </div>
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>Share SSSP</p>
