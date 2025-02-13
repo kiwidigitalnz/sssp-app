@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Siren, Users, FileText, MapPin, Shield, ClipboardList } from "lucide-react";
+import { Plus, Siren, Users } from "lucide-react";
 import { EmergencyContactSelection } from "./EmergencyContactSelection";
 import { EmergencyContactsTable } from "./EmergencyContactsTable";
 import { EmergencyResponsePlan } from "./EmergencyComponents/EmergencyResponsePlan";
@@ -179,69 +179,25 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
             </Card>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-2">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">Emergency Response Plan</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Define the steps to follow in case of emergency
-              </p>
-            </div>
-            <EmergencyResponsePlan
-              value={formData.emergencyPlan || ""}
-              onChange={(value) => setFormData({ ...formData, emergencyPlan: value })}
-            />
-          </div>
+          <EmergencyResponsePlan
+            value={formData.emergencyPlan || ""}
+            onChange={(value) => setFormData({ ...formData, emergencyPlan: value })}
+          />
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-2">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">Assembly Points</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Specify safe gathering locations
-              </p>
-            </div>
-            <AssemblyPoints
-              value={formData.assemblyPoints || ""}
-              onChange={(value) => setFormData({ ...formData, assemblyPoints: value })}
-            />
-          </div>
+          <AssemblyPoints
+            value={formData.assemblyPoints || ""}
+            onChange={(value) => setFormData({ ...formData, assemblyPoints: value })}
+          />
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-2">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">Emergency Equipment</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                List all safety equipment and their locations
-              </p>
-            </div>
-            <EmergencyEquipment
-              value={formData.emergencyEquipment || ""}
-              onChange={(value) => setFormData({ ...formData, emergencyEquipment: value })}
-            />
-          </div>
+          <EmergencyEquipment
+            value={formData.emergencyEquipment || ""}
+            onChange={(value) => setFormData({ ...formData, emergencyEquipment: value })}
+          />
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-2">
-              <div className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">Incident Reporting</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Document incident reporting procedures
-              </p>
-            </div>
-            <IncidentReporting
-              value={formData.incidentReporting || ""}
-              onChange={(value) => setFormData({ ...formData, incidentReporting: value })}
-            />
-          </div>
+          <IncidentReporting
+            value={formData.incidentReporting || ""}
+            onChange={(value) => setFormData({ ...formData, incidentReporting: value })}
+          />
         </CardContent>
       </Card>
     </div>
