@@ -23,9 +23,10 @@ import { useToast } from "@/hooks/use-toast";
 interface ShareSSSPProps {
   ssspId: string;
   onShare?: () => void;
+  children: React.ReactNode;
 }
 
-export function ShareSSSP({ ssspId, onShare }: ShareSSSPProps) {
+export function ShareSSSP({ ssspId, onShare, children }: ShareSSSPProps) {
   const [email, setEmail] = useState("");
   const [accessLevel, setAccessLevel] = useState("view");
   const [isOpen, setIsOpen] = useState(false);
@@ -71,7 +72,7 @@ export function ShareSSSP({ ssspId, onShare }: ShareSSSPProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" />
+        {children}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -122,4 +123,3 @@ export function ShareSSSP({ ssspId, onShare }: ShareSSSPProps) {
     </Dialog>
   );
 }
-

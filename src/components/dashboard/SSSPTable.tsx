@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -211,24 +210,22 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                       <TableCell className="text-right p-2">
                         <TooltipProvider>
                           <div className="flex items-center justify-end gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8 p-0 flex items-center justify-center"
-                                >
-                                  <Share2 className="h-4 w-4" />
-                                  <ShareSSSP 
-                                    ssspId={sssp.id} 
-                                    onShare={() => refetchSharing()} 
-                                  />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Share SSSP</p>
-                              </TooltipContent>
-                            </Tooltip>
+                            <ShareSSSP ssspId={sssp.id} onShare={() => refetchSharing()}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 p-0 flex items-center justify-center"
+                                  >
+                                    <Share2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Share SSSP</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </ShareSSSP>
 
                             <Tooltip>
                               <TooltipTrigger asChild>
