@@ -109,6 +109,12 @@ const SSSPForm = () => {
     navigate("/");
   }, [clearSavedData, navigate]);
 
+  const handleStepClick = (stepIndex: number) => {
+    setCurrentStep(stepIndex);
+    // Scroll to top when changing steps
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Optimize resize observer
   useEffect(() => {
     const container = containerRef.current;
@@ -154,6 +160,8 @@ const SSSPForm = () => {
             currentStep={currentStep}
             totalSteps={formSteps.length}
             stepTitle={formSteps[currentStep].title}
+            onStepClick={handleStepClick}
+            isLoading={isLoading}
           />
 
           <ErrorBoundary>
