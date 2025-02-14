@@ -1,6 +1,5 @@
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Save, Send, Printer, ChevronDown, Edit } from "lucide-react";
 import { toast } from "sonner";
@@ -14,15 +13,16 @@ import { cn } from "@/lib/utils";
 
 interface SummaryScreenProps {
   formData: any;
-  setFormData: (data: any) => void;
-  onStepChange: (step: number) => void;
+  setFormData?: (data: any) => void;
+  onStepChange?: (step: number) => void;
+  isLoading?: boolean;
 }
 
 interface StepSummaryProps {
   title: string;
   data: any;
   step: number;
-  onStepChange: (step: number) => void;
+  onStepChange?: (step: number) => void;
 }
 
 const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
@@ -58,7 +58,9 @@ const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
               size="icon"
               onClick={(e) => {
                 e.stopPropagation();
-                onStepChange(step);
+                if (onStepChange) {
+                  onStepChange(step);
+                }
               }}
               className="h-8 w-8 shrink-0"
             >
@@ -141,7 +143,7 @@ const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
   );
 };
 
-export const SummaryScreen = ({ formData, onStepChange }: SummaryScreenProps) => {
+export const SummaryScreen = ({ formData, onStepChange, isLoading }: SummaryScreenProps) => {
   const handleSave = () => {
     localStorage.setItem("sssp-form", JSON.stringify(formData));
     toast.success("Form saved successfully");
@@ -175,15 +177,15 @@ export const SummaryScreen = ({ formData, onStepChange }: SummaryScreenProps) =>
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Final Review</h2>
         <div className="flex gap-4">
-          <Button onClick={handleSave} variant="outline">
+          <Button onClick={handleSave} variant="outline" disabled={isLoading}>
             <Save className="mr-2 h-4 w-4" />
             Save Draft
           </Button>
-          <Button onClick={handleSubmit}>
+          <Button onClick={handleSubmit} disabled={isLoading}>
             <Send className="mr-2 h-4 w-4" />
             Submit
           </Button>
-          <Button onClick={handlePrintPDF} variant="secondary">
+          <Button onClick={handlePrintPDF} variant="secondary" disabled={isLoading}>
             <Printer className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
