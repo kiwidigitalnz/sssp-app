@@ -14,6 +14,7 @@ import { ProjectDetailsSection } from "./SummaryComponents/ProjectDetailsSection
 import { CompanyInfoSection } from "./SummaryComponents/CompanyInfoSection";
 import { ScopeOfWorkSection } from "./SummaryComponents/ScopeOfWorkSection";
 import { HealthAndSafetySection } from "./SummaryComponents/HealthAndSafetySection";
+import { HazardManagementSection } from "./SummaryComponents/HazardManagementSection";
 
 interface SummaryScreenProps {
   formData: any;
@@ -44,6 +45,8 @@ const StepSummary = ({ title, data, setFormData }: StepSummaryProps) => {
         return <ScopeOfWorkSection data={data} setFormData={setFormData!} />;
       case "Health and Safety":
         return <HealthAndSafetySection data={data} setFormData={setFormData!} />;
+      case "Hazard Management":
+        return <HazardManagementSection data={data} setFormData={setFormData!} />;
       default:
         return (
           <div className="text-sm text-muted-foreground">
@@ -89,7 +92,7 @@ export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScree
     { title: "Company Information", data: formData, step: 1 },
     { title: "Scope of Work", data: formData, step: 2 },
     { title: "Health and Safety", data: formData, step: 3 },
-    { title: "Hazard Management", data: formData.hazardManagement, step: 4 },
+    { title: "Hazard Management", data: formData, step: 4 },
     { title: "Emergency Procedures", data: formData.emergencyProcedures, step: 5 },
     { title: "Training Requirements", data: formData.trainingRequirements, step: 6 },
     { title: "Health and Safety Policies", data: formData.healthAndSafetyPolicies, step: 7 },
