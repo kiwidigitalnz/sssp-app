@@ -17,19 +17,20 @@ import { HealthAndSafetySection } from "./SummaryComponents/HealthAndSafetySecti
 import { HazardManagementSection } from "./SummaryComponents/HazardManagementSection";
 import { EmergencyProceduresSection } from "./SummaryComponents/EmergencyProceduresSection";
 import { TrainingRequirementsSection } from "./SummaryComponents/TrainingRequirementsSection";
+import type { SSSPFormData } from "@/types/sssp/forms";
 
 interface SummaryScreenProps {
-  formData: any;
-  setFormData?: (data: any) => void;
+  formData: SSSPFormData;
+  setFormData?: (data: SSSPFormData) => void;
   onStepChange?: (step: number) => void;
   isLoading?: boolean;
 }
 
 interface StepSummaryProps {
   title: string;
-  data: any;
+  data: SSSPFormData;
   step: number;
-  setFormData?: (data: any) => void;
+  setFormData?: (data: SSSPFormData) => void;
 }
 
 const StepSummary = ({ title, data, setFormData }: StepSummaryProps) => {
