@@ -100,7 +100,7 @@ export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScree
     { title: "Health and Safety", data: formData, step: 3 },
     { title: "Hazard Management", data: formData, step: 4 },
     { title: "Emergency Procedures", data: formData, step: 5 },
-    { title: "Training Requirements", data: formData, step: 6 }, // Changed from formData.trainingRequirements to formData
+    { title: "Training Requirements", data: formData, step: 6 },
     { title: "Health and Safety Policies", data: formData, step: 7 },
     { title: "Site Safety Rules", data: formData, step: 8 },
     { title: "Communication", data: formData, step: 9 },
