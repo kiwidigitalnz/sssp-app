@@ -28,6 +28,48 @@ interface StepSummaryProps {
 const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const renderProjectDetails = (data: any) => {
+    const fields = [
+      { key: "title", label: "Project Name" },
+      { key: "company_address", label: "Site Address" },
+      { key: "start_date", label: "Start Date" },
+      { key: "end_date", label: "End Date" },
+      { key: "description", label: "Project Description" }
+    ];
+
+    return (
+      <div className="space-y-4">
+        {fields.map(({ key, label }) => (
+          <div key={key} className="flex items-center justify-between gap-4 py-2 border-b last:border-0">
+            <div className="flex-1">
+              <span className="text-sm font-medium">{label}</span>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {data[key] ? (
+                  key.includes("date") ? 
+                    new Date(data[key]).toLocaleDateString() : 
+                    data[key]
+                ) : (
+                  <span className="italic text-muted-foreground">Not provided</span>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStepChange(step);
+              }}
+              className="h-8 w-8 shrink-0"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderValue = (key: string, value: any): JSX.Element => {
     if (Array.isArray(value)) {
       return (
@@ -91,7 +133,9 @@ const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
         )} />
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-2 rounded-lg border p-4">
-        {Object.entries(data || {}).map(([key, value]) => renderField(key, value))}
+        {title === "Project Details" ? 
+          renderProjectDetails(data) : 
+          Object.entries(data || {}).map(([key, value]) => renderField(key, value))}
       </CollapsibleContent>
     </Collapsible>
   );
@@ -113,7 +157,7 @@ export const SummaryScreen = ({ formData, onStepChange }: SummaryScreenProps) =>
   };
 
   const sections = [
-    { title: "Project Details", data: formData.projectDetails, step: 0 },
+    { title: "Project Details", data: formData, step: 0 },
     { title: "Company Information", data: formData.companyInfo, step: 1 },
     { title: "Scope of Work", data: formData.scopeOfWork, step: 2 },
     { title: "Health and Safety", data: formData.healthAndSafety, step: 3 },
