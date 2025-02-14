@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -54,26 +55,6 @@ export interface Database {
           social_links?: Json | null;
           preferences?: Json | null;
           role?: string | null;
-        };
-      };
-      template_version: {
-        Row: {
-          id: string;
-          version: string;
-          updated_at: string;
-          metadata: Json;
-        };
-        Insert: {
-          id?: string;
-          version: string;
-          updated_at?: string;
-          metadata?: Json;
-        };
-        Update: {
-          id?: string;
-          version?: string;
-          updated_at?: string;
-          metadata?: Json;
         };
       };
       team_members: {
@@ -152,7 +133,6 @@ export interface Database {
           version_history: Json[] | null
           visitor_rules: string | null
           worker_duties: string | null
-          template_version: string | null;
         }
         Insert: {
           assembly_points?: string | null
@@ -203,7 +183,6 @@ export interface Database {
           version_history?: Json[] | null
           visitor_rules?: string | null
           worker_duties?: string | null
-          template_version?: string | null;
         }
         Update: {
           assembly_points?: string | null
@@ -254,7 +233,6 @@ export interface Database {
           version_history?: Json[] | null
           visitor_rules?: string | null
           worker_duties?: string | null
-          template_version?: string | null;
         }
         Relationships: []
       }
