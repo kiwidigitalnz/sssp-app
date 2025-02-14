@@ -1,8 +1,10 @@
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, Send, Printer, ChevronDown, Edit } from "lucide-react";
+import { Save, Send, Printer, ChevronDown, Edit, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Collapsible,
   CollapsibleContent,
@@ -23,10 +25,103 @@ interface StepSummaryProps {
   data: any;
   step: number;
   onStepChange?: (step: number) => void;
+  setFormData?: (data: any) => void;
 }
 
-const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
+const StepSummary = ({ title, data, step, setFormData }: StepSummaryProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [tempValue, setTempValue] = useState<string>("");
+
+  const handleEditClick = (key: string, value: any) => {
+    setEditingField(key);
+    setTempValue(value || "");
+  };
+
+  const handleSaveEdit = (key: string) => {
+    if (setFormData && data) {
+      const updatedData = { ...data };
+      updatedData[key] = tempValue;
+      setFormData(updatedData);
+      toast.success("Field updated successfully");
+    }
+    setEditingField(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingField(null);
+    setTempValue("");
+  };
+
+  const renderEditableField = (key: string, value: any, label: string) => {
+    const isEditing = editingField === key;
+
+    return (
+      <div key={key} className="flex items-center justify-between gap-4 py-2 border-b last:border-0">
+        <div className="flex-1">
+          <span className="text-sm font-medium">{label}</span>
+          <div className="mt-1">
+            {isEditing ? (
+              key === "description" ? (
+                <Textarea
+                  value={tempValue}
+                  onChange={(e) => setTempValue(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              ) : (
+                <Input
+                  type={key.includes("date") ? "date" : "text"}
+                  value={tempValue}
+                  onChange={(e) => setTempValue(e.target.value)}
+                />
+              )
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                {value ? (
+                  key.includes("date") ? 
+                    new Date(value).toLocaleDateString() : 
+                    value
+                ) : (
+                  <span className="italic text-muted-foreground">Not provided</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {isEditing ? (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleSaveEdit(key)}
+                className="h-8 w-8 shrink-0"
+              >
+                <Check className="h-4 w-4 text-green-500" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCancelEdit}
+                className="h-8 w-8 shrink-0"
+              >
+                <X className="h-4 w-4 text-red-500" />
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleEditClick(key, value)}
+              className="h-8 w-8 shrink-0"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderProjectDetails = (data: any) => {
     const fields = [
@@ -39,35 +134,7 @@ const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
 
     return (
       <div className="space-y-4">
-        {fields.map(({ key, label }) => (
-          <div key={key} className="flex items-center justify-between gap-4 py-2 border-b last:border-0">
-            <div className="flex-1">
-              <span className="text-sm font-medium">{label}</span>
-              <div className="mt-1 text-sm text-muted-foreground">
-                {data[key] ? (
-                  key.includes("date") ? 
-                    new Date(data[key]).toLocaleDateString() : 
-                    data[key]
-                ) : (
-                  <span className="italic text-muted-foreground">Not provided</span>
-                )}
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onStepChange) {
-                  onStepChange(step);
-                }
-              }}
-              className="h-8 w-8 shrink-0"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+        {fields.map(({ key, label }) => renderEditableField(key, data[key], label))}
       </div>
     );
   };
@@ -113,10 +180,7 @@ const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onStepChange(step);
-          }}
+          onClick={() => handleEditClick(key, value)}
           className="h-8 w-8 shrink-0"
         >
           <Edit className="h-4 w-4" />
@@ -143,7 +207,7 @@ const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
   );
 };
 
-export const SummaryScreen = ({ formData, onStepChange, isLoading }: SummaryScreenProps) => {
+export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScreenProps) => {
   const handleSave = () => {
     localStorage.setItem("sssp-form", JSON.stringify(formData));
     toast.success("Form saved successfully");
@@ -200,7 +264,7 @@ export const SummaryScreen = ({ formData, onStepChange, isLoading }: SummaryScre
               title={section.title}
               data={section.data}
               step={section.step}
-              onStepChange={onStepChange}
+              setFormData={setFormData}
             />
           ))}
         </div>
