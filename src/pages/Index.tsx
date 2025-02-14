@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,23 +15,14 @@ import { useToast } from "@/hooks/use-toast";
 const fetchSSSPs = async () => {
   const { data, error } = await supabase
     .from('sssps')
-    .select('*, template_version(version, metadata)')
+    .select('*')
     .order('created_at', { ascending: false });
 
   if (error) {
     throw new Error(error.message);
   }
   
-  const transformedData = data?.map(sssp => ({
-    ...sssp,
-    monitoring_review: sssp.monitoring_review as SSSP['monitoring_review'],
-    template_version: sssp.template_version ? {
-      version: sssp.template_version.version,
-      metadata: sssp.template_version.metadata
-    } : null
-  }));
-  
-  return transformedData as SSSP[];
+  return data as SSSP[];
 };
 
 const Index = () => {
