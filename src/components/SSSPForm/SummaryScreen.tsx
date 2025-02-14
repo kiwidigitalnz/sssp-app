@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Save, Send, Printer, ChevronDown } from "lucide-react";
@@ -15,6 +14,7 @@ import { CompanyInfoSection } from "./SummaryComponents/CompanyInfoSection";
 import { ScopeOfWorkSection } from "./SummaryComponents/ScopeOfWorkSection";
 import { HealthAndSafetySection } from "./SummaryComponents/HealthAndSafetySection";
 import { HazardManagementSection } from "./SummaryComponents/HazardManagementSection";
+import { EmergencyProceduresSection } from "./SummaryComponents/EmergencyProceduresSection";
 
 interface SummaryScreenProps {
   formData: any;
@@ -47,6 +47,8 @@ const StepSummary = ({ title, data, setFormData }: StepSummaryProps) => {
         return <HealthAndSafetySection data={data} setFormData={setFormData!} />;
       case "Hazard Management":
         return <HazardManagementSection data={data} setFormData={setFormData!} />;
+      case "Emergency Procedures":
+        return <EmergencyProceduresSection data={data} setFormData={setFormData!} />;
       default:
         return (
           <div className="text-sm text-muted-foreground">
