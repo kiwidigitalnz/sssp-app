@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Save, Send, Printer, ChevronDown } from "lucide-react";
@@ -95,7 +96,7 @@ export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScree
     { title: "Scope of Work", data: formData, step: 2 },
     { title: "Health and Safety", data: formData, step: 3 },
     { title: "Hazard Management", data: formData, step: 4 },
-    { title: "Emergency Procedures", data: formData.emergencyProcedures, step: 5 },
+    { title: "Emergency Procedures", data: formData, step: 5 },
     { title: "Training Requirements", data: formData.trainingRequirements, step: 6 },
     { title: "Health and Safety Policies", data: formData.healthAndSafetyPolicies, step: 7 },
     { title: "Site Safety Rules", data: formData.siteSafetyRules, step: 8 },
