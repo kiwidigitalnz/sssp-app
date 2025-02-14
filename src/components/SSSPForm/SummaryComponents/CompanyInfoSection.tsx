@@ -13,11 +13,11 @@ export const CompanyInfoSection = ({ data, setFormData }: CompanyInfoSectionProp
   const [tempValue, setTempValue] = useState<string>("");
 
   const fields = [
-    { key: "companyName", label: "Company Name" },
-    { key: "address", label: "Address" },
-    { key: "contactPerson", label: "Contact Person" },
-    { key: "contactEmail", label: "Contact Email" },
-    { key: "contactPhone", label: "Contact Phone" }
+    { key: "company_name", label: "Company Name" },
+    { key: "company_address", label: "Company Address" },
+    { key: "company_contact_name", label: "Contact Person" },
+    { key: "company_contact_email", label: "Contact Email" },
+    { key: "company_contact_phone", label: "Contact Phone" }
   ];
 
   const handleEditClick = (key: string, value: any) => {

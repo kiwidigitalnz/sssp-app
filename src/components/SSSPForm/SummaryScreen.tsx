@@ -80,7 +80,7 @@ export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScree
 
   const sections = [
     { title: "Project Details", data: formData, step: 0 },
-    { title: "Company Information", data: formData.companyInfo, step: 1 },
+    { title: "Company Information", data: formData, step: 1 },
     { title: "Scope of Work", data: formData.scopeOfWork, step: 2 },
     { title: "Health and Safety", data: formData.healthAndSafety, step: 3 },
     { title: "Hazard Management", data: formData.hazardManagement, step: 4 },
