@@ -1,8 +1,16 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, Send, Printer } from "lucide-react";
+import { Save, Send, Printer, ChevronDown, Edit } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface SummaryScreenProps {
   formData: any;
@@ -10,20 +18,96 @@ interface SummaryScreenProps {
   onStepChange: (step: number) => void;
 }
 
+interface StepSummaryProps {
+  title: string;
+  data: any;
+  step: number;
+  onStepChange: (step: number) => void;
+}
+
+const StepSummary = ({ title, data, step, onStepChange }: StepSummaryProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const renderValue = (key: string, value: any): JSX.Element => {
+    if (Array.isArray(value)) {
+      return (
+        <div className="space-y-2">
+          {value.map((item, index) => (
+            <div key={index} className="pl-4 border-l-2 border-muted">
+              {Object.entries(item).map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-medium">{k.replace(/_/g, " ")}:</span>
+                  <span className="text-sm text-muted-foreground">{String(v)}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (typeof value === "object" && value !== null) {
+      return (
+        <div className="space-y-2">
+          {Object.entries(value).map(([k, v]) => renderField(k, v))}
+        </div>
+      );
+    }
+
+    return <span className="text-sm text-muted-foreground">{String(value)}</span>;
+  };
+
+  const renderField = (key: string, value: any): JSX.Element => {
+    if (value === undefined || value === null || value === "") return <></>;
+    
+    return (
+      <div key={key} className="flex items-center justify-between gap-4 py-1">
+        <div className="flex-1">
+          <span className="text-sm font-medium">{key.replace(/_/g, " ")}:</span>
+          {renderValue(key, value)}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onStepChange(step);
+          }}
+          className="h-8 w-8 shrink-0"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-2">
+      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border p-4 hover:bg-muted/50">
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <ChevronDown className={cn(
+          "h-4 w-4 transition-transform duration-200",
+          isOpen && "rotate-180"
+        )} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-2 rounded-lg border p-4">
+        {Object.entries(data || {}).map(([key, value]) => renderField(key, value))}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
 export const SummaryScreen = ({ formData, onStepChange }: SummaryScreenProps) => {
   const handleSave = () => {
-    // In a real app, this would save to a backend
     localStorage.setItem("sssp-form", JSON.stringify(formData));
     toast.success("Form saved successfully");
   };
 
   const handleSubmit = () => {
-    // In a real app, this would submit to a backend
     toast.success("Form submitted successfully");
   };
 
   const handlePrintPDF = () => {
-    // In a real app, this would generate a PDF
     toast.success("PDF generation started");
     window.print();
   };
@@ -63,23 +147,15 @@ export const SummaryScreen = ({ formData, onStepChange }: SummaryScreenProps) =>
       </div>
 
       <ScrollArea className="h-[600px] rounded-md border p-4">
-        <div className="space-y-6">
+        <div className="space-y-4">
           {sections.map((section, index) => (
-            <Card key={index} className="p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-semibold">{section.title}</h3>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => onStepChange(section.step)}
-                >
-                  Edit
-                </Button>
-              </div>
-              <pre className="whitespace-pre-wrap text-sm">
-                {JSON.stringify(section.data, null, 2)}
-              </pre>
-            </Card>
+            <StepSummary
+              key={index}
+              title={section.title}
+              data={section.data}
+              step={section.step}
+              onStepChange={onStepChange}
+            />
           ))}
         </div>
       </ScrollArea>
