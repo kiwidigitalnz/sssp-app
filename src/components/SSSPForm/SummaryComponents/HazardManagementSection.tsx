@@ -3,6 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import type { HazardFormData } from "@/types/sssp/forms";
 import { useNavigate } from "react-router-dom";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface HazardManagementSectionProps {
   data: any;
@@ -14,25 +22,33 @@ export const HazardManagementSection = ({ data }: HazardManagementSectionProps) 
   const hazards = data.hazards || [];
 
   const navigateToHazardManagement = () => {
-    navigate(`/edit-sssp/${data.id}/4`); // Navigate to hazard management step
+    navigate(`/edit-sssp/32c7f60c-1756-4ff7-be14-4e0ac5c3297c/4`); // Navigate to hazard management step
   };
 
   return (
     <div className="space-y-4">
       {hazards.length > 0 ? (
         <>
-          <ul className="list-disc list-inside space-y-2 pl-4">
-            {hazards.map((hazard: HazardFormData, index: number) => (
-              <li key={index} className="text-sm">
-                <span className="font-medium">{hazard.hazard}</span>
-                {hazard.riskLevel && (
-                  <span className="text-muted-foreground ml-2">
-                    - Risk Level: {hazard.riskLevel}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[30%]">Hazard/Risk Source</TableHead>
+                  <TableHead className="w-[20%]">Risk Level</TableHead>
+                  <TableHead className="w-[50%]">Control Measures</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {hazards.map((hazard: HazardFormData, index: number) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{hazard.hazard}</TableCell>
+                    <TableCell className="text-muted-foreground">{hazard.riskLevel}</TableCell>
+                    <TableCell>{hazard.controlMeasures}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           
           <div className="flex justify-end mt-4">
             <Button
