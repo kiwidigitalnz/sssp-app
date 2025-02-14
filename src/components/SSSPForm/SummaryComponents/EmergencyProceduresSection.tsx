@@ -10,6 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EditableField } from "./EditableField";
+import { useState } from "react";
 import type { EmergencyContactFormData } from "@/types/sssp/forms";
 
 interface EmergencyProceduresSectionProps {
@@ -17,19 +19,40 @@ interface EmergencyProceduresSectionProps {
   setFormData: (data: any) => void;
 }
 
-export const EmergencyProceduresSection = ({ data }: EmergencyProceduresSectionProps) => {
+export const EmergencyProceduresSection = ({ data, setFormData }: EmergencyProceduresSectionProps) => {
   const navigate = useNavigate();
   const emergencyContacts = data.emergencyContacts || [];
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [tempValue, setTempValue] = useState("");
 
   const navigateToEmergencyProcedures = () => {
     navigate(`/edit-sssp/32c7f60c-1756-4ff7-be14-4e0ac5c3297c/5`);
   };
 
-  const sections = [
-    { title: "Emergency Response Plan", content: data.emergencyPlan },
-    { title: "Assembly Points", content: data.assemblyPoints },
-    { title: "Emergency Equipment", content: data.emergencyEquipment },
-    { title: "Incident Reporting", content: data.incidentReporting },
+  const handleEdit = (key: string, value: any) => {
+    setEditingField(key);
+    setTempValue(value || "");
+  };
+
+  const handleSave = (key: string) => {
+    setFormData({
+      ...data,
+      [key]: tempValue
+    });
+    setEditingField(null);
+    setTempValue("");
+  };
+
+  const handleCancel = () => {
+    setEditingField(null);
+    setTempValue("");
+  };
+
+  const fields = [
+    { key: "emergencyPlan", label: "Emergency Response Plan" },
+    { key: "assemblyPoints", label: "Assembly Points" },
+    { key: "emergencyEquipment", label: "Emergency Equipment" },
+    { key: "incidentReporting", label: "Incident Reporting" }
   ];
 
   return (
@@ -66,18 +89,21 @@ export const EmergencyProceduresSection = ({ data }: EmergencyProceduresSectionP
       {/* Emergency Procedures Sections */}
       <div className="space-y-4">
         <h4 className="font-medium">Emergency Procedures</h4>
-        <div className="grid gap-4">
-          {sections.map((section, index) => (
-            <div key={index} className="rounded-md border p-4">
-              <h5 className="font-medium text-sm mb-2">{section.title}</h5>
-              {section.content ? (
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {section.content}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">No information provided</p>
-              )}
-            </div>
+        <div className="space-y-4">
+          {fields.map((field) => (
+            <EditableField
+              key={field.key}
+              label={field.label}
+              value={data[field.key]}
+              fieldKey={field.key}
+              isEditing={editingField === field.key}
+              tempValue={editingField === field.key ? tempValue : ""}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+              onValueChange={setTempValue}
+              isTextArea
+            />
           ))}
         </div>
       </div>
