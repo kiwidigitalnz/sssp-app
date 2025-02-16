@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,18 +14,28 @@ import { useToast } from "@/hooks/use-toast";
 import { SupabaseConnectionTest } from "@/components/common/SupabaseConnectionTest";
 
 const fetchSSSPs = async () => {
-  console.log('Fetching SSSPs...');
+  console.log('[fetchSSSPs] Starting fetch...');
+  
+  // First check if we have an authenticated user
+  const { data: { user } } = await supabase.auth.getUser();
+  console.log('[fetchSSSPs] Current user:', user?.email);
+  
+  if (!user) {
+    console.log('[fetchSSSPs] No authenticated user found');
+    throw new Error('Authentication required');
+  }
+
   const { data, error } = await supabase
     .from('sssps')
     .select('*')
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching SSSPs:', error);
+    console.error('[fetchSSSPs] Error:', error);
     throw new Error(error.message);
   }
   
-  console.log('Fetched SSSPs:', data);
+  console.log('[fetchSSSPs] Success! Data:', data);
   return data as SSSP[];
 };
 
@@ -36,13 +47,34 @@ const Index = () => {
     queryKey: ['sssps'],
     queryFn: fetchSSSPs,
     enabled: !!session,
-    retry: 3,
+    retry: false, // Disable retries temporarily for debugging
     gcTime: 5 * 60 * 1000
   });
 
   useEffect(() => {
+    console.log('[Index] Component mounted');
+    
+    const initializeAuth = async () => {
+      const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+      console.log('[Index] Initial session check:', initialSession?.user?.email, sessionError);
+      setSession(initialSession);
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        console.log('[Index] Auth state changed:', _event, session?.user?.email);
+        setSession(session);
+      });
+
+      return () => subscription.unsubscribe();
+    };
+
+    initializeAuth();
+  }, []);
+
+  useEffect(() => {
     if (error) {
-      console.error('Query error:', error);
+      console.error('[Index] Query error:', error);
       toast({
         variant: "destructive",
         title: "Error loading data",
@@ -50,22 +82,6 @@ const Index = () => {
       });
     }
   }, [error, toast]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Current session:', session);
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session?.user?.email);
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   if (!session) {
     return (
