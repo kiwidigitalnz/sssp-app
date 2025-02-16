@@ -51,6 +51,24 @@ export type Database = {
         }
         Relationships: []
       }
+      schema_checks: {
+        Row: {
+          check_name: string
+          check_result: boolean | null
+          checked_at: string | null
+        }
+        Insert: {
+          check_name: string
+          check_result?: boolean | null
+          checked_at?: string | null
+        }
+        Update: {
+          check_name?: string
+          check_result?: boolean | null
+          checked_at?: string | null
+        }
+        Relationships: []
+      }
       sssp_access: {
         Row: {
           access_level: string
