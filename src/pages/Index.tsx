@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,15 +13,18 @@ import { useToast } from "@/hooks/use-toast";
 import { SupabaseConnectionTest } from "@/components/common/SupabaseConnectionTest";
 
 const fetchSSSPs = async () => {
+  console.log('Fetching SSSPs...');
   const { data, error } = await supabase
     .from('sssps')
     .select('*')
     .order('created_at', { ascending: false });
 
   if (error) {
+    console.error('Error fetching SSSPs:', error);
     throw new Error(error.message);
   }
   
+  console.log('Fetched SSSPs:', data);
   return data as SSSP[];
 };
 
@@ -40,6 +42,7 @@ const Index = () => {
 
   useEffect(() => {
     if (error) {
+      console.error('Query error:', error);
       toast({
         variant: "destructive",
         title: "Error loading data",
@@ -50,12 +53,14 @@ const Index = () => {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Current session:', session);
       setSession(session);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session?.user?.email);
       setSession(session);
     });
 
