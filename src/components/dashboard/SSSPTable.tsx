@@ -50,19 +50,25 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
   const { data: sharingInfo, refetch: refetchSharing } = useQuery({
     queryKey: ['sssp-sharing'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sssp_access')
-        .select('sssp_id, user_id');
-      
-      if (error) throw error;
-      
-      const counts: Record<string, number> = {};
-      data.forEach(access => {
-        counts[access.sssp_id] = (counts[access.sssp_id] || 0) + 1;
-      });
-      
-      return counts;
-    }
+      try {
+        const { data, error } = await supabase
+          .from('sssp_access')
+          .select('sssp_id, user_id');
+        
+        if (error) throw error;
+        
+        const counts: Record<string, number> = {};
+        data?.forEach(access => {
+          counts[access.sssp_id] = (counts[access.sssp_id] || 0) + 1;
+        });
+        
+        return counts;
+      } catch (error) {
+        console.error('Error fetching sharing info:', error);
+        return {};
+      }
+    },
+    retry: 1
   });
 
   const handleDelete = async (id: string) => {
@@ -135,6 +141,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
     });
   };
 
+  // Render SSSP table content
   return (
     <Card className="bg-white shadow-sm">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-4">
@@ -215,9 +222,9 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="text-sm text-muted-foreground truncate max-w-[200px] block cursor-default">
+                              <div className="text-sm text-muted-foreground truncate max-w-[200px] cursor-default">
                                 {sssp.visitor_rules || "No visitor rules set"}
-                              </span>
+                              </div>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p className="max-w-[300px] whitespace-pre-wrap">
