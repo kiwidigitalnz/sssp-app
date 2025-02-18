@@ -24,9 +24,18 @@ const fetchSSSPs = async () => {
     throw new Error('Authentication required');
   }
 
+  // Only select the fields we need for the table display
   const { data, error } = await supabase
     .from('sssps')
-    .select('*')
+    .select(`
+      id,
+      title,
+      status,
+      created_at,
+      updated_at,
+      visitor_rules,
+      company_name
+    `)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -46,8 +55,9 @@ const Index = () => {
     queryKey: ['sssps'],
     queryFn: fetchSSSPs,
     enabled: !!session,
-    retry: false, // Disable retries temporarily for debugging
-    gcTime: 5 * 60 * 1000
+    staleTime: 30000, // Data remains fresh for 30 seconds
+    cacheTime: 5 * 60 * 1000, // Cache data for 5 minutes
+    retry: false
   });
 
   useEffect(() => {

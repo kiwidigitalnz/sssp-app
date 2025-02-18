@@ -52,7 +52,8 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
       try {
         const { data, error } = await supabase
           .from('sssp_access')
-          .select('sssp_id, user_id');
+          .select('sssp_id, user_id')
+          .in('sssp_id', ssspList.map(sssp => sssp.id));
         
         if (error) throw error;
         
@@ -67,6 +68,9 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         return {};
       }
     },
+    enabled: ssspList.length > 0,
+    staleTime: 30000,
+    cacheTime: 5 * 60 * 1000,
     retry: 1
   });
 
