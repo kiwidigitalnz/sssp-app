@@ -11,7 +11,6 @@ import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { FileText, AlertTriangle, CheckCircle, ClipboardCheck } from "lucide-react";
 import { addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { SupabaseConnectionTest } from "@/components/common/SupabaseConnectionTest";
 
 const fetchSSSPs = async () => {
   console.log('[fetchSSSPs] Starting fetch...');
@@ -96,9 +95,6 @@ const Index = () => {
           <p className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700">
             Create, manage, and share your Site-Specific Safety Plans with ease. Built for construction professionals who value safety and efficiency.
           </p>
-          <div className="mt-8">
-            <SupabaseConnectionTest />
-          </div>
         </div>
       </div>
     );
@@ -110,9 +106,6 @@ const Index = () => {
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900">Error loading data</h2>
           <p className="mt-2 text-gray-600">{error instanceof Error ? error.message : 'An unexpected error occurred'}</p>
-          <div className="mt-4">
-            <SupabaseConnectionTest />
-          </div>
         </div>
       </div>
     );
@@ -135,9 +128,6 @@ const Index = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading data...</p>
-          <div className="mt-4">
-            <SupabaseConnectionTest />
-          </div>
         </div>
       </div>
     );
@@ -148,11 +138,7 @@ const Index = () => {
       <WelcomeHeader />
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <div className="grid grid-cols-1 gap-8">
-          <div className="mb-4">
-            <SupabaseConnectionTest />
-          </div>
-          
+        <div className="grid grid-cols-1 gap-8">          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
               title="Total SSSPs"
