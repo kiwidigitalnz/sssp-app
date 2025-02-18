@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, Send, Printer, ChevronDown } from "lucide-react";
+import { Save, Send, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   Collapsible,
@@ -85,13 +85,8 @@ export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScree
     toast.success("Form saved successfully");
   };
 
-  const handleSubmit = () => {
-    toast.success("Form submitted successfully");
-  };
-
-  const handlePrintPDF = () => {
-    toast.success("PDF generation started");
-    window.print();
+  const handlePublish = () => {
+    toast.success("SSSP published successfully");
   };
 
   const sections = [
@@ -117,13 +112,9 @@ export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScree
             <Save className="mr-2 h-4 w-4" />
             Save Draft
           </Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button onClick={handlePublish} disabled={isLoading}>
             <Send className="mr-2 h-4 w-4" />
-            Submit
-          </Button>
-          <Button onClick={handlePrintPDF} variant="secondary" disabled={isLoading}>
-            <Printer className="mr-2 h-4 w-4" />
-            Export PDF
+            Publish
           </Button>
         </div>
       </div>
