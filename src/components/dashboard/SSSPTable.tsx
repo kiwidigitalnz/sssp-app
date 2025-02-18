@@ -221,7 +221,6 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                     <TableHead className="font-semibold w-[100px]">Status</TableHead>
                     <TableHead className="hidden sm:table-cell font-semibold">Shared With</TableHead>
                     <TableHead className="hidden sm:table-cell font-semibold">Last Modified</TableHead>
-                    <TableHead className="hidden sm:table-cell font-semibold">Visitor Rules</TableHead>
                     <TableHead className="text-right font-semibold w-[140px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -272,22 +271,6 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {new Date(sssp.updated_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="text-sm text-muted-foreground truncate max-w-[200px] cursor-default">
-                                {sssp.visitor_rules || "No visitor rules set"}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-[300px] whitespace-pre-wrap">
-                                {sssp.visitor_rules || "No visitor rules set"}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
                       </TableCell>
                       <TableCell className="text-right p-2">
                         <TooltipProvider>

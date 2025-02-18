@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Save, Send, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Collapsible,
   CollapsibleContent,
@@ -80,13 +82,33 @@ const StepSummary = ({ title, data, setFormData }: StepSummaryProps) => {
 };
 
 export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScreenProps) => {
+  const navigate = useNavigate();
+  const [isPublishing, setIsPublishing] = useState(false);
+
   const handleSave = () => {
     localStorage.setItem("sssp-form", JSON.stringify(formData));
     toast.success("Form saved successfully");
   };
 
-  const handlePublish = () => {
-    toast.success("SSSP published successfully");
+  const handlePublish = async () => {
+    try {
+      setIsPublishing(true);
+      
+      const { error } = await supabase
+        .from('sssps')
+        .update({ status: 'published' })
+        .eq('id', formData.id);
+
+      if (error) throw error;
+
+      toast.success("SSSP published successfully");
+      navigate('/');
+    } catch (error) {
+      console.error('Error publishing SSSP:', error);
+      toast.error("Failed to publish SSSP");
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const sections = [
@@ -108,13 +130,13 @@ export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScree
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Final Review</h2>
         <div className="flex gap-4">
-          <Button onClick={handleSave} variant="outline" disabled={isLoading}>
+          <Button onClick={handleSave} variant="outline" disabled={isLoading || isPublishing}>
             <Save className="mr-2 h-4 w-4" />
             Save Draft
           </Button>
-          <Button onClick={handlePublish} disabled={isLoading}>
+          <Button onClick={handlePublish} disabled={isLoading || isPublishing}>
             <Send className="mr-2 h-4 w-4" />
-            Publish
+            {isPublishing ? "Publishing..." : "Publish"}
           </Button>
         </div>
       </div>
