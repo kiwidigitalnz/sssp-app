@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -210,18 +209,20 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                         {new Date(sssp.updated_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
-                              {sssp.visitor_rules || "No visitor rules set"}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-[300px] whitespace-pre-wrap">
-                              {sssp.visitor_rules || "No visitor rules set"}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-sm text-muted-foreground truncate max-w-[200px] block cursor-default">
+                                {sssp.visitor_rules || "No visitor rules set"}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-[300px] whitespace-pre-wrap">
+                                {sssp.visitor_rules || "No visitor rules set"}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
                       <TableCell className="text-right p-2">
                         <TooltipProvider>
