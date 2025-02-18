@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -99,14 +98,29 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
 
   const handleClone = async (sssp: SSSP) => {
     try {
-      const clonedSSSP = {
+      console.log('Starting clone operation for SSSP:', sssp.id);
+      
+      // Get the current authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
+
+      // Prepare the cloned SSSP data
+      const clonedSSSP: Partial<SSSP> = {
         ...sssp,
-        id: undefined,
+        id: undefined, // Let Supabase generate a new ID
         title: `CLONE - ${sssp.title}`,
         status: 'draft',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        created_by: user.id,
+        modified_by: user.id,
+        version: 1,
+        version_history: [],
       };
+
+      console.log('Prepared cloned SSSP data:', clonedSSSP);
 
       const { data, error } = await supabase
         .from('sssps')
@@ -115,6 +129,8 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         .single();
 
       if (error) throw error;
+
+      console.log('Successfully cloned SSSP:', data);
 
       toast({
         title: "SSSP cloned",
@@ -141,7 +157,6 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
     });
   };
 
-  // Render SSSP table content
   return (
     <Card className="bg-white shadow-sm">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-4">
