@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SSSP } from "@/types/sssp";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SSSPTable } from "@/components/dashboard/SSSPTable";
@@ -50,6 +50,7 @@ const fetchSSSPs = async () => {
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: sssps = [], isLoading, error } = useQuery({
     queryKey: ['sssps'],
@@ -80,6 +81,32 @@ const Index = () => {
 
     initializeAuth();
   }, []);
+
+  // Subscribe to real-time changes
+  useEffect(() => {
+    if (!session) return;
+
+    const channel = supabase
+      .channel('table-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sssps'
+        },
+        (payload) => {
+          console.log('Change received:', payload);
+          // Invalidate and refetch SSSPs query
+          queryClient.invalidateQueries({ queryKey: ['sssps'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session, queryClient]);
 
   useEffect(() => {
     if (error) {
