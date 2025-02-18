@@ -84,10 +84,27 @@ const StepSummary = ({ title, data, setFormData }: StepSummaryProps) => {
 export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScreenProps) => {
   const navigate = useNavigate();
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    localStorage.setItem("sssp-form", JSON.stringify(formData));
-    toast.success("Form saved successfully");
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      
+      const { error } = await supabase
+        .from('sssps')
+        .update({ status: 'draft' })
+        .eq('id', formData.id);
+
+      if (error) throw error;
+
+      toast.success("Form saved successfully");
+      navigate('/');
+    } catch (error) {
+      console.error('Error saving SSSP:', error);
+      toast.error("Failed to save SSSP");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePublish = async () => {
@@ -130,11 +147,18 @@ export const SummaryScreen = ({ formData, setFormData, isLoading }: SummaryScree
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Final Review</h2>
         <div className="flex gap-4">
-          <Button onClick={handleSave} variant="outline" disabled={isLoading || isPublishing}>
+          <Button 
+            onClick={handleSave} 
+            variant="outline" 
+            disabled={isLoading || isPublishing || isSaving}
+          >
             <Save className="mr-2 h-4 w-4" />
-            Save Draft
+            {isSaving ? "Saving..." : "Save Draft"}
           </Button>
-          <Button onClick={handlePublish} disabled={isLoading || isPublishing}>
+          <Button 
+            onClick={handlePublish} 
+            disabled={isLoading || isPublishing || isSaving}
+          >
             <Send className="mr-2 h-4 w-4" />
             {isPublishing ? "Publishing..." : "Publish"}
           </Button>
