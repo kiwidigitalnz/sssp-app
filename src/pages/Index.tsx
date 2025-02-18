@@ -56,8 +56,8 @@ const Index = () => {
     queryKey: ['sssps'],
     queryFn: fetchSSSPs,
     enabled: !!session,
-    staleTime: 30000, // Data remains fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Cache data for 5 minutes (renamed from cacheTime)
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
     retry: false
   });
 
@@ -151,7 +151,7 @@ const Index = () => {
   const stats = {
     total: sssps.length,
     draft: sssps.filter(s => s.status === "draft").length,
-    submitted: sssps.filter(s => s.status !== "draft").length,
+    published: sssps.filter(s => s.status === "published").length,
     needsReview: sssps.filter(s => {
       const thirtyDaysFromNow = addDays(new Date(), 30);
       const lastUpdated = new Date(s.updated_at);
@@ -190,8 +190,8 @@ const Index = () => {
               iconColor="text-yellow-500"
             />
             <StatsCard
-              title="Submitted SSSPs"
-              value={stats.submitted}
+              title="Published SSSPs"
+              value={stats.published}
               icon={CheckCircle}
               iconColor="text-green-500"
             />
