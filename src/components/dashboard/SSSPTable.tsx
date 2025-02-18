@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,7 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { PlusCircle, Share2, Copy, Printer, Trash2, Users } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
 import { ShareSSSP } from "@/components/SSSPForm/ShareSSSP";
@@ -41,6 +42,7 @@ interface SSSPTableProps {
 export function SSSPTable({ ssspList }: SSSPTableProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [ssspToDelete, setSsspToDelete] = useState<string | null>(null);
   const [ssspToClone, setSsspToClone] = useState<SSSP | null>(null);
   const isMobile = useIsMobile();
@@ -77,7 +79,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         description: "The SSSP has been successfully deleted",
       });
 
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ['sssps'] });
     } catch (error) {
       console.error('Delete error:', error);
       toast({
@@ -113,6 +115,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         description: "A new copy of the SSSP has been created",
       });
 
+      queryClient.invalidateQueries({ queryKey: ['sssps'] });
       navigate(`/edit-sssp/${data.id}`);
     } catch (error) {
       console.error('Clone error:', error);
