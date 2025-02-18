@@ -56,7 +56,7 @@ const Index = () => {
     queryFn: fetchSSSPs,
     enabled: !!session,
     staleTime: 30000, // Data remains fresh for 30 seconds
-    cacheTime: 5 * 60 * 1000, // Cache data for 5 minutes
+    gcTime: 5 * 60 * 1000, // Cache data for 5 minutes (renamed from cacheTime)
     retry: false
   });
 

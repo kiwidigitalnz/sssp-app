@@ -70,7 +70,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
     },
     enabled: ssspList.length > 0,
     staleTime: 30000,
-    cacheTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: 1
   });
 
