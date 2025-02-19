@@ -12,19 +12,6 @@ export async function logActivity(
   console.log(`[activityLogging] Logging activity: ${action} for SSSP ${sssp_id}`);
   
   try {
-    // Optimized access check query to use index
-    const { data: accessCheck, error: accessError } = await supabase
-      .from('sssps')
-      .select('id')
-      .eq('id', sssp_id)
-      .limit(1)
-      .maybeSingle();
-
-    if (accessError || !accessCheck) {
-      console.error('[activityLogging] User does not have access to this SSSP:', accessError);
-      throw new Error('User does not have access to this SSSP');
-    }
-
     const { data, error } = await supabase
       .from('sssp_activity')
       .insert({
@@ -32,21 +19,7 @@ export async function logActivity(
         action,
         user_id,
         details
-      })
-      .select(`
-        id,
-        action,
-        created_at,
-        sssps!sssp_activity_sssp_id_fkey (
-          id,
-          title
-        ),
-        profiles!sssp_activity_user_id_fkey (
-          first_name,
-          last_name
-        )
-      `)
-      .single();
+      });
 
     if (error) {
       console.error('[activityLogging] Error logging activity:', error);

@@ -1,6 +1,5 @@
-
-import { useEffect, useState, useCallback } from "react";
-import { Session, REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SSSP } from "@/types/sssp";
@@ -13,36 +12,37 @@ import { addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const CACHE_TIME = 5 * 60 * 1000;
-const STALE_TIME = 30000;
-
 const fetchSSSPs = async () => {
   console.log('[fetchSSSPs] Starting fetch...');
   
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
+  console.log('[fetchSSSPs] Current user:', user?.email);
   
-  if (!session?.user) {
-    console.log('[fetchSSSPs] No active session');
+  if (!user) {
+    console.log('[fetchSSSPs] No authenticated user found');
     throw new Error('Authentication required');
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('sssps')
-      .select('id, title, status, created_at, updated_at, company_name')
-      .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('sssps')
+    .select(`
+      id,
+      title,
+      status,
+      created_at,
+      updated_at,
+      visitor_rules,
+      company_name
+    `)
+    .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('[fetchSSSPs] Query error:', error);
-      throw error;
-    }
-
-    console.log('[fetchSSSPs] Success:', data);
-    return data as SSSP[];
-  } catch (error) {
-    console.error('[fetchSSSPs] Error details:', error);
-    throw error;
+  if (error) {
+    console.error('[fetchSSSPs] Error:', error);
+    throw new Error(error.message);
   }
+  
+  console.log('[fetchSSSPs] Success! Data:', data);
+  return data as SSSP[];
 };
 
 const Index = () => {
@@ -51,9 +51,39 @@ const Index = () => {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
-  const setupRealtimeSubscription = useCallback((userId: string) => {
-    console.log('[Index] Setting up realtime subscription for user:', userId);
+  const { data: sssps = [], isLoading, error } = useQuery({
+    queryKey: ['sssps'],
+    queryFn: fetchSSSPs,
+    enabled: !!session,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
+    retry: false
+  });
+
+  useEffect(() => {
+    console.log('[Index] Component mounted');
     
+    const initializeAuth = async () => {
+      const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+      console.log('[Index] Initial session check:', initialSession?.user?.email, sessionError);
+      setSession(initialSession);
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        console.log('[Index] Auth state changed:', _event, session?.user?.email);
+        setSession(session);
+      });
+
+      return () => subscription.unsubscribe();
+    };
+
+    initializeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+
     const channel = supabase
       .channel('table-db-changes')
       .on(
@@ -64,92 +94,27 @@ const Index = () => {
           table: 'sssps'
         },
         (payload) => {
-          console.log('[Index] Realtime change received:', payload);
-          queryClient.invalidateQueries({ 
-            queryKey: ['sssps'],
-            refetchType: 'active'
-          });
+          console.log('Change received:', payload);
+          queryClient.invalidateQueries({ queryKey: ['sssps'] });
         }
       )
-      .subscribe((status) => {
-        console.log('[Index] Subscription status:', status);
-        
-        if (status === REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR) {
-          console.error('[Index] Subscription error occurred');
-          toast({
-            variant: "destructive",
-            title: "Realtime Error",
-            description: "Failed to establish realtime connection. Updates may be delayed.",
-          });
-        }
-      });
-
-    return channel;
-  }, [queryClient, toast]);
-
-  useEffect(() => {
-    let authUnsubscribe: (() => void) | null = null;
-    let channel: ReturnType<typeof setupRealtimeSubscription> | null = null;
-
-    const initializeAuth = async () => {
-      try {
-        // Get initial session
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        
-        if (initialSession?.user) {
-          setSession(initialSession);
-          channel = setupRealtimeSubscription(initialSession.user.id);
-        }
-
-        // Setup auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-          if (newSession?.user?.id !== session?.user?.id) {
-            setSession(newSession);
-            
-            // Cleanup existing subscription before creating a new one
-            if (channel) {
-              console.log('[Index] Cleaning up existing subscription');
-              supabase.removeChannel(channel);
-              channel = null;
-            }
-            
-            if (newSession?.user) {
-              channel = setupRealtimeSubscription(newSession.user.id);
-            }
-          }
-        });
-
-        authUnsubscribe = subscription.unsubscribe;
-      } catch (error) {
-        console.error('[Index] Auth initialization error:', error);
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "Failed to initialize authentication. Please try refreshing the page.",
-        });
-      }
-    };
-
-    initializeAuth();
+      .subscribe();
 
     return () => {
-      if (authUnsubscribe) {
-        authUnsubscribe();
-      }
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [setupRealtimeSubscription, toast]);
+  }, [session, queryClient]);
 
-  const { data: sssps = [], isLoading, error } = useQuery({
-    queryKey: ['sssps'],
-    queryFn: fetchSSSPs,
-    enabled: !!session?.user,
-    staleTime: STALE_TIME,
-    gcTime: CACHE_TIME,
-    retry: 1
-  });
+  useEffect(() => {
+    if (error) {
+      console.error('[Index] Query error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error loading data",
+        description: error instanceof Error ? error.message : "Failed to load SSSPs"
+      });
+    }
+  }, [error, toast]);
 
   if (!session) {
     return (
@@ -180,6 +145,17 @@ const Index = () => {
     );
   }
 
+  const stats = {
+    total: sssps.length,
+    draft: sssps.filter(s => s.status === "draft").length,
+    published: sssps.filter(s => s.status === "published").length,
+    needsReview: sssps.filter(s => {
+      const thirtyDaysFromNow = addDays(new Date(), 30);
+      const lastUpdated = new Date(s.updated_at);
+      return thirtyDaysFromNow.getTime() - lastUpdated.getTime() >= 30 * 24 * 60 * 60 * 1000;
+    }).length
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -192,17 +168,6 @@ const Index = () => {
       </div>
     );
   }
-
-  const stats = {
-    total: sssps.length,
-    draft: sssps.filter(s => s.status === "draft").length,
-    published: sssps.filter(s => s.status === "published").length,
-    needsReview: sssps.filter(s => {
-      const thirtyDaysFromNow = addDays(new Date(), 30);
-      const lastUpdated = new Date(s.updated_at);
-      return thirtyDaysFromNow.getTime() - lastUpdated.getTime() >= 30 * 24 * 60 * 60 * 1000;
-    }).length
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">

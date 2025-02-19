@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -51,7 +50,6 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
   const isMobile = useIsMobile();
   const { user, session } = useAuth();
 
-  // Optimized sharing info query using new indexes
   const { data: sharingInfo, refetch: refetchSharing } = useQuery({
     queryKey: ['sssp-sharing'],
     queryFn: async () => {
@@ -60,15 +58,13 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
       }
 
       try {
-        // Using optimized query with new indexes
         const { data, error } = await supabase
           .from('sssp_access')
-          .select('sssp_id')
+          .select('sssp_id, user_id')
           .in('sssp_id', ssspList.map(sssp => sssp.id));
         
         if (error) throw error;
         
-        // Optimized counting logic
         const counts: Record<string, number> = {};
         data?.forEach(access => {
           counts[access.sssp_id] = (counts[access.sssp_id] || 0) + 1;
@@ -76,13 +72,13 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         
         return counts;
       } catch (error) {
-        console.error('[SSSPTable] Error fetching sharing info:', error);
+        console.error('Error fetching sharing info:', error);
         return {};
       }
     },
     enabled: Boolean(session?.access_token) && ssspList.length > 0,
-    staleTime: 30000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
     retry: 1
   });
 
@@ -100,7 +96,6 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
     try {
       setIsCloning(true);
 
-      // Optimized clone operation with minimal fields
       const newSSPP = {
         title: `Clone - ${sssp.title}`,
         company_name: sssp.company_name,
@@ -174,16 +169,15 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         version_history: []
       };
 
-      // Optimized insert query using new indexes
       const { data, error } = await supabase
         .from('sssps')
         .insert(newSSPP)
-        .select('id, title')
+        .select()
         .single();
 
       if (error) throw error;
 
-      // Log the clone activity with minimal data
+      // Log the clone activity
       await logActivity(data.id, 'cloned', user.id, {
         source_sssp_id: sssp.id,
         source_title: sssp.title
@@ -194,17 +188,13 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         description: "The SSSP has been cloned successfully.",
       });
 
-      // Optimized invalidation
-      queryClient.invalidateQueries({ 
-        queryKey: ['sssps'],
-        refetchType: 'active'
-      });
+      queryClient.invalidateQueries({ queryKey: ['sssps'] });
       
       if (data) {
         navigate(`/edit-sssp/${data.id}`);
       }
     } catch (error) {
-      console.error('[SSSPTable] Error cloning SSSP:', error);
+      console.error('Error cloning SSSP:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -220,15 +210,13 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
     if (!user) return;
     
     try {
-      // Log the delete activity before deletion
+      // Log the delete activity before actually deleting
       await logActivity(id, 'deleted', user.id);
       
-      // Optimized delete query using new indexes
       const { error } = await supabase
         .from('sssps')
         .delete()
-        .eq('id', id)
-        .single();
+        .eq('id', id);
 
       if (error) throw error;
 
@@ -237,13 +225,9 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         description: "The SSSP has been successfully deleted",
       });
 
-      // Optimized invalidation
-      queryClient.invalidateQueries({ 
-        queryKey: ['sssps'],
-        refetchType: 'active'
-      });
+      queryClient.invalidateQueries({ queryKey: ['sssps'] });
     } catch (error) {
-      console.error('[SSSPTable] Delete error:', error);
+      console.error('Delete error:', error);
       toast({
         variant: "destructive",
         title: "Error",
