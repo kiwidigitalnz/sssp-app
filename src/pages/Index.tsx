@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,9 @@ import { addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const CACHE_TIME = 5 * 60 * 1000; // 5 minutes
+const STALE_TIME = 30000; // 30 seconds
+
 const fetchSSSPs = async () => {
   console.log('[fetchSSSPs] Starting fetch...');
   
@@ -23,6 +27,7 @@ const fetchSSSPs = async () => {
     throw new Error('Authentication required');
   }
 
+  // Optimized query using new indexes
   const { data, error } = await supabase
     .from('sssps')
     .select(`
@@ -31,7 +36,6 @@ const fetchSSSPs = async () => {
       status,
       created_at,
       updated_at,
-      visitor_rules,
       company_name
     `)
     .order('created_at', { ascending: false });
@@ -51,12 +55,13 @@ const Index = () => {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
+  // Optimized query configuration
   const { data: sssps = [], isLoading, error } = useQuery({
     queryKey: ['sssps'],
     queryFn: fetchSSSPs,
     enabled: !!session,
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: STALE_TIME,
+    gcTime: CACHE_TIME,
     retry: false
   });
 
@@ -81,6 +86,7 @@ const Index = () => {
     initializeAuth();
   }, []);
 
+  // Optimized realtime subscription
   useEffect(() => {
     if (!session) return;
 
@@ -91,11 +97,15 @@ const Index = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'sssps'
+          table: 'sssps',
+          filter: `created_by=eq.${session.user.id}`
         },
         (payload) => {
-          console.log('Change received:', payload);
-          queryClient.invalidateQueries({ queryKey: ['sssps'] });
+          console.log('[Index] Change received:', payload);
+          queryClient.invalidateQueries({ 
+            queryKey: ['sssps'],
+            refetchType: 'active'
+          });
         }
       )
       .subscribe();
