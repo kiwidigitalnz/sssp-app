@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Session, REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,7 +58,6 @@ const Index = () => {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
-  // Initialize auth session
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -100,7 +98,6 @@ const Index = () => {
     initializeAuth();
   }, [queryClient, toast]);
 
-  // Updated query configuration
   const { data: sssps = [], isLoading, error } = useQuery({
     queryKey: ['sssps'],
     queryFn: async () => {
@@ -123,7 +120,6 @@ const Index = () => {
     retry: 1
   });
 
-  // Realtime subscription with correct status type
   useEffect(() => {
     if (!session?.user) return;
 
