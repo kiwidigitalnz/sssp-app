@@ -100,7 +100,7 @@ const Index = () => {
     initializeAuth();
   }, [queryClient, toast]);
 
-  // Updated query configuration without onError
+  // Updated query configuration
   const { data: sssps = [], isLoading, error } = useQuery({
     queryKey: ['sssps'],
     queryFn: async () => {
@@ -151,7 +151,7 @@ const Index = () => {
         .subscribe((status) => {
           console.log('[Index] Subscription status:', status);
           
-          if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIPTION_ERROR) {
+          if (status === REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR) {
             console.error('[Index] Subscription error occurred');
             toast({
               variant: "destructive",
