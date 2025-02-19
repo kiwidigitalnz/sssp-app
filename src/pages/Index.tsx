@@ -37,6 +37,7 @@ const fetchSSSPs = async () => {
       throw error;
     }
 
+    console.log('[fetchSSSPs] Success:', data);
     return data as SSSP[];
   } catch (error) {
     console.error('[fetchSSSPs] Error details:', error);
@@ -87,11 +88,12 @@ const Index = () => {
   }, [queryClient, toast]);
 
   useEffect(() => {
-    let authSubscription: { unsubscribe: () => void } | null = null;
+    let authUnsubscribe: (() => void) | null = null;
     let channel: ReturnType<typeof setupRealtimeSubscription> | null = null;
 
     const initializeAuth = async () => {
       try {
+        // Get initial session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         
         if (initialSession?.user) {
@@ -99,13 +101,16 @@ const Index = () => {
           channel = setupRealtimeSubscription(initialSession.user.id);
         }
 
+        // Setup auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
           if (newSession?.user?.id !== session?.user?.id) {
             setSession(newSession);
             
+            // Cleanup existing subscription before creating a new one
             if (channel) {
               console.log('[Index] Cleaning up existing subscription');
               supabase.removeChannel(channel);
+              channel = null;
             }
             
             if (newSession?.user) {
@@ -114,7 +119,7 @@ const Index = () => {
           }
         });
 
-        authSubscription = { unsubscribe: () => subscription.unsubscribe() };
+        authUnsubscribe = subscription.unsubscribe;
       } catch (error) {
         console.error('[Index] Auth initialization error:', error);
         toast({
@@ -128,8 +133,8 @@ const Index = () => {
     initializeAuth();
 
     return () => {
-      if (authSubscription) {
-        authSubscription.unsubscribe();
+      if (authUnsubscribe) {
+        authUnsubscribe();
       }
       if (channel) {
         supabase.removeChannel(channel);
