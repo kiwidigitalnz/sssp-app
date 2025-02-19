@@ -19,34 +19,39 @@ const STALE_TIME = 30000; // 30 seconds
 const fetchSSSPs = async () => {
   console.log('[fetchSSSPs] Starting fetch...');
   
-  const { data: { user } } = await supabase.auth.getUser();
-  console.log('[fetchSSSPs] Current user:', user?.email);
+  // Get current session instead of just user
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
-  if (!user) {
-    console.log('[fetchSSSPs] No authenticated user found');
+  if (sessionError) {
+    console.error('[fetchSSSPs] Session error:', sessionError);
+    throw new Error('Authentication error');
+  }
+  
+  if (!session) {
+    console.log('[fetchSSSPs] No active session');
     throw new Error('Authentication required');
   }
 
-  // Optimized query using new indexes
-  const { data, error } = await supabase
-    .from('sssps')
-    .select(`
-      id,
-      title,
-      status,
-      created_at,
-      updated_at,
-      company_name
-    `)
-    .order('created_at', { ascending: false });
+  console.log('[fetchSSSPs] Using session for user:', session.user.email);
 
-  if (error) {
-    console.error('[fetchSSSPs] Error:', error);
-    throw new Error(error.message);
+  try {
+    const { data, error } = await supabase
+      .from('sssps')
+      .select('id, title, status, created_at, updated_at, company_name')
+      .order('created_at', { ascending: false })
+      .throwOnError(); // This will ensure errors are properly caught
+
+    if (error) {
+      console.error('[fetchSSSPs] Query error:', error);
+      throw error;
+    }
+
+    console.log('[fetchSSSPs] Successfully fetched data:', data?.length, 'records');
+    return data as SSSP[];
+  } catch (error) {
+    console.error('[fetchSSSPs] Error details:', error);
+    throw error;
   }
-  
-  console.log('[fetchSSSPs] Success! Data:', data);
-  return data as SSSP[];
 };
 
 const Index = () => {
@@ -55,76 +60,112 @@ const Index = () => {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
-  // Optimized query configuration
-  const { data: sssps = [], isLoading, error } = useQuery({
-    queryKey: ['sssps'],
-    queryFn: fetchSSSPs,
-    enabled: !!session,
-    staleTime: STALE_TIME,
-    gcTime: CACHE_TIME,
-    retry: false
-  });
-
+  // Initialize auth session
   useEffect(() => {
-    console.log('[Index] Component mounted');
-    
     const initializeAuth = async () => {
-      const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log('[Index] Initial session check:', initialSession?.user?.email, sessionError);
-      setSession(initialSession);
+      try {
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('[Index] Session error:', sessionError);
+          throw sessionError;
+        }
 
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        console.log('[Index] Auth state changed:', _event, session?.user?.email);
-        setSession(session);
-      });
+        console.log('[Index] Initial session:', initialSession?.user?.email);
+        setSession(initialSession);
 
-      return () => subscription.unsubscribe();
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+          console.log('[Index] Auth state changed:', _event, session?.user?.email);
+          setSession(session);
+          
+          // Invalidate queries when auth state changes
+          if (!session) {
+            queryClient.invalidateQueries();
+          }
+        });
+
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('[Index] Auth initialization error:', error);
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Failed to initialize authentication. Please try refreshing the page.",
+        });
+      }
     };
 
     initializeAuth();
-  }, []);
+  }, [queryClient, toast]);
 
-  // Optimized realtime subscription
-  useEffect(() => {
-    if (!session) return;
-
-    const channel = supabase
-      .channel('table-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sssps',
-          filter: `created_by=eq.${session.user.id}`
-        },
-        (payload) => {
-          console.log('[Index] Change received:', payload);
-          queryClient.invalidateQueries({ 
-            queryKey: ['sssps'],
-            refetchType: 'active'
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session, queryClient]);
-
-  useEffect(() => {
-    if (error) {
+  // Optimized query with proper error handling
+  const { data: sssps = [], isLoading, error } = useQuery({
+    queryKey: ['sssps'],
+    queryFn: fetchSSSPs,
+    enabled: !!session?.user,
+    staleTime: STALE_TIME,
+    gcTime: CACHE_TIME,
+    retry: 1,
+    onError: (error: Error) => {
       console.error('[Index] Query error:', error);
       toast({
         variant: "destructive",
         title: "Error loading data",
-        description: error instanceof Error ? error.message : "Failed to load SSSPs"
+        description: error.message,
       });
     }
-  }, [error, toast]);
+  });
+
+  // Realtime subscription with improved error handling
+  useEffect(() => {
+    if (!session?.user) return;
+
+    console.log('[Index] Setting up realtime subscription for user:', session.user.email);
+
+    try {
+      const channel = supabase
+        .channel('table-db-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'sssps',
+            filter: `created_by=eq.${session.user.id}`
+          },
+          (payload) => {
+            console.log('[Index] Realtime change received:', payload);
+            queryClient.invalidateQueries({ 
+              queryKey: ['sssps'],
+              refetchType: 'active'
+            });
+          }
+        )
+        .subscribe((status) => {
+          console.log('[Index] Subscription status:', status);
+          
+          if (status === 'SUBSCRIPTION_ERROR') {
+            console.error('[Index] Subscription error occurred');
+            toast({
+              variant: "destructive",
+              title: "Realtime Error",
+              description: "Failed to establish realtime connection. Updates may be delayed.",
+            });
+          }
+        });
+
+      return () => {
+        console.log('[Index] Cleaning up realtime subscription');
+        supabase.removeChannel(channel);
+      };
+    } catch (error) {
+      console.error('[Index] Subscription setup error:', error);
+    }
+  }, [session, queryClient, toast]);
 
   if (!session) {
     return (
@@ -155,17 +196,6 @@ const Index = () => {
     );
   }
 
-  const stats = {
-    total: sssps.length,
-    draft: sssps.filter(s => s.status === "draft").length,
-    published: sssps.filter(s => s.status === "published").length,
-    needsReview: sssps.filter(s => {
-      const thirtyDaysFromNow = addDays(new Date(), 30);
-      const lastUpdated = new Date(s.updated_at);
-      return thirtyDaysFromNow.getTime() - lastUpdated.getTime() >= 30 * 24 * 60 * 60 * 1000;
-    }).length
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -178,6 +208,17 @@ const Index = () => {
       </div>
     );
   }
+
+  const stats = {
+    total: sssps.length,
+    draft: sssps.filter(s => s.status === "draft").length,
+    published: sssps.filter(s => s.status === "published").length,
+    needsReview: sssps.filter(s => {
+      const thirtyDaysFromNow = addDays(new Date(), 30);
+      const lastUpdated = new Date(s.updated_at);
+      return thirtyDaysFromNow.getTime() - lastUpdated.getTime() >= 30 * 24 * 60 * 60 * 1000;
+    }).length
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
