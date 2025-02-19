@@ -27,23 +27,16 @@ async function fetchSSSP(id: string) {
     return null;
   }
 
-  // Transform empty strings to undefined for better form handling
-  const transformedData = Object.entries(data).reduce((acc, [key, value]) => {
-    acc[key] = value === '' ? undefined : value;
-    return acc;
-  }, {} as Record<string, any>);
-
-  // Ensure arrays are properly initialized
-  const arrayFields = ['hazards', 'emergency_contacts', 'required_training', 'meetings_schedule'];
-  arrayFields.forEach(field => {
-    if (!transformedData[field]) {
-      transformedData[field] = [];
-    }
-  });
-
-  // Ensure monitoring_review object is properly structured
-  if (!transformedData.monitoring_review) {
-    transformedData.monitoring_review = {
+  // Transform data to ensure all fields are properly initialized
+  const transformedData = {
+    ...data,
+    // Ensure arrays are properly initialized
+    hazards: Array.isArray(data.hazards) ? data.hazards : [],
+    emergency_contacts: Array.isArray(data.emergency_contacts) ? data.emergency_contacts : [],
+    required_training: Array.isArray(data.required_training) ? data.required_training : [],
+    meetings_schedule: Array.isArray(data.meetings_schedule) ? data.meetings_schedule : [],
+    // Ensure monitoring_review is properly structured
+    monitoring_review: data.monitoring_review || {
       review_schedule: {
         frequency: '',
         last_review: null,
@@ -68,9 +61,37 @@ async function fetchSSSP(id: string) {
         retention_period: '',
         access_details: ''
       }
-    };
-  }
+    },
+    // Initialize empty strings for text fields if they're null
+    services: data.services || '',
+    locations: data.locations || '',
+    considerations: data.considerations || '',
+    pcbu_duties: data.pcbu_duties || '',
+    site_supervisor_duties: data.site_supervisor_duties || '',
+    worker_duties: data.worker_duties || '',
+    contractor_duties: data.contractor_duties || '',
+    emergency_plan: data.emergency_plan || '',
+    assembly_points: data.assembly_points || '',
+    emergency_equipment: data.emergency_equipment || '',
+    incident_reporting: data.incident_reporting || '',
+    competency_requirements: data.competency_requirements || '',
+    training_records: data.training_records || '',
+    drug_and_alcohol: data.drug_and_alcohol || '',
+    fatigue_management: data.fatigue_management || '',
+    ppe: data.ppe || '',
+    mobile_phone: data.mobile_phone || '',
+    entry_exit_procedures: data.entry_exit_procedures || '',
+    speed_limits: data.speed_limits || '',
+    parking_rules: data.parking_rules || '',
+    site_specific_ppe: data.site_specific_ppe || '',
+    communication_methods: data.communication_methods || '',
+    toolbox_meetings: data.toolbox_meetings || '',
+    reporting_procedures: data.reporting_procedures || '',
+    communication_protocols: data.communication_protocols || '',
+    visitor_rules: data.visitor_rules || ''
+  };
 
+  console.log('Transformed SSSP data:', transformedData);
   return transformedData;
 }
 
@@ -164,31 +185,9 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     }
   }, [options.key]);
 
-  const updateFormData = useCallback((newData: T) => {
-    console.log('Updating form data:', newData);
-    setFormData((prevData) => {
-      if (JSON.stringify(newData) !== JSON.stringify(prevData)) {
-        try {
-          const minimalData = {
-            id: newData.id,
-            title: newData.title,
-            lastModified: new Date().toISOString(),
-            isDraft: true
-          };
-          
-          localStorage.setItem(options.key, JSON.stringify(minimalData));
-        } catch (error) {
-          console.warn('Storage error:', error);
-        }
-        return newData;
-      }
-      return prevData;
-    });
-  }, [options.key]);
-
   return {
     formData,
-    setFormData: updateFormData,
+    setFormData,
     clearSavedData,
     isLoading,
     save: () => mutation.mutate(formData),
