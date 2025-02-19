@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Session, REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,20 +13,15 @@ import { addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const CACHE_TIME = 5 * 60 * 1000; // 5 minutes
-const STALE_TIME = 30000; // 30 seconds
+const CACHE_TIME = 5 * 60 * 1000;
+const STALE_TIME = 30000;
 
 const fetchSSSPs = async () => {
   console.log('[fetchSSSPs] Starting fetch...');
   
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
   
-  if (sessionError) {
-    console.error('[fetchSSSPs] Session error:', sessionError);
-    throw new Error('Authentication error');
-  }
-  
-  if (!session) {
+  if (!session?.user) {
     console.log('[fetchSSSPs] No active session');
     throw new Error('Authentication required');
   }
@@ -36,8 +32,7 @@ const fetchSSSPs = async () => {
     const { data, error } = await supabase
       .from('sssps')
       .select('id, title, status, created_at, updated_at, company_name')
-      .order('created_at', { ascending: false })
-      .throwOnError();
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('[fetchSSSPs] Query error:', error);
@@ -61,13 +56,7 @@ const Index = () => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('[Index] Session error:', sessionError);
-          throw sessionError;
-        }
-
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
         console.log('[Index] Initial session:', initialSession?.user?.email);
         setSession(initialSession);
 
@@ -133,8 +122,7 @@ const Index = () => {
           {
             event: '*',
             schema: 'public',
-            table: 'sssps',
-            filter: `created_by=eq.${session.user.id}`
+            table: 'sssps'
           },
           (payload) => {
             console.log('[Index] Realtime change received:', payload);
