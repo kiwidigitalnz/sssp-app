@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { UseQueryResult } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 export function useActivitySubscription(query: UseQueryResult<any, Error>) {
   const { toast } = useToast();
@@ -13,11 +14,12 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
     let retryCount = 0;
     const MAX_RETRIES = 3;
     let retryTimeout: NodeJS.Timeout;
-    let cleanupFn: (() => void) | undefined;
+    let channel: RealtimeChannel | null = null;
 
     const setupSubscription = () => {
       try {
-        const channel = supabase
+        // Create new channel
+        channel = supabase
           .channel('schema-db-changes')
           .on(
             'postgres_changes',
@@ -73,17 +75,9 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
               handleSubscriptionError(new Error(`Failed to subscribe: ${status}`));
             }
           });
-
-        cleanupFn = () => {
-          console.log('[useActivitySubscription] Cleaning up subscription');
-          supabase.removeChannel(channel);
-        };
-
-        return cleanupFn;
       } catch (error) {
         console.error('[useActivitySubscription] Error in subscription setup:', error);
         handleSubscriptionError(error as Error);
-        return () => {}; // Return empty cleanup function for failed setup
       }
     };
 
@@ -97,7 +91,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
         
         retryTimeout = setTimeout(() => {
           console.log(`[useActivitySubscription] Retry attempt ${retryCount}`);
-          cleanupFn = setupSubscription();
+          setupSubscription();
         }, delay);
       } else {
         toast({
@@ -109,15 +103,16 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
     };
 
     // Initial setup
-    cleanupFn = setupSubscription();
+    setupSubscription();
 
     // Cleanup function
     return () => {
+      console.log('[useActivitySubscription] Cleaning up subscription');
       if (retryTimeout) {
         clearTimeout(retryTimeout);
       }
-      if (cleanupFn) {
-        cleanupFn();
+      if (channel) {
+        supabase.removeChannel(channel);
       }
     };
   }, [refetch, toast]);
