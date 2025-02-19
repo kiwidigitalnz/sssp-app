@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Session } from "@supabase/supabase-js";
+import { Session, REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SSSP } from "@/types/sssp";
@@ -19,7 +19,6 @@ const STALE_TIME = 30000; // 30 seconds
 const fetchSSSPs = async () => {
   console.log('[fetchSSSPs] Starting fetch...');
   
-  // Get current session instead of just user
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
   if (sessionError) {
@@ -39,7 +38,7 @@ const fetchSSSPs = async () => {
       .from('sssps')
       .select('id, title, status, created_at, updated_at, company_name')
       .order('created_at', { ascending: false })
-      .throwOnError(); // This will ensure errors are properly caught
+      .throwOnError();
 
     if (error) {
       console.error('[fetchSSSPs] Query error:', error);
@@ -80,7 +79,6 @@ const Index = () => {
           console.log('[Index] Auth state changed:', _event, session?.user?.email);
           setSession(session);
           
-          // Invalidate queries when auth state changes
           if (!session) {
             queryClient.invalidateQueries();
           }
@@ -102,25 +100,30 @@ const Index = () => {
     initializeAuth();
   }, [queryClient, toast]);
 
-  // Optimized query with proper error handling
+  // Updated query configuration without onError
   const { data: sssps = [], isLoading, error } = useQuery({
     queryKey: ['sssps'],
-    queryFn: fetchSSSPs,
+    queryFn: async () => {
+      try {
+        const data = await fetchSSSPs();
+        return data;
+      } catch (error) {
+        console.error('[Index] Query error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error loading data",
+          description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        });
+        throw error;
+      }
+    },
     enabled: !!session?.user,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
-    retry: 1,
-    onError: (error: Error) => {
-      console.error('[Index] Query error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error loading data",
-        description: error.message,
-      });
-    }
+    retry: 1
   });
 
-  // Realtime subscription with improved error handling
+  // Realtime subscription with correct status type
   useEffect(() => {
     if (!session?.user) return;
 
@@ -148,7 +151,7 @@ const Index = () => {
         .subscribe((status) => {
           console.log('[Index] Subscription status:', status);
           
-          if (status === 'SUBSCRIPTION_ERROR') {
+          if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIPTION_ERROR) {
             console.error('[Index] Subscription error occurred');
             toast({
               variant: "destructive",
