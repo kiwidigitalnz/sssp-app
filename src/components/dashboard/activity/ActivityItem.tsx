@@ -1,11 +1,15 @@
+
 import { format } from "date-fns";
 import { Activity, FileText, Share, Edit } from "lucide-react";
+import { useState } from "react";
+import { ActivityDetailDialog } from "./ActivityDetailDialog";
 
 interface ActivityItemProps {
   activity: {
     id: string;
     action: string;
     created_at: string;
+    details?: any;
     sssps: { title: string };
     profiles?: {
       first_name?: string;
@@ -15,6 +19,8 @@ interface ActivityItemProps {
 }
 
 export function ActivityItem({ activity }: ActivityItemProps) {
+  const [showDetails, setShowDetails] = useState(false);
+
   const getActivityIcon = (action: string) => {
     switch (action) {
       case "created":
@@ -46,16 +52,27 @@ export function ActivityItem({ activity }: ActivityItemProps) {
   };
 
   return (
-    <div className="flex items-start space-x-4 p-2 rounded-lg transition-colors hover:bg-muted/50">
-      <div className="mt-1 p-2 rounded-full bg-muted/20">
-        {getActivityIcon(activity.action)}
+    <>
+      <div 
+        className="flex items-start space-x-4 p-2 rounded-lg transition-colors hover:bg-muted/50 cursor-pointer"
+        onClick={() => setShowDetails(true)}
+      >
+        <div className="mt-1 p-2 rounded-full bg-muted/20">
+          {getActivityIcon(activity.action)}
+        </div>
+        <div className="flex-1 space-y-1">
+          <p className="text-sm font-medium text-gray-900">{getActivityText(activity)}</p>
+          <p className="text-xs text-muted-foreground">
+            {format(new Date(activity.created_at), 'PPp')}
+          </p>
+        </div>
       </div>
-      <div className="flex-1 space-y-1">
-        <p className="text-sm font-medium text-gray-900">{getActivityText(activity)}</p>
-        <p className="text-xs text-muted-foreground">
-          {format(new Date(activity.created_at), 'PPp')}
-        </p>
-      </div>
-    </div>
+
+      <ActivityDetailDialog 
+        activity={activity}
+        open={showDetails}
+        onOpenChange={setShowDetails}
+      />
+    </>
   );
 }
