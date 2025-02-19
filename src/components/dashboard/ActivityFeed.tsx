@@ -39,8 +39,8 @@ export function ActivityFeed() {
         .from('sssp_activity')
         .select(`
           *,
-          sssps:sssp_id(title),
-          profiles!sssp_activity_user_id_fkey (first_name, last_name)
+          sssps!sssp_activity_sssp_id_fkey(title),
+          profiles!sssp_activity_user_id_fkey(first_name, last_name)
         `, { count: 'exact' })
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Last 7 days
         .order('created_at', { ascending: false });
