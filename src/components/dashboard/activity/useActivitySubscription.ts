@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { UseQueryResult } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,8 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
   const { refetch } = query;
 
   useEffect(() => {
+    console.log('[useActivitySubscription] Setting up realtime subscription');
+
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -18,6 +21,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
           table: 'sssp_activity'
         },
         async (payload) => {
+          console.log('[useActivitySubscription] Received new activity:', payload);
           await refetch();
           
           const { data: activityDetails } = await supabase
@@ -29,6 +33,8 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
             `)
             .eq('id', payload.new.id)
             .single();
+
+          console.log('[useActivitySubscription] Fetched activity details:', activityDetails);
 
           if (activityDetails) {
             const userName = activityDetails.profiles?.first_name 
@@ -46,6 +52,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
       .subscribe();
 
     return () => {
+      console.log('[useActivitySubscription] Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [refetch, toast]);

@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +7,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { ActivityItem } from "./activity/ActivityItem";
 import { ActivitySkeleton } from "./activity/ActivitySkeleton";
 import { useActivitySubscription } from "./activity/useActivitySubscription";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function ActivityFeed() {
+  const { session } = useAuth();
+
   const query = useQuery({
     queryKey: ['sssp-activities'],
     queryFn: async () => {
+      console.log('[ActivityFeed] Starting to fetch activities');
+      if (!session?.access_token) {
+        console.log('[ActivityFeed] No session, skipping fetch');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('sssp_activity')
         .select(`
@@ -21,9 +31,17 @@ export function ActivityFeed() {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[ActivityFeed] Error fetching activities:', error);
+        throw error;
+      }
+
+      console.log('[ActivityFeed] Successfully fetched activities:', data);
       return data;
-    }
+    },
+    enabled: Boolean(session?.access_token),
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
   });
 
   useActivitySubscription(query);
