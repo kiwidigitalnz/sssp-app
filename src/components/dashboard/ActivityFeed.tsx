@@ -15,7 +15,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 
 const ITEMS_PER_PAGE = 10;
-const ACTIVITY_WINDOW = '7 days'; // Time window for activities
 
 type ActivityType = 'all' | 'created' | 'updated' | 'shared';
 
@@ -39,7 +38,7 @@ export function ActivityFeed() {
         .from('sssp_activity')
         .select(`
           *,
-          sssps (title),
+          sssps!sssp_activity_sssp_id_fkey (title),
           profiles!sssp_activity_user_id_fkey (first_name, last_name)
         `, { count: 'exact' })
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Last 7 days
@@ -132,7 +131,7 @@ export function ActivityFeed() {
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1">
-        <ScrollArea className="h-[440px] px-6"> {/* Adjusted height to account for pagination */}
+        <ScrollArea className="h-[440px] px-6">
           {query.isLoading ? (
             <ActivitySkeleton />
           ) : query.error ? (
@@ -158,7 +157,6 @@ export function ActivityFeed() {
           )}
         </ScrollArea>
         
-        {/* Pagination Controls */}
         {query.data?.items && query.data.items.length > 0 && (
           <div className="flex items-center justify-between px-6 py-2 border-t">
             <Button

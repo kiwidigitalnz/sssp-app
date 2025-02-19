@@ -38,7 +38,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
                   .from('sssp_activity')
                   .select(`
                     *,
-                    sssps (title),
+                    sssps!sssp_activity_sssp_id_fkey (title),
                     profiles!sssp_activity_user_id_fkey (first_name, last_name)
                   `)
                   .eq('id', payload.new.id)

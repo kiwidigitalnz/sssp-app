@@ -34,7 +34,7 @@ export async function logActivity(
       })
       .select(`
         *,
-        sssps (title),
+        sssps!sssp_activity_sssp_id_fkey (title),
         profiles!sssp_activity_user_id_fkey (first_name, last_name)
       `)
       .single();
