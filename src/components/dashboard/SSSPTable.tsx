@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -48,11 +47,15 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
   const [ssspToClone, setSsspToClone] = useState<SSSP | null>(null);
   const [isCloning, setIsCloning] = useState(false);
   const isMobile = useIsMobile();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const { data: sharingInfo, refetch: refetchSharing } = useQuery({
     queryKey: ['sssp-sharing'],
     queryFn: async () => {
+      if (!session?.access_token) {
+        throw new Error("Authentication required");
+      }
+
       try {
         const { data, error } = await supabase
           .from('sssp_access')
@@ -72,37 +75,33 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         return {};
       }
     },
-    enabled: ssspList.length > 0,
+    enabled: Boolean(session?.access_token) && ssspList.length > 0,
     staleTime: 30000,
     gcTime: 5 * 60 * 1000,
     retry: 1
   });
 
   const handleClone = async (sssp: SSSP) => {
-    if (!user) {
+    if (!user || !session?.access_token) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "You must be logged in to clone an SSSP",
       });
+      navigate('/auth');
       return;
     }
 
     try {
       setIsCloning(true);
-      console.log('Original SSSP before cloning:', sssp);
 
-      // Create new SSSP object with required fields
       const newSSPP = {
-        // Required fields - must be provided
         title: `Clone - ${sssp.title}`,
         company_name: sssp.company_name,
         status: 'draft' as const,
         created_by: user.id,
         modified_by: user.id,
         version: 1,
-        
-        // Copy all fields directly from source SSSP
         description: sssp.description,
         company_address: sssp.company_address,
         company_contact_name: sssp.company_contact_name,
@@ -141,7 +140,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         monitoring_review: sssp.monitoring_review ? {
           review_schedule: {
             frequency: sssp.monitoring_review.review_schedule?.frequency || '',
-            last_review: null, // Reset review dates for the clone
+            last_review: null,
             next_review: null,
             responsible_person: sssp.monitoring_review.review_schedule?.responsible_person
           },
@@ -155,7 +154,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
           worker_consultation: {
             method: sssp.monitoring_review.worker_consultation?.method || '',
             frequency: sssp.monitoring_review.worker_consultation?.frequency || '',
-            last_consultation: null // Reset consultation date for the clone
+            last_consultation: null
           },
           review_triggers: sssp.monitoring_review.review_triggers || [],
           documentation: {
@@ -166,10 +165,8 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         } : null,
         start_date: sssp.start_date,
         end_date: sssp.end_date,
-        version_history: [] // Reset version history for the clone
+        version_history: []
       };
-
-      console.log('Prepared data for cloning:', newSSPP);
 
       const { data, error } = await supabase
         .from('sssps')
@@ -177,12 +174,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         .select()
         .single();
 
-      console.log('Raw Supabase response after insert:', data);
-      console.log('Insert error (if any):', error);
-
       if (error) throw error;
-
-      console.log('Successfully cloned SSSP:', data);
 
       toast({
         title: "SSSP Cloned",
