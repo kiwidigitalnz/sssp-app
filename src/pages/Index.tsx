@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { Session, REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,7 +99,7 @@ const Index = () => {
           channel = setupRealtimeSubscription(initialSession.user.id);
         }
 
-        authSubscription = supabase.auth.onAuthStateChange((_event, newSession) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
           if (newSession?.user?.id !== session?.user?.id) {
             setSession(newSession);
             
@@ -112,6 +113,8 @@ const Index = () => {
             }
           }
         });
+
+        authSubscription = { unsubscribe: () => subscription.unsubscribe() };
       } catch (error) {
         console.error('[Index] Auth initialization error:', error);
         toast({
