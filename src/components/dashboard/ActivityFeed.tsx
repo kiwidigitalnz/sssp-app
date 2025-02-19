@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity } from "lucide-react";
+import { Activity, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityItem } from "./activity/ActivityItem";
 import { ActivitySkeleton } from "./activity/ActivitySkeleton";
@@ -12,8 +12,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
-const ACTIVITY_LIMIT = 50; // Maximum number of activities to fetch
+const ITEMS_PER_PAGE = 10;
 const ACTIVITY_WINDOW = '7 days'; // Time window for activities
 
 type ActivityType = 'all' | 'created' | 'updated' | 'shared';
@@ -21,24 +22,26 @@ type ActivityType = 'all' | 'created' | 'updated' | 'shared';
 export function ActivityFeed() {
   const { session } = useAuth();
   const [activityType, setActivityType] = useState<ActivityType>('all');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   const query = useQuery({
-    queryKey: ['sssp-activities', activityType],
+    queryKey: ['sssp-activities', activityType, currentPage],
     queryFn: async () => {
       console.log('[ActivityFeed] Starting to fetch activities');
       if (!session?.access_token) {
         console.log('[ActivityFeed] No session, skipping fetch');
-        return [];
+        return { items: [], count: 0 };
       }
 
-      // Fetch activities within the time window and with a limit
+      // Build base query
       let query = supabase
         .from('sssp_activity')
         .select(`
           *,
           sssps (title),
           profiles!sssp_activity_user_id_fkey (first_name, last_name)
-        `)
+        `, { count: 'exact' })
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Last 7 days
         .order('created_at', { ascending: false });
 
@@ -47,7 +50,13 @@ export function ActivityFeed() {
         query = query.eq('action', activityType);
       }
 
-      const { data, error } = await query.limit(ACTIVITY_LIMIT);
+      // Apply pagination
+      query = query.range(
+        currentPage * ITEMS_PER_PAGE, 
+        (currentPage * ITEMS_PER_PAGE) + ITEMS_PER_PAGE - 1
+      );
+
+      const { data, error, count } = await query;
 
       if (error) {
         console.error('[ActivityFeed] Error fetching activities:', error);
@@ -55,6 +64,10 @@ export function ActivityFeed() {
       }
 
       console.log('[ActivityFeed] Successfully fetched activities:', data);
+      
+      if (count !== null) {
+        setTotalCount(count);
+      }
 
       // Client-side data cleanup: remove any activities with missing relationships
       const cleanedData = data.filter(activity => 
@@ -62,7 +75,7 @@ export function ActivityFeed() {
         activity.profiles?.first_name
       );
 
-      return cleanedData;
+      return { items: cleanedData, count: count || 0 };
     },
     enabled: Boolean(session?.access_token),
     staleTime: 30000, // Data is considered fresh for 30 seconds
@@ -71,6 +84,22 @@ export function ActivityFeed() {
   });
 
   useActivitySubscription(query);
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const canGoNext = currentPage < totalPages - 1;
+  const canGoPrevious = currentPage > 0;
+
+  const handleNextPage = () => {
+    if (canGoNext) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (canGoPrevious) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
 
   return (
     <Card className="bg-white shadow-sm h-[600px] flex flex-col">
@@ -81,13 +110,16 @@ export function ActivityFeed() {
             Recent Activity
             {query.data && (
               <span className="text-sm text-muted-foreground ml-2">
-                ({query.data.length} activities in the last 7 days)
+                ({totalCount} activities in the last 7 days)
               </span>
             )}
           </CardTitle>
           <Tabs
             value={activityType}
-            onValueChange={(value) => setActivityType(value as ActivityType)}
+            onValueChange={(value) => {
+              setActivityType(value as ActivityType);
+              setCurrentPage(0); // Reset to first page when changing filters
+            }}
             className="w-full"
           >
             <TabsList className="grid grid-cols-4 w-full">
@@ -100,7 +132,7 @@ export function ActivityFeed() {
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1">
-        <ScrollArea className="h-[480px] px-6"> {/* Adjusted height to account for tabs */}
+        <ScrollArea className="h-[440px] px-6"> {/* Adjusted height to account for pagination */}
           {query.isLoading ? (
             <ActivitySkeleton />
           ) : query.error ? (
@@ -110,9 +142,9 @@ export function ActivityFeed() {
                 Failed to load activities. Please try refreshing the page.
               </AlertDescription>
             </Alert>
-          ) : query.data && query.data.length > 0 ? (
+          ) : query.data?.items && query.data.items.length > 0 ? (
             <div className="space-y-4 py-4">
-              {query.data.map((activity) => (
+              {query.data.items.map((activity) => (
                 <ActivityItem 
                   key={activity.id} 
                   activity={activity}
@@ -125,6 +157,33 @@ export function ActivityFeed() {
             </div>
           )}
         </ScrollArea>
+        
+        {/* Pagination Controls */}
+        {query.data?.items && query.data.items.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-2 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousPage}
+              disabled={!canGoPrevious}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {currentPage + 1} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={!canGoNext}
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
