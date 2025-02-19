@@ -15,7 +15,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 
 const ITEMS_PER_PAGE = 10;
-const ACTIVITY_WINDOW = '7 days'; // Time window for activities
 
 type ActivityType = 'all' | 'created' | 'updated' | 'shared';
 
@@ -69,17 +68,11 @@ export function ActivityFeed() {
         setTotalCount(count);
       }
 
-      // Client-side data cleanup: remove any activities with missing relationships
-      const cleanedData = data.filter(activity => 
-        activity.sssps?.title && 
-        activity.profiles?.first_name
-      );
-
-      return { items: cleanedData, count: count || 0 };
+      return { items: data || [], count: count || 0 };
     },
     enabled: Boolean(session?.access_token),
-    staleTime: 30000, // Data is considered fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep inactive data in cache for 5 minutes
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
     retry: 3,
   });
 
@@ -132,7 +125,7 @@ export function ActivityFeed() {
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1">
-        <ScrollArea className="h-[440px] px-6"> {/* Adjusted height to account for pagination */}
+        <ScrollArea className="h-[440px] px-6">
           {query.isLoading ? (
             <ActivitySkeleton />
           ) : query.error ? (

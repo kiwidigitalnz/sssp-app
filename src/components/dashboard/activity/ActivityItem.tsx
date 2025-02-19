@@ -10,11 +10,11 @@ interface ActivityItemProps {
     action: string;
     created_at: string;
     details?: any;
-    sssps: { title: string };
+    sssps: { title: string } | null;
     profiles?: {
-      first_name?: string;
-      last_name?: string;
-    };
+      first_name?: string | null;
+      last_name?: string | null;
+    } | null;
   };
 }
 
@@ -39,15 +39,17 @@ export function ActivityItem({ activity }: ActivityItemProps) {
       ? `${activity.profiles.first_name} ${activity.profiles.last_name}`
       : 'A user';
     
+    const ssspTitle = activity.sssps?.title || 'an SSSP';
+    
     switch (activity.action) {
       case 'created':
-        return `${userName} created "${activity.sssps.title}"`;
+        return `${userName} created "${ssspTitle}"`;
       case 'updated':
-        return `${userName} updated "${activity.sssps.title}"`;
+        return `${userName} updated "${ssspTitle}"`;
       case 'shared':
-        return `${userName} shared "${activity.sssps.title}"`;
+        return `${userName} shared "${ssspTitle}"`;
       default:
-        return `${userName} performed an action on "${activity.sssps.title}"`;
+        return `${userName} performed an action on "${ssspTitle}"`;
     }
   };
 
