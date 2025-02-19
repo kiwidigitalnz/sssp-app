@@ -102,92 +102,46 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
 
   const handleClone = async (sssp: SSSP) => {
     try {
-      console.log('Starting clone operation for SSSP:', sssp.id);
+      const { id, created_at, updated_at, version, version_history, status, ...cloneData } = sssp;
       
-      // Get the current authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('No authenticated user found');
-      }
-
-      // Create the cloned SSSP with required fields
-      const clonedSSSP = {
-        title: `CLONE - ${sssp.title}`,
-        company_name: sssp.company_name,
+      const newSSPP = {
+        ...cloneData,
+        title: `${sssp.title} (Copy)`,
         status: 'draft',
-        created_by: user.id,
-        modified_by: user.id,
-        // Optional fields from original SSSP
-        description: sssp.description,
-        company_address: sssp.company_address,
-        company_contact_name: sssp.company_contact_name,
-        company_contact_email: sssp.company_contact_email,
-        company_contact_phone: sssp.company_contact_phone,
-        services: sssp.services,
-        locations: sssp.locations,
-        considerations: sssp.considerations,
-        pcbu_duties: sssp.pcbu_duties,
-        site_supervisor_duties: sssp.site_supervisor_duties,
-        worker_duties: sssp.worker_duties,
-        contractor_duties: sssp.contractor_duties,
-        emergency_plan: sssp.emergency_plan,
-        assembly_points: sssp.assembly_points,
-        emergency_equipment: sssp.emergency_equipment,
-        incident_reporting: sssp.incident_reporting,
-        emergency_contacts: sssp.emergency_contacts,
-        competency_requirements: sssp.competency_requirements,
-        training_records: sssp.training_records,
-        required_training: sssp.required_training,
-        drug_and_alcohol: sssp.drug_and_alcohol,
-        fatigue_management: sssp.fatigue_management,
-        ppe: sssp.ppe,
-        mobile_phone: sssp.mobile_phone,
-        entry_exit_procedures: sssp.entry_exit_procedures,
-        speed_limits: sssp.speed_limits,
-        parking_rules: sssp.parking_rules,
-        site_specific_ppe: sssp.site_specific_ppe,
-        communication_methods: sssp.communication_methods,
-        toolbox_meetings: sssp.toolbox_meetings,
-        reporting_procedures: sssp.reporting_procedures,
-        communication_protocols: sssp.communication_protocols,
-        visitor_rules: sssp.visitor_rules,
-        hazards: sssp.hazards,
-        meetings_schedule: sssp.meetings_schedule,
-        monitoring_review: sssp.monitoring_review,
-        start_date: sssp.start_date,
-        end_date: sssp.end_date,
+        created_by: user?.id,
+        modified_by: user?.id,
         version: 1,
-        version_history: []
+        version_history: [],
       };
-
-      console.log('Prepared cloned SSSP data:', clonedSSSP);
 
       const { data, error } = await supabase
         .from('sssps')
-        .insert(clonedSSSP)
+        .insert(newSSPP)
         .select()
         .single();
 
       if (error) throw error;
 
-      console.log('Successfully cloned SSSP:', data);
-
       toast({
-        title: "SSSP cloned",
-        description: "A new copy of the SSSP has been created",
+        title: "SSSP Cloned",
+        description: "The SSSP has been cloned successfully.",
       });
 
       queryClient.invalidateQueries({ queryKey: ['sssps'] });
-      navigate(`/edit-sssp/${data.id}`);
+      
+      if (data) {
+        navigate(`/edit-sssp/${data.id}`);
+      }
     } catch (error) {
-      console.error('Clone error:', error);
+      console.error('Error cloning SSSP:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to clone SSSP",
+        description: "Failed to clone SSSP. Please try again.",
       });
+    } finally {
+      setSsspToClone(null);
     }
-    setSsspToClone(null);
   };
 
   const handleExportPDF = async (sssp: SSSP) => {
