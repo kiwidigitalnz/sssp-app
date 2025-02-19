@@ -18,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 
 const ITEMS_PER_PAGE = 10;
+const CACHE_TIME = 5 * 60 * 1000; // 5 minutes
+const STALE_TIME = 30000; // 30 seconds
 
 type ActivityType = 'all' | 'created' | 'updated' | 'shared';
 
@@ -33,14 +35,23 @@ export function ActivityFeed() {
         throw new Error("Not authenticated");
       }
 
+      // Only select the fields we actually need
       let query = supabase
         .from('sssp_activity')
         .select(`
-          *,
-          sssps!sssp_activity_sssp_id_fkey (title),
-          profiles!sssp_activity_user_id_fkey (first_name, last_name)
+          id,
+          action,
+          created_at,
+          sssps!sssp_activity_sssp_id_fkey (
+            id,
+            title
+          ),
+          profiles!sssp_activity_user_id_fkey (
+            first_name,
+            last_name
+          )
         `, { count: 'exact' })
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Last 7 days
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
         .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1);
 
@@ -50,16 +61,21 @@ export function ActivityFeed() {
 
       const { data, error, count } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('[ActivityFeed] Query error:', error);
+        throw error;
+      }
 
+      console.log('[ActivityFeed] Query executed successfully, rows:', data?.length);
+      
       return {
         items: data,
         total: count || 0
       };
     },
     enabled: !!session?.access_token,
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: STALE_TIME,
+    gcTime: CACHE_TIME,
   });
 
   useEffect(() => {

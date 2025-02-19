@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
+const SUBSCRIPTION_TIMEOUT = 10000; // 10 seconds
+const MAX_RETRIES = 3;
+
 export function useActivitySubscription(query: UseQueryResult<any, Error>) {
   const { toast } = useToast();
   const { refetch } = query;
@@ -12,13 +15,27 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
   useEffect(() => {
     console.log('[useActivitySubscription] Setting up realtime subscription');
     let retryCount = 0;
-    const MAX_RETRIES = 3;
     let retryTimeout: NodeJS.Timeout;
     let channel: RealtimeChannel | null = null;
+    let timeoutId: NodeJS.Timeout;
 
     const setupSubscription = () => {
       try {
-        // Create new channel
+        // Clear any existing timeout
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+
+        // Set new timeout for subscription
+        timeoutId = setTimeout(() => {
+          console.log('[useActivitySubscription] Subscription timeout, reconnecting...');
+          if (channel) {
+            supabase.removeChannel(channel);
+          }
+          setupSubscription();
+        }, SUBSCRIPTION_TIMEOUT);
+
+        // Create new channel with optimized query
         channel = supabase
           .channel('schema-db-changes')
           .on(
@@ -33,23 +50,30 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
               try {
                 await refetch();
                 
-                // Fetch the complete activity details including related data
+                // Optimized query for fetching activity details
                 const { data: activityDetails, error: fetchError } = await supabase
                   .from('sssp_activity')
                   .select(`
-                    *,
-                    sssps!sssp_activity_sssp_id_fkey (title),
-                    profiles!sssp_activity_user_id_fkey (first_name, last_name)
+                    id,
+                    action,
+                    created_at,
+                    sssps!sssp_activity_sssp_id_fkey (
+                      id,
+                      title
+                    ),
+                    profiles!sssp_activity_user_id_fkey (
+                      first_name,
+                      last_name
+                    )
                   `)
                   .eq('id', payload.new.id)
-                  .single();
+                  .limit(1)
+                  .maybeSingle();
 
                 if (fetchError) {
                   console.error('[useActivitySubscription] Error fetching activity details:', fetchError);
                   return;
                 }
-
-                console.log('[useActivitySubscription] Fetched activity details:', activityDetails);
 
                 if (activityDetails) {
                   const userName = activityDetails.profiles?.first_name 
@@ -78,7 +102,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
               console.log('[useActivitySubscription] Successfully subscribed to activities');
-              retryCount = 0; // Reset retry count on successful subscription
+              retryCount = 0;
             } else {
               console.error('[useActivitySubscription] Subscription status:', status);
               handleSubscriptionError(new Error(`Failed to subscribe: ${status}`));
@@ -95,8 +119,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
       
       if (retryCount < MAX_RETRIES) {
         retryCount++;
-        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Exponential backoff with max 10s
-        console.log(`[useActivitySubscription] Retrying in ${delay}ms (attempt ${retryCount}/${MAX_RETRIES})`);
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
         
         retryTimeout = setTimeout(() => {
           console.log(`[useActivitySubscription] Retry attempt ${retryCount}`);
@@ -119,6 +142,9 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
       console.log('[useActivitySubscription] Cleaning up subscription');
       if (retryTimeout) {
         clearTimeout(retryTimeout);
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
       if (channel) {
         supabase.removeChannel(channel);
