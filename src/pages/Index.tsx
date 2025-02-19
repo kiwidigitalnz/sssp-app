@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Session, REALTIME_SUBSCRIBE_STATES } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,8 +25,6 @@ const fetchSSSPs = async () => {
     throw new Error('Authentication required');
   }
 
-  console.log('[fetchSSSPs] Using session for user:', session.user.email);
-
   try {
     const { data, error } = await supabase
       .from('sssps')
@@ -39,7 +36,6 @@ const fetchSSSPs = async () => {
       throw error;
     }
 
-    console.log('[fetchSSSPs] Successfully fetched data:', data?.length, 'records');
     return data as SSSP[];
   } catch (error) {
     console.error('[fetchSSSPs] Error details:', error);
@@ -53,27 +49,69 @@ const Index = () => {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
+  const setupRealtimeSubscription = useCallback((userId: string) => {
+    console.log('[Index] Setting up realtime subscription for user:', userId);
+    
+    const channel = supabase
+      .channel('table-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sssps'
+        },
+        (payload) => {
+          console.log('[Index] Realtime change received:', payload);
+          queryClient.invalidateQueries({ 
+            queryKey: ['sssps'],
+            refetchType: 'active'
+          });
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Index] Subscription status:', status);
+        
+        if (status === REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR) {
+          console.error('[Index] Subscription error occurred');
+          toast({
+            variant: "destructive",
+            title: "Realtime Error",
+            description: "Failed to establish realtime connection. Updates may be delayed.",
+          });
+        }
+      });
+
+    return channel;
+  }, [queryClient, toast]);
+
   useEffect(() => {
+    let authSubscription: { unsubscribe: () => void } | null = null;
+    let channel: ReturnType<typeof setupRealtimeSubscription> | null = null;
+
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
-        console.log('[Index] Initial session:', initialSession?.user?.email);
-        setSession(initialSession);
+        
+        if (initialSession?.user) {
+          setSession(initialSession);
+          channel = setupRealtimeSubscription(initialSession.user.id);
+        }
 
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-          console.log('[Index] Auth state changed:', _event, session?.user?.email);
-          setSession(session);
-          
-          if (!session) {
-            queryClient.invalidateQueries();
+        authSubscription = supabase.auth.onAuthStateChange((_event, newSession) => {
+          if (newSession?.user?.id !== session?.user?.id) {
+            setSession(newSession);
+            
+            if (channel) {
+              console.log('[Index] Cleaning up existing subscription');
+              supabase.removeChannel(channel);
+            }
+            
+            if (newSession?.user) {
+              channel = setupRealtimeSubscription(newSession.user.id);
+            }
           }
         });
-
-        return () => {
-          subscription.unsubscribe();
-        };
       } catch (error) {
         console.error('[Index] Auth initialization error:', error);
         toast({
@@ -85,74 +123,25 @@ const Index = () => {
     };
 
     initializeAuth();
-  }, [queryClient, toast]);
+
+    return () => {
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [setupRealtimeSubscription, toast]);
 
   const { data: sssps = [], isLoading, error } = useQuery({
     queryKey: ['sssps'],
-    queryFn: async () => {
-      try {
-        const data = await fetchSSSPs();
-        return data;
-      } catch (error) {
-        console.error('[Index] Query error:', error);
-        toast({
-          variant: "destructive",
-          title: "Error loading data",
-          description: error instanceof Error ? error.message : 'An unexpected error occurred',
-        });
-        throw error;
-      }
-    },
+    queryFn: fetchSSSPs,
     enabled: !!session?.user,
     staleTime: STALE_TIME,
     gcTime: CACHE_TIME,
     retry: 1
   });
-
-  useEffect(() => {
-    if (!session?.user) return;
-
-    console.log('[Index] Setting up realtime subscription for user:', session.user.email);
-
-    try {
-      const channel = supabase
-        .channel('table-db-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'sssps'
-          },
-          (payload) => {
-            console.log('[Index] Realtime change received:', payload);
-            queryClient.invalidateQueries({ 
-              queryKey: ['sssps'],
-              refetchType: 'active'
-            });
-          }
-        )
-        .subscribe((status) => {
-          console.log('[Index] Subscription status:', status);
-          
-          if (status === REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR) {
-            console.error('[Index] Subscription error occurred');
-            toast({
-              variant: "destructive",
-              title: "Realtime Error",
-              description: "Failed to establish realtime connection. Updates may be delayed.",
-            });
-          }
-        });
-
-      return () => {
-        console.log('[Index] Cleaning up realtime subscription');
-        supabase.removeChannel(channel);
-      };
-    } catch (error) {
-      console.error('[Index] Subscription setup error:', error);
-    }
-  }, [session, queryClient, toast]);
 
   if (!session) {
     return (
