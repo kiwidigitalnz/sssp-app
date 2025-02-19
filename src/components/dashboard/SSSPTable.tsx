@@ -102,60 +102,60 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         modified_by: user.id,
         version: 1,
         
-        // Optional fields with defaults
-        description: sssp.description || null,
-        company_address: sssp.company_address || null,
-        company_contact_name: sssp.company_contact_name || null,
-        company_contact_email: sssp.company_contact_email || null,
-        company_contact_phone: sssp.company_contact_phone || null,
-        services: sssp.services || '',
-        locations: sssp.locations || '',
-        considerations: sssp.considerations || '',
-        pcbu_duties: sssp.pcbu_duties || '',
-        site_supervisor_duties: sssp.site_supervisor_duties || '',
-        worker_duties: sssp.worker_duties || '',
-        contractor_duties: sssp.contractor_duties || '',
-        emergency_plan: sssp.emergency_plan || '',
-        assembly_points: sssp.assembly_points || '',
-        emergency_equipment: sssp.emergency_equipment || '',
-        incident_reporting: sssp.incident_reporting || '',
-        emergency_contacts: Array.isArray(sssp.emergency_contacts) ? sssp.emergency_contacts : [],
-        competency_requirements: sssp.competency_requirements || '',
-        training_records: sssp.training_records || '',
-        required_training: Array.isArray(sssp.required_training) ? sssp.required_training : [],
-        drug_and_alcohol: sssp.drug_and_alcohol || '',
-        fatigue_management: sssp.fatigue_management || '',
-        ppe: sssp.ppe || '',
-        mobile_phone: sssp.mobile_phone || '',
-        entry_exit_procedures: sssp.entry_exit_procedures || '',
-        speed_limits: sssp.speed_limits || '',
-        parking_rules: sssp.parking_rules || '',
-        site_specific_ppe: sssp.site_specific_ppe || '',
-        communication_methods: sssp.communication_methods || '',
-        toolbox_meetings: sssp.toolbox_meetings || '',
-        reporting_procedures: sssp.reporting_procedures || '',
-        communication_protocols: sssp.communication_protocols || '',
-        visitor_rules: sssp.visitor_rules || '',
-        hazards: Array.isArray(sssp.hazards) ? sssp.hazards : [],
-        meetings_schedule: Array.isArray(sssp.meetings_schedule) ? sssp.meetings_schedule : [],
+        // Copy all fields directly from source SSSP
+        description: sssp.description,
+        company_address: sssp.company_address,
+        company_contact_name: sssp.company_contact_name,
+        company_contact_email: sssp.company_contact_email,
+        company_contact_phone: sssp.company_contact_phone,
+        services: sssp.services,
+        locations: sssp.locations,
+        considerations: sssp.considerations,
+        pcbu_duties: sssp.pcbu_duties,
+        site_supervisor_duties: sssp.site_supervisor_duties,
+        worker_duties: sssp.worker_duties,
+        contractor_duties: sssp.contractor_duties,
+        emergency_plan: sssp.emergency_plan,
+        assembly_points: sssp.assembly_points,
+        emergency_equipment: sssp.emergency_equipment,
+        incident_reporting: sssp.incident_reporting,
+        emergency_contacts: sssp.emergency_contacts,
+        competency_requirements: sssp.competency_requirements,
+        training_records: sssp.training_records,
+        required_training: sssp.required_training,
+        drug_and_alcohol: sssp.drug_and_alcohol,
+        fatigue_management: sssp.fatigue_management,
+        ppe: sssp.ppe,
+        mobile_phone: sssp.mobile_phone,
+        entry_exit_procedures: sssp.entry_exit_procedures,
+        speed_limits: sssp.speed_limits,
+        parking_rules: sssp.parking_rules,
+        site_specific_ppe: sssp.site_specific_ppe,
+        communication_methods: sssp.communication_methods,
+        toolbox_meetings: sssp.toolbox_meetings,
+        reporting_procedures: sssp.reporting_procedures,
+        communication_protocols: sssp.communication_protocols,
+        visitor_rules: sssp.visitor_rules,
+        hazards: sssp.hazards,
+        meetings_schedule: sssp.meetings_schedule,
         monitoring_review: sssp.monitoring_review ? {
           review_schedule: {
             frequency: sssp.monitoring_review.review_schedule?.frequency || '',
-            last_review: null,
+            last_review: null, // Reset review dates for the clone
             next_review: null,
-            responsible_person: null
+            responsible_person: sssp.monitoring_review.review_schedule?.responsible_person
           },
           kpis: sssp.monitoring_review.kpis || [],
           corrective_actions: {
             process: sssp.monitoring_review.corrective_actions?.process || '',
             tracking_method: sssp.monitoring_review.corrective_actions?.tracking_method || '',
-            responsible_person: null
+            responsible_person: sssp.monitoring_review.corrective_actions?.responsible_person
           },
           audits: sssp.monitoring_review.audits || [],
           worker_consultation: {
             method: sssp.monitoring_review.worker_consultation?.method || '',
             frequency: sssp.monitoring_review.worker_consultation?.frequency || '',
-            last_consultation: null
+            last_consultation: null // Reset consultation date for the clone
           },
           review_triggers: sssp.monitoring_review.review_triggers || [],
           documentation: {
@@ -164,9 +164,9 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
             access_details: sssp.monitoring_review.documentation?.access_details || ''
           }
         } : null,
-        start_date: sssp.start_date || null,
-        end_date: sssp.end_date || null,
-        version_history: []
+        start_date: sssp.start_date,
+        end_date: sssp.end_date,
+        version_history: [] // Reset version history for the clone
       };
 
       console.log('Prepared data for cloning:', newSSPP);
