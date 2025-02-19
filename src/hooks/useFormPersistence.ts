@@ -11,11 +11,16 @@ export interface FormPersistenceOptions {
 }
 
 async function fetchSSSP(id: string) {
+  console.log('Fetching SSSP with id:', id);
+
   const { data, error } = await supabase
     .from('sssps')
     .select('*')
     .eq('id', id)
     .maybeSingle();
+
+  console.log('Raw fetched data from Supabase:', data);
+  console.log('Fetch error (if any):', error);
 
   if (error) {
     console.error('Error fetching SSSP:', error);
@@ -92,6 +97,12 @@ async function fetchSSSP(id: string) {
   };
 
   console.log('Transformed SSSP data:', transformedData);
+  console.log('Transformation differences:', {
+    original: data,
+    transformed: transformedData,
+    changes: Object.keys(transformedData).filter(key => data[key] !== transformedData[key])
+  });
+
   return transformedData;
 }
 

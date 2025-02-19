@@ -89,19 +89,9 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
 
     try {
       setIsCloning(true);
-      console.log('Starting clone operation for SSSP:', sssp);
+      console.log('Original SSSP before cloning:', sssp);
 
-      const { 
-        id,
-        created_at,
-        updated_at,
-        version,
-        version_history,
-        status,
-        created_by,
-        modified_by,
-        ...cloneData 
-      } = sssp;
+      const { id, created_at, updated_at, version, version_history, status, created_by, modified_by, ...cloneData } = sssp;
 
       const newSSPP = {
         title: `Clone - ${sssp.title}`,
@@ -151,13 +141,16 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         version_history: []
       };
 
-      console.log('Prepared cloned SSSP data:', newSSPP);
+      console.log('Prepared data for cloning:', newSSPP);
 
       const { data, error } = await supabase
         .from('sssps')
         .insert(newSSPP)
         .select()
         .single();
+
+      console.log('Raw Supabase response after insert:', data);
+      console.log('Insert error (if any):', error);
 
       if (error) throw error;
 
