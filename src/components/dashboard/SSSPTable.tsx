@@ -92,15 +92,22 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
       setIsCloning(true);
       console.log('Original SSSP before cloning:', sssp);
 
-      // Ensure arrays are properly initialized
-      const newSSPP: Partial<SSSP> = {
+      // Create new SSSP object with required fields
+      const newSSPP = {
+        // Required fields - must be provided
         title: `Clone - ${sssp.title}`,
-        company_name: sssp.company_name || '',
-        description: sssp.description,
-        company_address: sssp.company_address,
-        company_contact_name: sssp.company_contact_name,
-        company_contact_email: sssp.company_contact_email,
-        company_contact_phone: sssp.company_contact_phone,
+        company_name: sssp.company_name,
+        status: 'draft' as const,
+        created_by: user.id,
+        modified_by: user.id,
+        version: 1,
+        
+        // Optional fields with defaults
+        description: sssp.description || null,
+        company_address: sssp.company_address || null,
+        company_contact_name: sssp.company_contact_name || null,
+        company_contact_email: sssp.company_contact_email || null,
+        company_contact_phone: sssp.company_contact_phone || null,
         services: sssp.services || '',
         locations: sssp.locations || '',
         considerations: sssp.considerations || '',
@@ -157,12 +164,8 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
             access_details: sssp.monitoring_review.documentation?.access_details || ''
           }
         } : null,
-        start_date: sssp.start_date,
-        end_date: sssp.end_date,
-        status: 'draft',
-        created_by: user.id,
-        modified_by: user.id,
-        version: 1,
+        start_date: sssp.start_date || null,
+        end_date: sssp.end_date || null,
         version_history: []
       };
 
