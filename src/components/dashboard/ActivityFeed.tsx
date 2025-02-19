@@ -1,17 +1,20 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, ChevronLeft, ChevronRight } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { ActivityItem } from "./activity/ActivityItem";
 import { ActivitySkeleton } from "./activity/ActivitySkeleton";
 import { useActivitySubscription } from "./activity/useActivitySubscription";
-import { useAuth } from "@/contexts/AuthContext";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 const ITEMS_PER_PAGE = 10;
@@ -21,19 +24,15 @@ type ActivityType = 'all' | 'created' | 'updated' | 'shared';
 export function ActivityFeed() {
   const { session } = useAuth();
   const [activityType, setActivityType] = useState<ActivityType>('all');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
-
+  const [page, setPage] = useState(1);
+  
   const query = useQuery({
-    queryKey: ['sssp-activities', activityType, currentPage],
+    queryKey: ['activities', activityType, page],
     queryFn: async () => {
-      console.log('[ActivityFeed] Starting to fetch activities');
       if (!session?.access_token) {
-        console.log('[ActivityFeed] No session, skipping fetch');
-        return { items: [], count: 0 };
+        throw new Error("Not authenticated");
       }
 
-      // Build base query
       let query = supabase
         .from('sssp_activity')
         .select(`
@@ -42,92 +41,54 @@ export function ActivityFeed() {
           profiles!sssp_activity_user_id_fkey (first_name, last_name)
         `, { count: 'exact' })
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Last 7 days
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1);
 
-      // Apply activity type filter if not 'all'
       if (activityType !== 'all') {
         query = query.eq('action', activityType);
       }
 
-      // Apply pagination
-      query = query.range(
-        currentPage * ITEMS_PER_PAGE, 
-        (currentPage * ITEMS_PER_PAGE) + ITEMS_PER_PAGE - 1
-      );
-
       const { data, error, count } = await query;
 
-      if (error) {
-        console.error('[ActivityFeed] Error fetching activities:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('[ActivityFeed] Successfully fetched activities:', data);
-      
-      if (count !== null) {
-        setTotalCount(count);
-      }
-
-      // Client-side data cleanup: remove any activities with missing relationships
-      const cleanedData = data.filter(activity => 
-        activity.sssps?.title && 
-        activity.profiles?.first_name
-      );
-
-      return { items: cleanedData, count: count || 0 };
+      return {
+        items: data,
+        total: count || 0
+      };
     },
-    enabled: Boolean(session?.access_token),
-    staleTime: 30000, // Data is considered fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep inactive data in cache for 5 minutes
-    retry: 3,
+    enabled: !!session?.access_token,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [activityType]);
 
   useActivitySubscription(query);
 
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-  const canGoNext = currentPage < totalPages - 1;
-  const canGoPrevious = currentPage > 0;
-
-  const handleNextPage = () => {
-    if (canGoNext) {
-      setCurrentPage(prev => prev + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (canGoPrevious) {
-      setCurrentPage(prev => prev - 1);
-    }
-  };
+  const totalPages = Math.ceil((query.data?.total || 0) / ITEMS_PER_PAGE);
 
   return (
-    <Card className="bg-white shadow-sm h-[600px] flex flex-col">
-      <CardHeader className="border-b bg-muted/10">
-        <div className="space-y-4">
-          <CardTitle className="text-lg font-medium flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Recent Activity
-            {query.data && (
-              <span className="text-sm text-muted-foreground ml-2">
-                ({totalCount} activities in the last 7 days)
-              </span>
-            )}
-          </CardTitle>
-          <Tabs
+    <Card className="col-span-3 h-[600px] flex flex-col">
+      <CardHeader className="pb-4 space-y-4">
+        <CardTitle className="text-2xl font-semibold">Recent Activity</CardTitle>
+        <div className="flex justify-between items-center">
+          <Select
             value={activityType}
-            onValueChange={(value) => {
-              setActivityType(value as ActivityType);
-              setCurrentPage(0); // Reset to first page when changing filters
-            }}
-            className="w-full"
+            onValueChange={(value) => setActivityType(value as ActivityType)}
           >
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="created">Created</TabsTrigger>
-              <TabsTrigger value="updated">Updated</TabsTrigger>
-              <TabsTrigger value="shared">Shared</TabsTrigger>
-            </TabsList>
-          </Tabs>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Activities</SelectItem>
+              <SelectItem value="created">Created</SelectItem>
+              <SelectItem value="updated">Updated</SelectItem>
+              <SelectItem value="shared">Shared</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1">
@@ -135,24 +96,25 @@ export function ActivityFeed() {
           {query.isLoading ? (
             <ActivitySkeleton />
           ) : query.error ? (
-            <Alert variant="destructive" className="mx-6 my-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Failed to load activities. Please try refreshing the page.
-              </AlertDescription>
-            </Alert>
-          ) : query.data?.items && query.data.items.length > 0 ? (
-            <div className="space-y-4 py-4">
-              {query.data.items.map((activity) => (
-                <ActivityItem 
-                  key={activity.id} 
+            <div className="flex items-center justify-center h-full">
+              <p className="text-sm text-muted-foreground">
+                Error loading activities
+              </p>
+            </div>
+          ) : query.data?.items.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-sm text-muted-foreground">
+                No recent activity
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {query.data?.items.map((activity) => (
+                <ActivityItem
+                  key={activity.id}
                   activity={activity}
                 />
               ))}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-center text-muted-foreground py-8">
-              No {activityType === 'all' ? 'recent' : activityType} activity
             </div>
           )}
         </ScrollArea>
@@ -162,23 +124,21 @@ export function ActivityFeed() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handlePreviousPage}
-              disabled={!canGoPrevious}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
               Previous
             </Button>
             <span className="text-sm text-muted-foreground">
-              Page {currentPage + 1} of {totalPages}
+              Page {page} of {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
-              onClick={handleNextPage}
-              disabled={!canGoNext}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
             >
               Next
-              <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
         )}
