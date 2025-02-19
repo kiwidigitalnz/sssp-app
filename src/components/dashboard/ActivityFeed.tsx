@@ -11,6 +11,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
+const ACTIVITY_LIMIT = 50; // Maximum number of activities to fetch
+const ACTIVITY_WINDOW = '7 days'; // Time window for activities
+
 export function ActivityFeed() {
   const { session } = useAuth();
 
@@ -23,6 +26,7 @@ export function ActivityFeed() {
         return [];
       }
 
+      // Fetch activities within the time window and with a limit
       const { data, error } = await supabase
         .from('sssp_activity')
         .select(`
@@ -30,8 +34,9 @@ export function ActivityFeed() {
           sssps (title),
           profiles!sssp_activity_user_id_fkey (first_name, last_name)
         `)
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Last 7 days
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(ACTIVITY_LIMIT);
 
       if (error) {
         console.error('[ActivityFeed] Error fetching activities:', error);
@@ -39,11 +44,18 @@ export function ActivityFeed() {
       }
 
       console.log('[ActivityFeed] Successfully fetched activities:', data);
-      return data;
+
+      // Client-side data cleanup: remove any activities with missing relationships
+      const cleanedData = data.filter(activity => 
+        activity.sssps?.title && 
+        activity.profiles?.first_name
+      );
+
+      return cleanedData;
     },
     enabled: Boolean(session?.access_token),
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 30000, // Data is considered fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep inactive data in cache for 5 minutes
     retry: 3,
   });
 
@@ -55,6 +67,11 @@ export function ActivityFeed() {
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <Activity className="h-5 w-5 text-primary" />
           Recent Activity
+          {query.data && (
+            <span className="text-sm text-muted-foreground ml-2">
+              ({query.data.length} activities in the last 7 days)
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1">
