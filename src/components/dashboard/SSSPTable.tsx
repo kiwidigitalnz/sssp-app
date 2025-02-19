@@ -14,6 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
 import { ShareSSSP } from "@/components/SSSPForm/ShareSSSP";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +45,9 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
   const queryClient = useQueryClient();
   const [ssspToDelete, setSsspToDelete] = useState<string | null>(null);
   const [ssspToClone, setSsspToClone] = useState<SSSP | null>(null);
+  const [isCloning, setIsCloning] = useState(false);
   const isMobile = useIsMobile();
+  const { user } = useAuth();
 
   const { data: sharingInfo, refetch: refetchSharing } = useQuery({
     queryKey: ['sssp-sharing'],
@@ -74,6 +77,82 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
     retry: 1
   });
 
+  const handleClone = async (sssp: SSSP) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to clone an SSSP",
+      });
+      return;
+    }
+
+    try {
+      setIsCloning(true);
+      console.log('Starting clone operation for SSSP:', sssp.id);
+
+      const { 
+        id,
+        created_at,
+        updated_at,
+        version,
+        version_history,
+        status,
+        created_by,
+        modified_by,
+        ...cloneData 
+      } = sssp;
+
+      const newSSPP = {
+        ...cloneData,
+        title: `${sssp.title} (Copy)`,
+        status: 'draft',
+        created_by: user.id,
+        modified_by: user.id,
+        version: 1,
+        version_history: [],
+        hazards: Array.isArray(sssp.hazards) ? [...sssp.hazards] : [],
+        emergency_contacts: Array.isArray(sssp.emergency_contacts) ? [...sssp.emergency_contacts] : [],
+        required_training: Array.isArray(sssp.required_training) ? [...sssp.required_training] : [],
+        meetings_schedule: Array.isArray(sssp.meetings_schedule) ? [...sssp.meetings_schedule] : [],
+        monitoring_review: sssp.monitoring_review ? { ...sssp.monitoring_review } : null
+      };
+
+      console.log('Prepared cloned SSSP data:', newSSPP);
+
+      const { data, error } = await supabase
+        .from('sssps')
+        .insert(newSSPP)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log('Successfully cloned SSSP:', data);
+
+      toast({
+        title: "SSSP Cloned",
+        description: "The SSSP has been cloned successfully.",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['sssps'] });
+      
+      if (data) {
+        navigate(`/edit-sssp/${data.id}`);
+      }
+    } catch (error) {
+      console.error('Error cloning SSSP:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to clone SSSP. Please try again.",
+      });
+    } finally {
+      setIsCloning(false);
+      setSsspToClone(null);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
@@ -98,50 +177,6 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
       });
     }
     setSsspToDelete(null);
-  };
-
-  const handleClone = async (sssp: SSSP) => {
-    try {
-      const { id, created_at, updated_at, version, version_history, status, ...cloneData } = sssp;
-      
-      const newSSPP = {
-        ...cloneData,
-        title: `${sssp.title} (Copy)`,
-        status: 'draft',
-        created_by: user?.id,
-        modified_by: user?.id,
-        version: 1,
-        version_history: [],
-      };
-
-      const { data, error } = await supabase
-        .from('sssps')
-        .insert(newSSPP)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "SSSP Cloned",
-        description: "The SSSP has been cloned successfully.",
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['sssps'] });
-      
-      if (data) {
-        navigate(`/edit-sssp/${data.id}`);
-      }
-    } catch (error) {
-      console.error('Error cloning SSSP:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to clone SSSP. Please try again.",
-      });
-    } finally {
-      setSsspToClone(null);
-    }
   };
 
   const handleExportPDF = async (sssp: SSSP) => {
@@ -253,6 +288,7 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
                                   size="icon"
                                   onClick={() => setSsspToClone(sssp)}
                                   className="h-8 w-8 p-0 flex items-center justify-center"
+                                  disabled={isCloning}
                                 >
                                   <Copy className="h-4 w-4" />
                                 </Button>
@@ -305,6 +341,27 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         </div>
       </CardContent>
 
+      {/* Clone Confirmation Dialog */}
+      <AlertDialog open={!!ssspToClone} onOpenChange={() => setSsspToClone(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clone SSSP</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create a new copy of the SSSP with all its data. The new SSSP will be in draft status.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => ssspToClone && handleClone(ssspToClone)}
+              disabled={isCloning}
+            >
+              {isCloning ? "Cloning..." : "Clone"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!ssspToDelete} onOpenChange={() => setSsspToDelete(null)}>
         <AlertDialogContent>
@@ -321,26 +378,6 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
               className="bg-destructive hover:bg-destructive/90"
             >
               Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Clone Confirmation Dialog */}
-      <AlertDialog open={!!ssspToClone} onOpenChange={() => setSsspToClone(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clone SSSP</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will create a new copy of the SSSP with all its data. The new SSSP will be in draft status.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => ssspToClone && handleClone(ssspToClone)}
-            >
-              Clone
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
