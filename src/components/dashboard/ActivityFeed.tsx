@@ -8,6 +8,8 @@ import { ActivityItem } from "./activity/ActivityItem";
 import { ActivitySkeleton } from "./activity/ActivitySkeleton";
 import { useActivitySubscription } from "./activity/useActivitySubscription";
 import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export function ActivityFeed() {
   const { session } = useAuth();
@@ -42,6 +44,7 @@ export function ActivityFeed() {
     enabled: Boolean(session?.access_token),
     staleTime: 30000,
     gcTime: 5 * 60 * 1000,
+    retry: 3,
   });
 
   useActivitySubscription(query);
@@ -58,6 +61,13 @@ export function ActivityFeed() {
         <ScrollArea className="h-[520px] px-6">
           {query.isLoading ? (
             <ActivitySkeleton />
+          ) : query.error ? (
+            <Alert variant="destructive" className="mx-6 my-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Failed to load activities. Please try refreshing the page.
+              </AlertDescription>
+            </Alert>
           ) : query.data && query.data.length > 0 ? (
             <div className="space-y-4 py-4">
               {query.data.map((activity) => (
