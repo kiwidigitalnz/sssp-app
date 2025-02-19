@@ -33,6 +33,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
               try {
                 await refetch();
                 
+                // Fetch the complete activity details including related data
                 const { data: activityDetails, error: fetchError } = await supabase
                   .from('sssp_activity')
                   .select(`
@@ -55,9 +56,17 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
                     ? `${activityDetails.profiles.first_name} ${activityDetails.profiles.last_name}`
                     : 'A user';
                   
+                  const actionText = {
+                    created: 'created',
+                    updated: 'updated',
+                    shared: 'shared',
+                    cloned: 'cloned',
+                    deleted: 'deleted'
+                  }[activityDetails.action] || activityDetails.action;
+                  
                   toast({
                     title: "New Activity",
-                    description: `${userName} ${activityDetails.action} "${activityDetails.sssps.title}"`,
+                    description: `${userName} ${actionText} "${activityDetails.sssps.title}"`,
                     duration: 5000,
                   });
                 }
