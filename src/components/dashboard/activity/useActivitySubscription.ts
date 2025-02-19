@@ -37,7 +37,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
                   .from('sssp_activity')
                   .select(`
                     *,
-                    sssps (title),
+                    sssps:sssp_id(title),
                     profiles!sssp_activity_user_id_fkey (first_name, last_name)
                   `)
                   .eq('id', payload.new.id)
@@ -50,7 +50,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
 
                 console.log('[useActivitySubscription] Fetched activity details:', activityDetails);
 
-                if (activityDetails) {
+                if (activityDetails && activityDetails.sssps) {
                   const userName = activityDetails.profiles?.first_name 
                     ? `${activityDetails.profiles.first_name} ${activityDetails.profiles.last_name}`
                     : 'A user';
