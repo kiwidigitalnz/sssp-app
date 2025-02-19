@@ -13,8 +13,9 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
     let retryCount = 0;
     const MAX_RETRIES = 3;
     let retryTimeout: NodeJS.Timeout;
+    let cleanupFn: (() => void) | undefined;
 
-    const setupSubscription = async () => {
+    const setupSubscription = () => {
       try {
         const channel = supabase
           .channel('schema-db-changes')
@@ -73,10 +74,12 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
             }
           });
 
-        return () => {
+        cleanupFn = () => {
           console.log('[useActivitySubscription] Cleaning up subscription');
           supabase.removeChannel(channel);
         };
+
+        return cleanupFn;
       } catch (error) {
         console.error('[useActivitySubscription] Error in subscription setup:', error);
         handleSubscriptionError(error as Error);
@@ -94,7 +97,7 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
         
         retryTimeout = setTimeout(() => {
           console.log(`[useActivitySubscription] Retry attempt ${retryCount}`);
-          cleanup = setupSubscription();
+          cleanupFn = setupSubscription();
         }, delay);
       } else {
         toast({
@@ -105,13 +108,17 @@ export function useActivitySubscription(query: UseQueryResult<any, Error>) {
       }
     };
 
-    let cleanup = setupSubscription();
+    // Initial setup
+    cleanupFn = setupSubscription();
 
+    // Cleanup function
     return () => {
       if (retryTimeout) {
         clearTimeout(retryTimeout);
       }
-      cleanup();
+      if (cleanupFn) {
+        cleanupFn();
+      }
     };
   }, [refetch, toast]);
 }
