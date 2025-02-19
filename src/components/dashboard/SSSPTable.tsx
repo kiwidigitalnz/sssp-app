@@ -34,6 +34,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { logActivity } from "@/utils/activityLogging";
 
 interface SSSPTableProps {
   ssspList: SSSP[];
@@ -176,6 +177,12 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
 
       if (error) throw error;
 
+      // Log the clone activity
+      await logActivity(data.id, 'cloned', user.id, {
+        source_sssp_id: sssp.id,
+        source_title: sssp.title
+      });
+
       toast({
         title: "SSSP Cloned",
         description: "The SSSP has been cloned successfully.",
@@ -200,7 +207,12 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
   };
 
   const handleDelete = async (id: string) => {
+    if (!user) return;
+    
     try {
+      // Log the delete activity before actually deleting
+      await logActivity(id, 'deleted', user.id);
+      
       const { error } = await supabase
         .from('sssps')
         .delete()

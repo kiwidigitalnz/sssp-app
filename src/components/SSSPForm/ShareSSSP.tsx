@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +18,7 @@ import {
 import { UserPlus, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logActivity } from "@/utils/activityLogging";
 
 interface ShareSSSPProps {
   ssspId: string;
@@ -50,6 +50,11 @@ export function ShareSSSP({ ssspId, onShare, children }: ShareSSSPProps) {
         });
 
       if (error) throw error;
+
+      await logActivity(ssspId, 'shared', user.id, {
+        shared_with: email,
+        access_level: accessLevel
+      });
 
       toast({
         title: "Invitation sent",

@@ -1,9 +1,9 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import type { SSSP } from '@/types/sssp';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { logActivity } from "@/utils/activityLogging";
 
 export interface FormPersistenceOptions {
   key: string;
@@ -32,15 +32,12 @@ async function fetchSSSP(id: string) {
     return null;
   }
 
-  // Transform data to ensure all fields are properly initialized
   const transformedData = {
     ...data,
-    // Ensure arrays are properly initialized
     hazards: Array.isArray(data.hazards) ? data.hazards : [],
     emergency_contacts: Array.isArray(data.emergency_contacts) ? data.emergency_contacts : [],
     required_training: Array.isArray(data.required_training) ? data.required_training : [],
     meetings_schedule: Array.isArray(data.meetings_schedule) ? data.meetings_schedule : [],
-    // Ensure monitoring_review is properly structured
     monitoring_review: data.monitoring_review || {
       review_schedule: {
         frequency: '',
@@ -67,7 +64,6 @@ async function fetchSSSP(id: string) {
         access_details: ''
       }
     },
-    // Initialize empty strings for text fields if they're null
     services: data.services || '',
     locations: data.locations || '',
     considerations: data.considerations || '',
@@ -148,7 +144,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     return {} as T;
   });
 
-  // Update form data when query data changes
   useEffect(() => {
     if (data) {
       console.log('Updating form data from query:', data);
@@ -160,12 +155,19 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     mutationFn: async (newData: T) => {
       console.log('Saving form data:', newData);
       if (options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("User not authenticated");
+
         const { error } = await supabase
           .from('sssps')
           .update(newData)
           .eq('id', options.key);
         
         if (error) throw error;
+
+        await logActivity(options.key, 'updated', user.id, {
+          updated_fields: Object.keys(newData)
+        });
       }
       return newData;
     },
