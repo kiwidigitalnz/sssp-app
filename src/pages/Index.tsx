@@ -23,7 +23,8 @@ const fetchSSSPs = async () => {
     throw new Error('Authentication required');
   }
 
-  const { data, error } = await supabase
+  // First fetch SSSPs directly owned by the user
+  const { data: ownedSssps, error: ownedError } = await supabase
     .from('sssps')
     .select(`
       id,
@@ -34,15 +35,45 @@ const fetchSSSPs = async () => {
       visitor_rules,
       company_name
     `)
+    .eq('created_by', user.id)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('[fetchSSSPs] Error:', error);
-    throw new Error(error.message);
+  if (ownedError) {
+    console.error('[fetchSSSPs] Error fetching owned SSSPs:', ownedError);
+    throw ownedError;
   }
+
+  // Then fetch SSSPs the user has access to via sssp_access
+  const { data: sharedSssps, error: sharedError } = await supabase
+    .from('sssp_access')
+    .select(`
+      sssp:sssps (
+        id,
+        title,
+        status,
+        created_at,
+        updated_at,
+        visitor_rules,
+        company_name
+      )
+    `)
+    .eq('user_id', user.id);
+
+  if (sharedError) {
+    console.error('[fetchSSSPs] Error fetching shared SSSPs:', sharedError);
+    throw sharedError;
+  }
+
+  // Combine and deduplicate the results
+  const sharedSsspList = sharedSssps
+    .map(item => item.sssp)
+    .filter((sssp): sssp is SSSP => sssp !== null);
+
+  const allSssps = [...(ownedSssps || []), ...sharedSsspList];
+  const uniqueSssps = Array.from(new Map(allSssps.map(item => [item.id, item])).values());
   
-  console.log('[fetchSSSPs] Success! Data:', data);
-  return data as SSSP[];
+  console.log('[fetchSSSPs] Success! Combined data:', uniqueSssps);
+  return uniqueSssps;
 };
 
 const Index = () => {
