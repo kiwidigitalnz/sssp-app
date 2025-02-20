@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,19 @@ import { FileText, AlertTriangle, CheckCircle, ClipboardCheck } from "lucide-rea
 import { addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+interface SSSPQueryResult {
+  id: string;
+  title: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  visitor_rules?: string;
+  company_name: string;
+  created_by: string;
+  modified_by: string;
+  version: number;
+}
 
 const fetchSSSPs = async () => {
   console.log('[fetchSSSPs] Starting fetch...');
@@ -33,7 +47,10 @@ const fetchSSSPs = async () => {
       created_at,
       updated_at,
       visitor_rules,
-      company_name
+      company_name,
+      created_by,
+      modified_by,
+      version
     `)
     .eq('created_by', user.id)
     .order('created_at', { ascending: false });
@@ -54,7 +71,10 @@ const fetchSSSPs = async () => {
         created_at,
         updated_at,
         visitor_rules,
-        company_name
+        company_name,
+        created_by,
+        modified_by,
+        version
       )
     `)
     .eq('user_id', user.id);
@@ -67,9 +87,9 @@ const fetchSSSPs = async () => {
   // Combine and deduplicate the results
   const sharedSsspList = sharedSssps
     .map(item => item.sssp)
-    .filter((sssp): sssp is SSSP => sssp !== null);
+    .filter((sssp): sssp is SSSPQueryResult => sssp !== null);
 
-  const allSssps = [...(ownedSssps || []), ...sharedSsspList];
+  const allSssps = [...(ownedSssps || []), ...sharedSsspList] as SSSP[];
   const uniqueSssps = Array.from(new Map(allSssps.map(item => [item.id, item])).values());
   
   console.log('[fetchSSSPs] Success! Combined data:', uniqueSssps);
