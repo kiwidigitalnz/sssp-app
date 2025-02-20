@@ -19,7 +19,7 @@ interface SSSPQueryResult {
   status: string;
   created_at: string;
   updated_at: string;
-  visitor_rules?: string;
+  visitor_rules: string | null;
   company_name: string;
   created_by: string;
   modified_by: string;
@@ -87,9 +87,19 @@ const fetchSSSPs = async () => {
   // Combine and deduplicate the results
   const sharedSsspList = sharedSssps
     .map(item => item.sssp)
-    .filter((sssp): sssp is SSSPQueryResult => sssp !== null);
+    .filter((sssp): sssp is NonNullable<typeof sssp> => sssp !== null);
 
-  const allSssps = [...(ownedSssps || []), ...sharedSsspList] as SSSP[];
+  // Transform the data to match SSSP type
+  const transformToSSSP = (item: SSSPQueryResult): SSSP => ({
+    ...item,
+    visitor_rules: item.visitor_rules || undefined
+  });
+
+  const allSssps = [
+    ...(ownedSssps || []).map(transformToSSSP),
+    ...sharedSsspList.map(transformToSSSP)
+  ];
+  
   const uniqueSssps = Array.from(new Map(allSssps.map(item => [item.id, item])).values());
   
   console.log('[fetchSSSPs] Success! Combined data:', uniqueSssps);
