@@ -128,13 +128,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_sssp_activity_sssp"
-            columns: ["sssp_id"]
-            isOneToOne: false
-            referencedRelation: "sssps"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "sssp_activity_sssp_id_fkey"
             columns: ["sssp_id"]
             isOneToOne: false
