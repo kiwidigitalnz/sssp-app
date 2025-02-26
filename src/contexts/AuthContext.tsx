@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export interface AuthContextType {
   user: User | null;
@@ -12,6 +13,7 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
+  handleInvitationAcceptance: (userId: string, inviteToken: string | null) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   signup: async () => {},
+  handleInvitationAcceptance: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -29,11 +32,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
 
-    // Initialize session
     const initializeSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -64,7 +67,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (mounted) {
@@ -72,18 +74,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(session);
           setUser(session?.user ?? null);
           setLoading(false);
+
+          // Handle invitation acceptance after authentication
+          const urlParams = new URLSearchParams(window.location.search);
+          const invite = urlParams.get('invite');
+          
+          if (session?.user && invite) {
+            await handleInvitationAcceptance(session.user.id, invite);
+            // Clear the invite from URL without refreshing the page
+            window.history.replaceState({}, '', window.location.pathname);
+          }
         }
       }
     );
 
     initializeSession();
 
-    // Cleanup
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
   }, []);
+
+  const handleInvitationAcceptance = async (userId: string, inviteToken: string | null) => {
+    if (!inviteToken) return;
+
+    try {
+      const { data: invitation, error: inviteError } = await supabase
+        .from("sssp_invitations")
+        .select("*")
+        .eq("id", inviteToken)
+        .eq("status", "pending")
+        .single();
+
+      if (inviteError || !invitation) {
+        throw new Error("Invalid or expired invitation");
+      }
+
+      const { error: accessError } = await supabase
+        .from("sssp_access")
+        .insert({
+          sssp_id: invitation.sssp_id,
+          user_id: userId,
+          access_level: invitation.access_level,
+        });
+
+      if (accessError) throw accessError;
+
+      const { error: updateError } = await supabase
+        .from("sssp_invitations")
+        .update({ status: "accepted" })
+        .eq("id", inviteToken);
+
+      if (updateError) throw updateError;
+
+      await supabase.from("sssp_activity").insert({
+        sssp_id: invitation.sssp_id,
+        user_id: userId,
+        action: "joined_sssp",
+        details: { invitation_id: inviteToken },
+      });
+
+      toast({
+        title: "Welcome!",
+        description: "You now have access to the shared SSSP.",
+      });
+
+      // Navigate to the shared SSSP
+      navigate(`/sssp/${invitation.sssp_id}`);
+    } catch (error: any) {
+      console.error('Error accepting invitation:', error);
+      toast({
+        title: "Error accepting invitation",
+        description: error.message,
+        variant: "destructive",
+      });
+      navigate('/');
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -124,7 +192,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      // Clear local state first
       setSession(null);
       setUser(null);
       
@@ -135,6 +202,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Logged out successfully",
         description: "You have been signed out of your account.",
       });
+      
+      navigate('/');
     } catch (error: any) {
       toast({
         title: "Logout failed",
@@ -155,6 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         signup,
+        handleInvitationAcceptance,
       }}
     >
       {children}
