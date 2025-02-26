@@ -1,3 +1,4 @@
+
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,9 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     setShareForm({ email: '', accessLevel: 'view' });
   };
 
-  const handleShareSubmit = async () => {
+  const handleShareSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent form submission
+    
     if (!selectedSSSP || !shareForm.email) {
       toast({
         variant: "destructive",
@@ -118,12 +121,16 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     }
 
     setIsSubmitting(true);
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
         throw new Error("You must be logged in to share SSSPs");
       }
 
+      // Check for existing invitation
       const { data: existingInvite, error: checkError } = await supabase
         .from('sssp_invitations')
         .select('*')
@@ -132,19 +139,17 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         .eq('status', 'pending')
         .single();
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
-
       if (existingInvite) {
         toast({
           variant: "destructive",
-          title: "Error",
+          title: "Invitation Exists",
           description: "An invitation has already been sent to this email",
         });
+        setIsSubmitting(false);
         return;
       }
 
+      // Create invitation record
       const { error: inviteError } = await supabase
         .from('sssp_invitations')
         .insert({
@@ -159,11 +164,13 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw inviteError;
       }
 
-      toast({
-        title: "Sending invitation...",
-        description: "Please wait while we send the invitation.",
+      // Show sending status
+      const sendingToast = toast({
+        title: "Sending Invitation",
+        description: "Please wait while we send the invitation...",
       });
 
+      // Send invitation email
       const { error: functionError } = await supabase.functions.invoke('send-invitation', {
         body: {
           to: shareForm.email,
@@ -174,31 +181,34 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       });
 
       if (functionError) {
-        throw functionError;
-      }
-
-      toast({
-        title: "✅ Invitation Sent",
-        description: `An invitation has been sent to ${shareForm.email}`,
-      });
-
-      setShareDialogOpen(false);
-      setShareForm({ email: '', accessLevel: 'view' });
-    } catch (error: any) {
-      console.error('Share error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error Sending Invitation",
-        description: error.message || "There was a problem sending the invitation. Please try again.",
-      });
-
-      if (error.message === "Failed to send invitation email") {
+        // Clean up the invitation if email fails
         await supabase
           .from('sssp_invitations')
           .delete()
           .eq('sssp_id', selectedSSSP.id)
           .eq('email', shareForm.email);
+          
+        throw functionError;
       }
+
+      // Close sending toast and show success
+      toast({
+        title: "✅ Invitation Sent",
+        description: `Successfully shared with ${shareForm.email}`,
+      });
+
+      // Reset form and close dialog
+      setShareForm({ email: '', accessLevel: 'view' });
+      setShareDialogOpen(false);
+      setSelectedSSSP(null);
+
+    } catch (error: any) {
+      console.error('Share error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error Sending Invitation",
+        description: error.message || "Failed to send invitation. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -313,28 +323,13 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         </TableBody>
       </Table>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the SSSP
-              "{selectedSSSP?.title}" and remove all associated data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => selectedSSSP && handleDelete(selectedSSSP)}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+      <Dialog open={shareDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setShareForm({ email: '', accessLevel: 'view' });
+          setSelectedSSSP(null);
+        }
+        setShareDialogOpen(open);
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Share SSSP</DialogTitle>
@@ -342,7 +337,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               Share access to "{selectedSSSP?.title}" with other users.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4">
+          <form onSubmit={handleShareSubmit} className="py-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -352,6 +347,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                 value={shareForm.email}
                 disabled={isSubmitting}
                 onChange={(e) => setShareForm(prev => ({ ...prev, email: e.target.value }))}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -380,27 +376,53 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                 </p>
               )}
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShareDialogOpen(false)} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleShareSubmit}
-              disabled={!shareForm.email || isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                "Share"
-              )}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShareDialogOpen(false)} 
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!shareForm.email || isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Share"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the SSSP
+              "{selectedSSSP?.title}" and remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => selectedSSSP && handleDelete(selectedSSSP)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
