@@ -1,93 +1,43 @@
 
-import { Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
 import { SSSPList } from "./SSSPList";
-import { DashboardStats } from "./DashboardStats";
-import { WelcomeHeader } from "./WelcomeHeader";
-import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { SSSP } from "@/types/sssp";
 
-interface DashboardContentProps {
-  session: Session;
-}
-
-export function DashboardContent({ session }: DashboardContentProps) {
-  const { toast } = useToast();
-
-  const fetchSSSPs = async () => {
-    if (!session?.user?.id) {
-      throw new Error('User not authenticated');
-    }
-    
-    const { data, error } = await supabase
-      .from('sssps')
-      .select(`
-        id,
-        title,
-        description,
-        company_name,
-        status,
-        created_at,
-        updated_at,
-        version
-      `)
-      .eq('created_by', session.user.id);
-
-    if (error) {
-      console.error('Supabase error:', error);
-      throw error;
-    }
-    
-    return data || [];
-  };
-
-  const { data: sssps, isLoading, error } = useQuery({
-    queryKey: ['sssps', session?.user?.id],
-    queryFn: fetchSSSPs,
-    retry: 2,
-    retryDelay: 1000,
-    enabled: !!session?.user?.id,
-    meta: {
-      errorMessage: "Failed to load SSSPs"
-    }
-  });
+export function DashboardContent() {
+  const [sssps, setSssps] = useState<SSSP[]>([]);
 
   useEffect(() => {
-    if (error) {
-      console.error('Query error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load SSSPs. Please try again later."
-      });
-    }
-  }, [error, toast]);
+    const fetchSSSPs = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <WelcomeHeader />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Loading your SSSPs...</span>
-          </div>
-        </main>
-      </div>
-    );
-  }
+      const { data, error } = await supabase
+        .from('sssps')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching SSSPs:', error);
+        return;
+      }
+
+      // Ensure all required properties are present
+      const formattedSssps: SSSP[] = data.map(sssp => ({
+        ...sssp,
+        created_by: sssp.created_by || user.id, // Default to current user if not set
+        modified_by: sssp.modified_by || user.id, // Default to current user if not set
+      }));
+
+      setSssps(formattedSssps);
+    };
+
+    fetchSSSPs();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <WelcomeHeader />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DashboardStats sssps={sssps || []} />
-        <div className="mt-8">
-          <SSSPList sssps={sssps || []} />
-        </div>
-      </main>
+    <div className="container mx-auto py-8">
+      <SSSPList sssps={sssps} />
     </div>
   );
 }

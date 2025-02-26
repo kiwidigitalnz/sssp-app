@@ -55,51 +55,55 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
   useEffect(() => {
     const fetchSharedUsers = async () => {
-      const sharedData: Record<string, SharedUser[]> = {};
-      
-      for (const sssp of sssps) {
-        const { data: creatorProfile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('id', sssp.created_by)
-          .single();
-
-        const { data: invitations, error: invitationError } = await supabase
-          .from('sssp_invitations')
-          .select('email, access_level, status')
-          .eq('sssp_id', sssp.id);
-
-        const { data: accessRecords } = await supabase
-          .from('sssp_access')
-          .select('user_id, access_level')
-          .eq('sssp_id', sssp.id);
-
-        const userEmails = await Promise.all((accessRecords || []).map(async (record) => {
-          const { data: profile } = await supabase
+      try {
+        const sharedData: Record<string, SharedUser[]> = {};
+        
+        for (const sssp of sssps) {
+          const { data: creatorProfile } = await supabase
             .from('profiles')
             .select('email')
-            .eq('id', record.user_id)
-            .single();
-          return {
-            email: profile?.email,
-            access_level: record.access_level,
-            status: 'accepted'
-          };
-        }));
+            .eq('id', sssp.created_by)
+            .maybeSingle();
 
-        sharedData[sssp.id] = [
-          {
-            email: creatorProfile?.email || 'Unknown',
-            access_level: 'owner',
-            status: 'accepted',
-            is_creator: true
-          },
-          ...userEmails.filter(user => user.email),
-          ...(invitations || [])
-        ];
+          const { data: invitations } = await supabase
+            .from('sssp_invitations')
+            .select('email, access_level, status')
+            .eq('sssp_id', sssp.id);
+
+          const { data: accessRecords } = await supabase
+            .from('sssp_access')
+            .select('user_id, access_level')
+            .eq('sssp_id', sssp.id);
+
+          const userEmails = await Promise.all((accessRecords || []).map(async (record) => {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('id', record.user_id)
+              .maybeSingle();
+            return profile ? {
+              email: profile.email,
+              access_level: record.access_level,
+              status: 'accepted'
+            } : null;
+          }));
+
+          sharedData[sssp.id] = [
+            {
+              email: creatorProfile?.email || 'Unknown',
+              access_level: 'owner',
+              status: 'accepted',
+              is_creator: true
+            },
+            ...userEmails.filter((user): user is SharedUser => user !== null),
+            ...(invitations || [])
+          ];
+        }
+        
+        setSharedUsers(sharedData);
+      } catch (error) {
+        console.error('Error fetching shared users:', error);
       }
-      
-      setSharedUsers(sharedData);
     };
 
     fetchSharedUsers();
@@ -537,15 +541,15 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               <Label>Shared with</Label>
               <div className="rounded-md border divide-y">
                 {selectedSSSP && sharedUsers[selectedSSSP.id]?.map((user, idx) => (
-                  <div key={idx} className="p-3 flex items-center justify-between text-sm">
+                  <div key={idx} className="p-3 flex items-center justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        {user.email}
+                        <span className="font-medium">{user.email || 'Unknown'}</span>
                         {user.is_creator && (
-                          <Badge variant="outline" className="text-xs">Creator</Badge>
+                          <Badge variant="outline">Creator</Badge>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 text-sm">
                         <Badge variant={user.status === 'pending' ? 'secondary' : 'default'}>
                           {user.status === 'pending' ? 'Pending' : 'Accepted'}
                         </Badge>
