@@ -1,9 +1,10 @@
 
 import { useEffect, useState } from "react";
 import { SSSPList } from "./SSSPList";
+import { DashboardStats } from "./DashboardStats";
+import { WelcomeHeader } from "./WelcomeHeader";
 import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
-import type { Database } from "@/integrations/supabase/types";
 
 type MonitoringReviewType = {
   review_schedule?: {
@@ -94,8 +95,14 @@ export function DashboardContent() {
   }, []);
 
   return (
-    <div className="container mx-auto py-8">
-      <SSSPList sssps={sssps} />
-    </div>
+    <>
+      <WelcomeHeader />
+      <div className="container mx-auto py-8">
+        <DashboardStats sssps={sssps} />
+        <div className="mt-8">
+          <SSSPList sssps={sssps} />
+        </div>
+      </div>
+    </>
   );
 }
