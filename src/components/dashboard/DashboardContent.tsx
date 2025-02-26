@@ -7,6 +7,7 @@ import { SSSPList } from "./SSSPList";
 import { DashboardStats } from "./DashboardStats";
 import { WelcomeHeader } from "./WelcomeHeader";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 interface DashboardContentProps {
   session: Session;
@@ -46,13 +47,15 @@ export function DashboardContent({ session }: DashboardContentProps) {
     }
   });
 
-  if (error) {
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Failed to load SSSPs. Please try again later."
-    });
-  }
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load SSSPs. Please try again later."
+      });
+    }
+  }, [error, toast]);
 
   if (isLoading) {
     return (
