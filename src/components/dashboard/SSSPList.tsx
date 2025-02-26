@@ -1,16 +1,6 @@
 
 import { SSSPTable } from "./SSSPTable";
-
-interface SSSP {
-  id: string;
-  title: string;
-  description: string;
-  company_name: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  version: number;
-}
+import type { SSSP } from "@/types/sssp";
 
 interface SSSPListProps {
   sssps: SSSP[];

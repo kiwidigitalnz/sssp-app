@@ -1,4 +1,3 @@
-
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -22,19 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-
-interface SSSP {
-  id: string;
-  title: string;
-  description?: string;
-  company_name: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  created_by: string;
-  modified_by: string;
-  version: number;
-}
+import type { SSSP } from "@/types/sssp";
 
 interface ShareFormData {
   email: string;
