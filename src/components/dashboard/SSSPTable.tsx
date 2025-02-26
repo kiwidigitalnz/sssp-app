@@ -145,26 +145,19 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
       if (inviteError) throw inviteError;
 
-      const response = await fetch('/api/send-invitation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
+      const { error: functionError } = await supabase.functions.invoke('send-invitation', {
+        body: {
           to: shareForm.email,
           ssspTitle: selectedSSSP.title,
           accessLevel: shareForm.accessLevel,
           inviterEmail: user.email,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send invitation email');
-      }
+      if (functionError) throw functionError;
 
       toast({
-        title: "Invitation Sent",
+        title: "Success",
         description: `An invitation has been sent to ${shareForm.email}`,
       });
 
