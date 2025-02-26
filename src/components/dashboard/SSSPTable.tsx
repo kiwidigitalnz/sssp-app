@@ -66,7 +66,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
             .maybeSingle();
 
           const { data: invitations, error: invitationsError } = await supabase
-            .from('sssp_invitations')
+            .from('sssp_invitation_details')
             .select('email, access_level, status')
             .eq('sssp_id', sssp.id);
 
@@ -169,7 +169,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
   const handleShareSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Share submit started', { shareForm, selectedSSSP });
     
     if (!selectedSSSP || !shareForm.email) {
       toast({
@@ -184,14 +183,13 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('Current user:', user);
       
       if (!user) {
         throw new Error("You must be logged in to share SSSPs");
       }
 
       const { data: existingInvite, error: checkError } = await supabase
-        .from('sssp_invitations')
+        .from('sssp_invitation_details')
         .select('id')
         .eq('sssp_id', selectedSSSP.id)
         .eq('email', shareForm.email)
@@ -199,7 +197,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         .maybeSingle();
 
       if (checkError) {
-        console.error('Error checking existing invitation:', checkError);
         throw new Error("Failed to check existing invitations");
       }
 
@@ -226,7 +223,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         .single();
 
       if (inviteError) {
-        console.error('Error creating invitation:', inviteError);
         throw new Error("Failed to create invitation");
       }
 
@@ -333,7 +329,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const handleResendInvite = async (ssspId: string, email: string) => {
     try {
       const { data: invitation } = await supabase
-        .from('sssp_invitations')
+        .from('sssp_invitation_details')
         .select('*')
         .eq('sssp_id', ssspId)
         .eq('email', email)

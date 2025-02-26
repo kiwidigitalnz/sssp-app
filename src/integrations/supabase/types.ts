@@ -377,7 +377,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sssp_invitation_details: {
+        Row: {
+          access_level: string | null
+          created_at: string | null
+          email: string | null
+          expires_at: string | null
+          id: string | null
+          sssp_id: string | null
+          status: string | null
+        }
+        Insert: {
+          access_level?: string | null
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string | null
+          id?: string | null
+          sssp_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          access_level?: string | null
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string | null
+          id?: string | null
+          sssp_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sssp_invitations_sssp_id_fkey"
+            columns: ["sssp_id"]
+            isOneToOne: false
+            referencedRelation: "sssps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
