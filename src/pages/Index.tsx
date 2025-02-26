@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase, testConnection } from "@/integrations/supabase/client";
@@ -20,7 +19,6 @@ const Index = () => {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
-  // Test Supabase connection on component mount
   useEffect(() => {
     console.log('[Index] Testing Supabase connection...');
     testConnection().then(status => {
@@ -74,7 +72,6 @@ const Index = () => {
     initializeAuth();
   }, [toast]);
 
-  // Fetch SSSPs for the current user
   const { data: sssps, isLoading, error } = useQuery({
     queryKey: ['sssps', session?.user?.id],
     queryFn: async () => {
@@ -87,17 +84,31 @@ const Index = () => {
         .eq('created_by', session.user.id);
 
       if (error) {
-        console.error('[Index] Error fetching SSSPs:', error);
-        throw error;
+        console.error('[Index] Supabase error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw new Error(`Database error: ${error.message}${error.hint ? ` (${error.hint})` : ''}`);
       }
 
-      console.log('[Index] Fetched SSSPs:', data);
+      if (!data) {
+        console.log('[Index] No SSSPs found for user');
+        return [];
+      }
+
+      console.log('[Index] Successfully fetched SSSPs:', {
+        count: data.length,
+        firstItem: data[0]
+      });
+      
       return data as SSSP[];
     },
     enabled: !!session?.user?.id,
+    retry: 1,
   });
 
-  // Show connection status if there's an error
   if (connectionStatus === false) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -127,7 +138,6 @@ const Index = () => {
     );
   }
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -141,8 +151,8 @@ const Index = () => {
     );
   }
 
-  // Show error state
   if (error) {
+    console.error('[Index] Query error:', error);
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
         <WelcomeHeader />
@@ -152,13 +162,18 @@ const Index = () => {
             <p className="mt-2 text-gray-600">
               {error instanceof Error ? error.message : 'An unexpected error occurred'}
             </p>
+            <button
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['sssps'] })}
+              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            >
+              Try Again
+            </button>
           </div>
         </main>
       </div>
     );
   }
 
-  // Calculate stats
   const totalSssps = sssps?.length || 0;
   const draftSssps = sssps?.filter(sssp => sssp.status === 'draft').length || 0;
   const publishedSssps = sssps?.filter(sssp => sssp.status === 'published').length || 0;
@@ -172,7 +187,6 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <WelcomeHeader />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatsCard
             title="Total SSSPs"
@@ -202,8 +216,6 @@ const Index = () => {
             className="sm:col-span-1"
           />
         </div>
-
-        {/* SSSP Table */}
         <div className="mt-8">
           <SSSPTable ssspList={sssps || []} />
         </div>
