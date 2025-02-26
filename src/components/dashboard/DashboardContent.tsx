@@ -39,20 +39,26 @@ export function DashboardContent({ session }: DashboardContentProps) {
       }
 
       return data || [];
+    },
+    onError: (error) => {
+      console.error('Query error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load SSSPs"
+      });
     }
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Failed to load SSSPs"
-    });
-    return <div>Error loading SSSPs</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <WelcomeHeader />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div>Loading...</div>
+        </main>
+      </div>
+    );
   }
 
   return (
