@@ -5,29 +5,31 @@ import { Resend } from "npm:resend@2.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
-interface InvitationEmailRequest {
-  to: string;
-  ssspTitle: string;
-  accessLevel: string;
-  inviterEmail: string;
-}
-
 const handler = async (req: Request): Promise<Response> => {
-  console.log("Received request to send invitation");
+  console.log("Received request:", req.method);
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      status: 204, // No content for OPTIONS
+      headers: corsHeaders
+    });
   }
 
   try {
-    const { to, ssspTitle, accessLevel, inviterEmail }: InvitationEmailRequest = await req.json();
+    if (req.method !== "POST") {
+      throw new Error(`HTTP method ${req.method} is not allowed`);
+    }
+
+    const { to, ssspTitle, accessLevel, inviterEmail } = await req.json();
     
-    console.log("Sending invitation email to:", to);
+    console.log("Processing invitation request:", { to, ssspTitle, accessLevel, inviterEmail });
 
     if (!to || !ssspTitle || !accessLevel || !inviterEmail) {
       throw new Error("Missing required fields");
@@ -45,7 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
           <p>You have been granted <strong>${accessLevel}</strong> access to this document.</p>
           <p>To access the document, please sign in or create an account using this email address.</p>
           <div style="margin: 30px 0;">
-            <a href="${Deno.env.get("PUBLIC_SITE_URL")}/auth" 
+            <a href="${Deno.env.get("PUBLIC_SITE_URL") || 'http://localhost:5173'}/auth" 
                style="background: #0091ff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
               Access Document
             </a>
@@ -59,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
+    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -67,12 +69,16 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error) {
-    console.error("Error sending invitation email:", error);
+    console.error("Error in send-invitation function:", error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || "An error occurred while sending the invitation" 
+      }),
       {
         status: 500,
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           ...corsHeaders,
         },
