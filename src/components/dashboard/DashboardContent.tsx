@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SSSPList } from "./SSSPList";
 import { DashboardStats } from "./DashboardStats";
 import { WelcomeHeader } from "./WelcomeHeader";
+import { Loader2 } from "lucide-react";
 
 interface DashboardContentProps {
   session: Session;
@@ -17,10 +18,7 @@ export function DashboardContent({ session }: DashboardContentProps) {
   const { data: sssps, isLoading, error } = useQuery({
     queryKey: ['sssps', session?.user?.id],
     queryFn: async () => {
-      console.log('Fetching SSSPs for user:', session?.user?.id); // Debug log
-      
       if (!session?.user?.id) {
-        console.error('No user ID found in session');
         throw new Error('User not authenticated');
       }
       
@@ -38,25 +36,21 @@ export function DashboardContent({ session }: DashboardContentProps) {
         `)
         .eq('created_by', session.user.id);
 
-      if (error) {
-        console.error('Supabase query error:', error); // Debug log
-        throw error;
-      }
-
-      console.log('Fetched SSSPs:', data); // Debug log
+      if (error) throw error;
       return data || [];
     },
+    retry: 2,
+    retryDelay: 1000,
     meta: {
       errorMessage: "Failed to load SSSPs"
     }
   });
 
   if (error) {
-    console.error('React Query error:', error); // Debug log
     toast({
       variant: "destructive",
       title: "Error",
-      description: "Failed to load SSSPs"
+      description: "Failed to load SSSPs. Please try again later."
     });
   }
 
@@ -65,14 +59,14 @@ export function DashboardContent({ session }: DashboardContentProps) {
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
         <WelcomeHeader />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div>Loading SSSPs...</div>
+          <div className="flex items-center justify-center space-x-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading your SSSPs...</span>
+          </div>
         </main>
       </div>
     );
   }
-
-  // Add debug log for rendered data
-  console.log('Rendering with SSSPs:', sssps);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
