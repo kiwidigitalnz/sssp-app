@@ -161,29 +161,31 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     setIsSubmitting(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('Current auth state:', { user, authError });
       
       if (!user) {
         throw new Error("You must be logged in to share SSSPs");
       }
 
-      if (user.email === shareForm.email) {
-        toast({
-          variant: "destructive",
-          title: "Invalid Invitation",
-          description: "You cannot invite yourself",
-        });
-        setIsSubmitting(false);
-        return;
-      }
+      console.log('Checking if invited user exists in profiles...');
+      const { data: invitedUserProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', shareForm.email)
+        .maybeSingle();
+      
+      console.log('Profile check result:', { invitedUserProfile, profileError });
 
-      const { data: existingInvite } = await supabase
+      const { data: existingInvite, error: inviteCheckError } = await supabase
         .from('sssp_invitations')
         .select('*')
         .eq('sssp_id', selectedSSSP.id)
         .eq('email', shareForm.email)
         .eq('status', 'pending')
         .maybeSingle();
+
+      console.log('Existing invitation check:', { existingInvite, inviteCheckError });
 
       if (existingInvite) {
         toast({
@@ -195,24 +197,22 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         return;
       }
 
-      console.log('Creating invitation for:', {
+      const invitationData = {
         sssp_id: selectedSSSP.id,
         email: shareForm.email,
         access_level: shareForm.accessLevel,
-        invited_by: user.id
-      });
+        invited_by: user.id,
+        status: 'pending'
+      };
+      console.log('Attempting to create invitation with data:', invitationData);
 
       const { data: invitation, error: inviteError } = await supabase
         .from('sssp_invitations')
-        .insert({
-          sssp_id: selectedSSSP.id,
-          email: shareForm.email,
-          access_level: shareForm.accessLevel,
-          invited_by: user.id,
-          status: 'pending'
-        })
+        .insert(invitationData)
         .select()
         .single();
+
+      console.log('Invitation creation result:', { invitation, inviteError });
 
       if (inviteError) {
         console.error('Invite error:', inviteError);
