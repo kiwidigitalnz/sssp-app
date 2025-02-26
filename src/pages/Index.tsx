@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, testConnection } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SSSP } from "@/types/sssp";
 import { StatsCard } from "@/components/dashboard/StatsCard";
@@ -13,88 +13,78 @@ import { addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const fetchSSSPs = async () => {
-  console.log('[fetchSSSPs] Starting fetch with simplified logic');
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    console.log('[fetchSSSPs] No authenticated user found');
-    throw new Error('Authentication required');
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('sssps')
-      .select('*');
-
-    console.log('[fetchSSSPs] Query result:', {
-      success: !error,
-      hasData: !!data?.length,
-      error: error,
-      data: data
-    });
-
-    if (error) throw error;
-    
-    return data as SSSP[];
-  } catch (error) {
-    console.error('[fetchSSSPs] Error details:', error);
-    throw error;
-  }
-};
-
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<boolean | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
-  const { data: sssps = [], isLoading, error } = useQuery({
-    queryKey: ['sssps'],
-    queryFn: fetchSSSPs,
-    enabled: !!session,
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
-    retry: false
-  });
+  // Test Supabase connection on component mount
+  useEffect(() => {
+    console.log('[Index] Testing Supabase connection...');
+    testConnection().then(status => {
+      console.log('[Index] Connection test result:', status);
+      setConnectionStatus(status);
+      if (!status) {
+        toast({
+          variant: "destructive",
+          title: "Connection Error",
+          description: "Could not connect to the database. Please try again later."
+        });
+      }
+    });
+  }, [toast]);
 
   useEffect(() => {
     console.log('[Index] Component mounted');
     
     const initializeAuth = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      console.log('[Index] Initial auth check:', {
-        hasSession: !!initialSession,
-        email: initialSession?.user?.email
-      });
-      setSession(initialSession);
-
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        console.log('[Index] Auth state changed:', {
-          event: _event,
-          email: session?.user?.email
+      try {
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        console.log('[Index] Initial auth check:', {
+          hasSession: !!initialSession,
+          email: initialSession?.user?.email
         });
-        setSession(session);
-      });
+        setSession(initialSession);
 
-      return () => subscription.unsubscribe();
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+          console.log('[Index] Auth state changed:', {
+            event: _event,
+            email: session?.user?.email
+          });
+          setSession(session);
+        });
+
+        return () => subscription.unsubscribe();
+      } catch (error) {
+        console.error('[Index] Auth initialization error:', error);
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Failed to initialize authentication"
+        });
+      }
     };
 
     initializeAuth();
-  }, []);
+  }, [toast]);
 
-  useEffect(() => {
-    if (error) {
-      console.error('[Index] Query error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error loading data",
-        description: error instanceof Error ? error.message : "Failed to load SSSPs"
-      });
-    }
-  }, [error, toast]);
+  // Show connection status if there's an error
+  if (connectionStatus === false) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-md w-full">
+          <h2 className="text-xl font-semibold text-gray-900">Database Connection Error</h2>
+          <p className="mt-2 text-gray-600">Unable to connect to the database. Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!session) {
     return (
@@ -114,86 +104,16 @@ const Index = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center max-w-md w-full">
-          <h2 className="text-xl font-semibold text-gray-900">Error loading data</h2>
-          <p className="mt-2 text-gray-600">{error instanceof Error ? error.message : 'An unexpected error occurred'}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const stats = {
-    total: sssps.length,
-    draft: sssps.filter(s => s.status === "draft").length,
-    published: sssps.filter(s => s.status === "published").length,
-    needsReview: sssps.filter(s => {
-      const thirtyDaysFromNow = addDays(new Date(), 30);
-      const lastUpdated = new Date(s.updated_at);
-      return thirtyDaysFromNow.getTime() - lastUpdated.getTime() >= 30 * 24 * 60 * 60 * 1000;
-    }).length
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto">
-            <span className="sr-only">Loading...</span>
-          </div>
-          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // For now, let's just show a simple welcome message instead of trying to fetch SSSPs
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <WelcomeHeader />
-      
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <div className="grid grid-cols-1 gap-8">          
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard
-              title="Total SSSPs"
-              value={stats.total}
-              icon={FileText}
-              iconColor="text-blue-500"
-              className="transition-all hover:scale-102 hover:shadow-lg"
-            />
-            <StatsCard
-              title="Draft SSSPs"
-              value={stats.draft}
-              icon={AlertTriangle}
-              iconColor="text-yellow-500"
-              className="transition-all hover:scale-102 hover:shadow-lg"
-            />
-            <StatsCard
-              title="Published SSSPs"
-              value={stats.published}
-              icon={CheckCircle}
-              iconColor="text-green-500"
-              className="transition-all hover:scale-102 hover:shadow-lg"
-            />
-            <StatsCard
-              title={isMobile ? "Need Review" : "Need Review (30 Days)"}
-              value={stats.needsReview}
-              icon={ClipboardCheck}
-              iconColor="text-purple-500"
-              className="transition-all hover:scale-102 hover:shadow-lg"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
-            <div className="lg:col-span-2 bg-white rounded-lg shadow-sm overflow-hidden">
-              <SSSPTable ssspList={sssps} />
-            </div>
-            <div className="lg:col-span-1">
-              <ActivityFeed />
-            </div>
-          </div>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-gray-900">Welcome!</h2>
+          <p className="mt-2 text-gray-600">
+            Connected to Supabase successfully. User: {session.user.email}
+          </p>
         </div>
       </main>
     </div>
