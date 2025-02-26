@@ -5,7 +5,32 @@ import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
 import type { Database } from "@/integrations/supabase/types";
 
-type MonitoringReviewType = Database['public']['Tables']['sssps']['Row']['monitoring_review'];
+type MonitoringReviewType = {
+  review_schedule?: {
+    frequency?: string;
+    last_review?: string | null;
+    next_review?: string | null;
+    responsible_person?: string | null;
+  };
+  kpis?: any[];
+  corrective_actions?: {
+    process?: string;
+    tracking_method?: string;
+    responsible_person?: string | null;
+  };
+  audits?: any[];
+  worker_consultation?: {
+    method?: string;
+    frequency?: string;
+    last_consultation?: string | null;
+  };
+  review_triggers?: any[];
+  documentation?: {
+    storage_location?: string;
+    retention_period?: string;
+    access_details?: string;
+  };
+};
 
 export function DashboardContent() {
   const [sssps, setSssps] = useState<SSSP[]>([]);
