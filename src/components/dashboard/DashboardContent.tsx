@@ -16,37 +16,39 @@ interface DashboardContentProps {
 export function DashboardContent({ session }: DashboardContentProps) {
   const { toast } = useToast();
 
+  const fetchSSSPs = async () => {
+    if (!session?.user?.id) {
+      throw new Error('User not authenticated');
+    }
+    
+    console.log('Fetching SSSPs for user:', session.user.id);
+    
+    const { data, error } = await supabase
+      .from('sssps')
+      .select(`
+        id,
+        title,
+        description,
+        company_name,
+        status,
+        created_at,
+        updated_at,
+        version
+      `)
+      .eq('created_by', session.user.id);
+
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+    
+    console.log('Fetched SSSPs:', data);
+    return data || [];
+  };
+
   const { data: sssps, isLoading, error } = useQuery({
     queryKey: ['sssps', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) {
-        throw new Error('User not authenticated');
-      }
-      
-      console.log('Fetching SSSPs for user:', session.user.id);
-      
-      const { data, error } = await supabase
-        .from('sssps')
-        .select(`
-          id,
-          title,
-          description,
-          company_name,
-          status,
-          created_at,
-          updated_at,
-          version
-        `)
-        .eq('created_by', session.user.id);
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-      
-      console.log('Fetched SSSPs:', data);
-      return data || [];
-    },
+    queryFn: fetchSSSPs,
     retry: 2,
     retryDelay: 1000,
     enabled: !!session?.user?.id,
