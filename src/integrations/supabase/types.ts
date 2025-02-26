@@ -265,6 +265,7 @@ export type Database = {
           toolbox_meetings: string | null
           training_records: string | null
           updated_at: string
+          user_id: string | null
           version: number
           version_history: Json[] | null
           visitor_rules: string | null
@@ -315,6 +316,7 @@ export type Database = {
           toolbox_meetings?: string | null
           training_records?: string | null
           updated_at?: string
+          user_id?: string | null
           version?: number
           version_history?: Json[] | null
           visitor_rules?: string | null
@@ -365,6 +367,7 @@ export type Database = {
           toolbox_meetings?: string | null
           training_records?: string | null
           updated_at?: string
+          user_id?: string | null
           version?: number
           version_history?: Json[] | null
           visitor_rules?: string | null
