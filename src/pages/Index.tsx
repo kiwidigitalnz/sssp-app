@@ -55,7 +55,7 @@ const Index = () => {
     );
   }
 
-  return <DashboardContent session={session} />;
+  return <DashboardContent />;
 };
 
 export default Index;
