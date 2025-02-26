@@ -21,8 +21,6 @@ export function DashboardContent({ session }: DashboardContentProps) {
       throw new Error('User not authenticated');
     }
     
-    console.log('Fetching SSSPs for user:', session.user.id);
-    
     const { data, error } = await supabase
       .from('sssps')
       .select(`
@@ -42,7 +40,6 @@ export function DashboardContent({ session }: DashboardContentProps) {
       throw error;
     }
     
-    console.log('Fetched SSSPs:', data);
     return data || [];
   };
 
