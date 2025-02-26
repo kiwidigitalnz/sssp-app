@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,16 +12,11 @@ export interface FormPersistenceOptions {
 }
 
 async function fetchSSSP(id: string) {
-  console.log('Fetching SSSP with id:', id);
-
   const { data, error } = await supabase
     .from('sssps')
     .select('*')
     .eq('id', id)
     .maybeSingle();
-
-  console.log('Raw fetched data from Supabase:', data);
-  console.log('Fetch error (if any):', error);
 
   if (error) {
     console.error('Error fetching SSSP:', error);
@@ -92,13 +88,6 @@ async function fetchSSSP(id: string) {
     visitor_rules: data.visitor_rules || ''
   };
 
-  console.log('Transformed SSSP data:', transformedData);
-  console.log('Transformation differences:', {
-    original: data,
-    transformed: transformedData,
-    changes: Object.keys(transformedData).filter(key => data[key] !== transformedData[key])
-  });
-
   return transformedData;
 }
 
@@ -121,39 +110,33 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
 
   const [formData, setFormData] = useState<T>(() => {
     if (data) {
-      console.log('Initializing form data from query:', data);
       return data as T;
     }
     
     if (options.initialData) {
-      console.log('Initializing form data from initialData:', options.initialData);
       return options.initialData;
     }
     
     try {
       const savedData = localStorage.getItem(options.key);
       if (savedData) {
-        console.log('Initializing form data from localStorage:', JSON.parse(savedData));
         return JSON.parse(savedData);
       }
     } catch (error) {
       console.warn('Error reading from localStorage:', error);
     }
     
-    console.log('Initializing empty form data');
     return {} as T;
   });
 
   useEffect(() => {
     if (data) {
-      console.log('Updating form data from query:', data);
       setFormData(data as T);
     }
   }, [data]);
 
   const mutation = useMutation({
     mutationFn: async (newData: T) => {
-      console.log('Saving form data:', newData);
       if (options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("User not authenticated");
