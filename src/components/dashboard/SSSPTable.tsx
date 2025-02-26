@@ -164,6 +164,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
   const handleShareSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Share submit started', { shareForm, selectedSSSP });
     
     if (!selectedSSSP || !shareForm.email) {
       toast({
@@ -178,6 +179,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log('Current user:', user);
       
       if (userError || !user) {
         throw new Error("You must be logged in to share SSSPs");
@@ -190,6 +192,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         .eq('email', shareForm.email)
         .eq('status', 'pending')
         .single();
+
+      console.log('Existing invitation check:', { existingInvite, checkError });
 
       if (existingInvite) {
         toast({
@@ -213,16 +217,18 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         .select()
         .single();
 
+      console.log('Invitation creation:', { invitation, inviteError });
+
       if (inviteError || !invitation) {
         throw inviteError || new Error("Failed to create invitation");
       }
 
-      const sendingToast = toast({
+      const toastId = toast({
         title: "Sending Invitation",
         description: "Please wait while we send the invitation...",
       });
 
-      const { error: functionError } = await supabase.functions.invoke('send-invitation', {
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('send-invitation', {
         body: {
           to: shareForm.email,
           ssspTitle: selectedSSSP.title,
@@ -231,6 +237,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
           inviterEmail: user.email,
         },
       });
+
+      console.log('Edge function response:', { functionData, functionError });
 
       if (functionError) {
         await supabase
@@ -241,8 +249,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw functionError;
       }
 
-      if (selectedSSSP) {
-        setSharedUsers(prev => ({
+      setSharedUsers(prev => {
+        const updatedUsers = {
           ...prev,
           [selectedSSSP.id]: [
             ...(prev[selectedSSSP.id] || []),
@@ -252,8 +260,10 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               status: 'pending'
             }
           ]
-        }));
-      }
+        };
+        console.log('Updated shared users:', updatedUsers);
+        return updatedUsers;
+      });
 
       toast({
         title: "✅ Invitation Sent",
@@ -564,7 +574,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
+                          Sharing...
                         </>
                       ) : (
                         "Share"
