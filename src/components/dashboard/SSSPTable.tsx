@@ -1,7 +1,7 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Copy, Share2, FileText, Trash2, MoreHorizontal } from "lucide-react";
+import { Copy, Share2, FileText, Trash2, MoreHorizontal, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -20,7 +20,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
 
 interface SSSP {
   id: string;
@@ -109,20 +108,33 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   };
 
   const handleShareSubmit = async () => {
-    if (!selectedSSSP || !shareForm.email) return;
+    if (!selectedSSSP || !shareForm.email) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter an email address",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        throw new Error("You must be logged in to share SSSPs");
+      }
 
-      const { data: existingInvite } = await supabase
+      const { data: existingInvite, error: checkError } = await supabase
         .from('sssp_invitations')
         .select('*')
         .eq('sssp_id', selectedSSSP.id)
         .eq('email', shareForm.email)
         .eq('status', 'pending')
         .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
 
       if (existingInvite) {
         toast({
@@ -143,7 +155,14 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
           status: 'pending'
         });
 
-      if (inviteError) throw inviteError;
+      if (inviteError) {
+        throw inviteError;
+      }
+
+      toast({
+        title: "Sending invitation...",
+        description: "Please wait while we send the invitation.",
+      });
 
       const { error: functionError } = await supabase.functions.invoke('send-invitation', {
         body: {
@@ -154,22 +173,32 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         },
       });
 
-      if (functionError) throw functionError;
+      if (functionError) {
+        throw functionError;
+      }
 
       toast({
-        title: "Success",
+        title: "✅ Invitation Sent",
         description: `An invitation has been sent to ${shareForm.email}`,
       });
 
       setShareDialogOpen(false);
       setShareForm({ email: '', accessLevel: 'view' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Share error:', error);
       toast({
         variant: "destructive",
         title: "Error Sending Invitation",
-        description: "There was a problem sending the invitation. Please try again.",
+        description: error.message || "There was a problem sending the invitation. Please try again.",
       });
+
+      if (error.message === "Failed to send invitation email") {
+        await supabase
+          .from('sssp_invitations')
+          .delete()
+          .eq('sssp_id', selectedSSSP.id)
+          .eq('email', shareForm.email);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -321,6 +350,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                 type="email"
                 placeholder="Enter recipient's email"
                 value={shareForm.email}
+                disabled={isSubmitting}
                 onChange={(e) => setShareForm(prev => ({ ...prev, email: e.target.value }))}
               />
             </div>
@@ -328,6 +358,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               <Label htmlFor="access-level">Access level</Label>
               <Select
                 value={shareForm.accessLevel}
+                disabled={isSubmitting}
                 onValueChange={(value: 'view' | 'edit') => 
                   setShareForm(prev => ({ ...prev, accessLevel: value }))
                 }
@@ -351,7 +382,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShareDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setShareDialogOpen(false)} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button

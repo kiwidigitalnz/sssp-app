@@ -17,12 +17,21 @@ interface InvitationEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("Received request to send invitation");
+
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { to, ssspTitle, accessLevel, inviterEmail }: InvitationEmailRequest = await req.json();
+    
+    console.log("Sending invitation email to:", to);
+
+    if (!to || !ssspTitle || !accessLevel || !inviterEmail) {
+      throw new Error("Missing required fields");
+    }
 
     const emailResponse = await resend.emails.send({
       from: "SSSP App <onboarding@resend.dev>",
@@ -48,6 +57,8 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
+    console.log("Email sent successfully:", emailResponse);
+
     return new Response(JSON.stringify(emailResponse), {
       status: 200,
       headers: {
@@ -61,7 +72,10 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
       }
     );
   }
