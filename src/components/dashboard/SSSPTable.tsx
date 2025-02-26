@@ -65,10 +65,15 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
             .eq('id', sssp.created_by)
             .maybeSingle();
 
-          const { data: invitations } = await supabase
+          const { data: invitations, error: invitationsError } = await supabase
             .from('sssp_invitations')
             .select('email, access_level, status')
             .eq('sssp_id', sssp.id);
+
+          if (invitationsError) {
+            console.error('Error fetching invitations:', invitationsError);
+            continue;
+          }
 
           const { data: accessRecords } = await supabase
             .from('sssp_access')
@@ -187,13 +192,11 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
       const { data: existingInvite, error: checkError } = await supabase
         .from('sssp_invitations')
-        .select('*')
+        .select('id')
         .eq('sssp_id', selectedSSSP.id)
         .eq('email', shareForm.email)
         .eq('status', 'pending')
         .maybeSingle();
-
-      console.log('Existing invitation check:', { existingInvite, checkError });
 
       if (checkError) {
         console.error('Error checking existing invitation:', checkError);
@@ -222,19 +225,12 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         .select()
         .single();
 
-      console.log('Invitation creation:', { invitation, inviteError });
-
       if (inviteError) {
         console.error('Error creating invitation:', inviteError);
         throw new Error("Failed to create invitation");
       }
 
-      const toastId = toast({
-        title: "Sending Invitation",
-        description: "Please wait while we send the invitation...",
-      });
-
-      const { data: functionData, error: functionError } = await supabase.functions.invoke('send-invitation', {
+      const { error: functionError } = await supabase.functions.invoke('send-invitation', {
         body: {
           to: shareForm.email,
           ssspTitle: selectedSSSP.title,
@@ -243,8 +239,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
           inviterEmail: user.email,
         },
       });
-
-      console.log('Edge function response:', { functionData, functionError });
 
       if (functionError) {
         if (invitation) {
@@ -256,21 +250,17 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw functionError;
       }
 
-      setSharedUsers(prev => {
-        const updatedUsers = {
-          ...prev,
-          [selectedSSSP.id]: [
-            ...(prev[selectedSSSP.id] || []),
-            {
-              email: shareForm.email,
-              access_level: shareForm.accessLevel,
-              status: 'pending'
-            }
-          ]
-        };
-        console.log('Updated shared users:', updatedUsers);
-        return updatedUsers;
-      });
+      setSharedUsers(prev => ({
+        ...prev,
+        [selectedSSSP.id]: [
+          ...(prev[selectedSSSP.id] || []),
+          {
+            email: shareForm.email,
+            access_level: shareForm.accessLevel,
+            status: 'pending'
+          }
+        ]
+      }));
 
       toast({
         title: "✅ Invitation Sent",
