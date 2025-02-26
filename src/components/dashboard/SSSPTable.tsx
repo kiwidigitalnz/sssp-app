@@ -47,6 +47,7 @@ interface SharedUser {
   email: string;
   access_level: string;
   status: string;
+  is_creator?: boolean;
 }
 
 export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
@@ -67,14 +68,45 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       const sharedData: Record<string, SharedUser[]> = {};
       
       for (const sssp of sssps) {
+        const { data: creatorProfile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', sssp.created_by)
+          .single();
+
         const { data: invitations, error: invitationError } = await supabase
           .from('sssp_invitations')
           .select('email, access_level, status')
           .eq('sssp_id', sssp.id);
 
-        if (!invitationError && invitations) {
-          sharedData[sssp.id] = invitations;
-        }
+        const { data: accessRecords } = await supabase
+          .from('sssp_access')
+          .select('user_id, access_level')
+          .eq('sssp_id', sssp.id);
+
+        const userEmails = await Promise.all((accessRecords || []).map(async (record) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', record.user_id)
+            .single();
+          return {
+            email: profile?.email,
+            access_level: record.access_level,
+            status: 'accepted'
+          };
+        }));
+
+        sharedData[sssp.id] = [
+          {
+            email: creatorProfile?.email || 'Unknown',
+            access_level: 'owner',
+            status: 'accepted',
+            is_creator: true
+          },
+          ...userEmails.filter(user => user.email),
+          ...(invitations || [])
+        ];
       }
       
       setSharedUsers(sharedData);
@@ -511,21 +543,26 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               </Select>
             </div>
 
-            {selectedSSSP && sharedUsers[selectedSSSP.id]?.length > 0 && (
-              <div className="space-y-2">
-                <Label>Shared with</Label>
-                <div className="rounded-md border divide-y">
-                  {sharedUsers[selectedSSSP.id].map((user, idx) => (
-                    <div key={idx} className="p-3 flex items-center justify-between text-sm">
-                      <div className="space-y-1">
-                        <div>{user.email}</div>
-                        <div className="flex gap-2">
-                          <Badge variant={user.status === 'pending' ? 'secondary' : 'default'}>
-                            {user.status === 'pending' ? 'Pending' : 'Accepted'}
-                          </Badge>
-                          <Badge variant="outline">{user.access_level}</Badge>
-                        </div>
+            <div className="space-y-2">
+              <Label>Shared with</Label>
+              <div className="rounded-md border divide-y">
+                {selectedSSSP && sharedUsers[selectedSSSP.id]?.map((user, idx) => (
+                  <div key={idx} className="p-3 flex items-center justify-between text-sm">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        {user.email}
+                        {user.is_creator && (
+                          <Badge variant="outline" className="text-xs">Creator</Badge>
+                        )}
                       </div>
+                      <div className="flex gap-2">
+                        <Badge variant={user.status === 'pending' ? 'secondary' : 'default'}>
+                          {user.status === 'pending' ? 'Pending' : 'Accepted'}
+                        </Badge>
+                        <Badge variant="outline">{user.access_level}</Badge>
+                      </div>
+                    </div>
+                    {!user.is_creator && (
                       <div className="flex gap-2">
                         {user.status === 'pending' && (
                           <Button
@@ -544,11 +581,16 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    )}
+                  </div>
+                ))}
+                {selectedSSSP && (!sharedUsers[selectedSSSP.id] || sharedUsers[selectedSSSP.id].length === 0) && (
+                  <div className="p-3 text-sm text-muted-foreground">
+                    No users shared yet
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             <DialogFooter>
               <Button 
