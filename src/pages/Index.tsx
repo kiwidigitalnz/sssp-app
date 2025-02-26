@@ -98,12 +98,42 @@ const Index = () => {
         return [];
       }
 
-      console.log('[Index] Successfully fetched SSSPs:', {
-        count: data.length,
-        firstItem: data[0]
+      const transformedData: SSSP[] = data.map(item => ({
+        ...item,
+        monitoring_review: item.monitoring_review ? {
+          review_schedule: {
+            frequency: item.monitoring_review.review_schedule?.frequency || '',
+            last_review: item.monitoring_review.review_schedule?.last_review || null,
+            next_review: item.monitoring_review.review_schedule?.next_review || null,
+            responsible_person: item.monitoring_review.review_schedule?.responsible_person || null
+          },
+          kpis: item.monitoring_review.kpis || [],
+          corrective_actions: {
+            process: item.monitoring_review.corrective_actions?.process || '',
+            tracking_method: item.monitoring_review.corrective_actions?.tracking_method || '',
+            responsible_person: item.monitoring_review.corrective_actions?.responsible_person || null
+          },
+          audits: item.monitoring_review.audits || [],
+          worker_consultation: {
+            method: item.monitoring_review.worker_consultation?.method || '',
+            frequency: item.monitoring_review.worker_consultation?.frequency || '',
+            last_consultation: item.monitoring_review.worker_consultation?.last_consultation || null
+          },
+          review_triggers: item.monitoring_review.review_triggers || [],
+          documentation: {
+            storage_location: item.monitoring_review.documentation?.storage_location || '',
+            retention_period: item.monitoring_review.documentation?.retention_period || '',
+            access_details: item.monitoring_review.documentation?.access_details || ''
+          }
+        } : null
+      }));
+
+      console.log('[Index] Successfully transformed SSSPs:', {
+        count: transformedData.length,
+        firstItem: transformedData[0]
       });
       
-      return data as SSSP[];
+      return transformedData;
     },
     enabled: !!session?.user?.id,
     retry: 1,
