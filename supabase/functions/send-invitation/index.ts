@@ -4,12 +4,10 @@ import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-// Enhanced CORS headers with explicit methods and credentials
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, Authorization',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -21,29 +19,22 @@ interface EmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Log the incoming request details
   console.log(`[${new Date().toISOString()}] Received ${req.method} request`);
 
-  // Enhanced CORS preflight handling
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     console.log("Handling CORS preflight request");
     return new Response(null, {
       status: 204,
-      headers: {
-        ...corsHeaders,
-        'Content-Length': '0',
-      }
+      headers: corsHeaders
     });
   }
 
   try {
-    // Validate request method
     if (req.method !== "POST") {
-      console.error(`Invalid method: ${req.method}`);
-      throw new Error("Only POST requests are allowed");
+      throw new Error(`HTTP method ${req.method} is not allowed`);
     }
 
-    // Parse and validate request body
     const body: EmailRequest = await req.json();
     console.log("Request body:", JSON.stringify(body, null, 2));
 
@@ -60,7 +51,6 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Validation failed: ${validationErrors.join(", ")}`);
     }
 
-    // Send email with enhanced template
     const emailResponse = await resend.emails.send({
       from: "SSSP App <onboarding@resend.dev>",
       to: [to],
@@ -94,7 +84,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully:", emailResponse);
 
-    // Return success response with enhanced metadata
     return new Response(
       JSON.stringify({
         success: true,
@@ -114,7 +103,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error) {
-    // Enhanced error logging and response
     console.error("Error in send-invitation function:", {
       timestamp: new Date().toISOString(),
       error: error.message,
