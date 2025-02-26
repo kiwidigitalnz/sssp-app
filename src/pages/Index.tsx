@@ -74,6 +74,29 @@ const Index = () => {
     initializeAuth();
   }, [toast]);
 
+  // Fetch SSSPs for the current user
+  const { data: sssps, isLoading, error } = useQuery({
+    queryKey: ['sssps', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) throw new Error('User not authenticated');
+      
+      console.log('[Index] Fetching SSSPs for user:', session.user.id);
+      const { data, error } = await supabase
+        .from('sssps')
+        .select('*')
+        .eq('created_by', session.user.id);
+
+      if (error) {
+        console.error('[Index] Error fetching SSSPs:', error);
+        throw error;
+      }
+
+      console.log('[Index] Fetched SSSPs:', data);
+      return data as SSSP[];
+    },
+    enabled: !!session?.user?.id,
+  });
+
   // Show connection status if there's an error
   if (connectionStatus === false) {
     return (
@@ -104,16 +127,85 @@ const Index = () => {
     );
   }
 
-  // For now, let's just show a simple welcome message instead of trying to fetch SSSPs
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <WelcomeHeader />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-gray-900">Loading...</h2>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <WelcomeHeader />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-gray-900">Error Loading SSSPs</h2>
+            <p className="mt-2 text-gray-600">
+              {error instanceof Error ? error.message : 'An unexpected error occurred'}
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Calculate stats
+  const totalSssps = sssps?.length || 0;
+  const draftSssps = sssps?.filter(sssp => sssp.status === 'draft').length || 0;
+  const publishedSssps = sssps?.filter(sssp => sssp.status === 'published').length || 0;
+  const recentSssps = sssps?.filter(sssp => {
+    const date = new Date(sssp.updated_at);
+    const thirtyDaysAgo = addDays(new Date(), -30);
+    return date > thirtyDaysAgo;
+  }).length || 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <WelcomeHeader />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-900">Welcome!</h2>
-          <p className="mt-2 text-gray-600">
-            Connected to Supabase successfully. User: {session.user.email}
-          </p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatsCard
+            title="Total SSSPs"
+            value={totalSssps}
+            icon={FileText}
+            className="sm:col-span-1"
+          />
+          <StatsCard
+            title="Draft"
+            value={draftSssps}
+            icon={ClipboardCheck}
+            iconColor="text-yellow-500"
+            className="sm:col-span-1"
+          />
+          <StatsCard
+            title="Published"
+            value={publishedSssps}
+            icon={CheckCircle}
+            iconColor="text-green-500"
+            className="sm:col-span-1"
+          />
+          <StatsCard
+            title="Updated (30d)"
+            value={recentSssps}
+            icon={AlertTriangle}
+            iconColor="text-blue-500"
+            className="sm:col-span-1"
+          />
+        </div>
+
+        {/* SSSP Table */}
+        <div className="mt-8">
+          <SSSPTable ssspList={sssps || []} />
         </div>
       </main>
     </div>
