@@ -28,40 +28,61 @@ interface SSSPQueryResult {
 const fetchSSSPs = async () => {
   console.log('[fetchSSSPs] ====== Starting new fetch attempt ======');
   
+  // Test direct table access first
+  try {
+    const { count, error: countError } = await supabase
+      .from('sssps')
+      .select('*', { count: 'exact', head: true });
+    
+    console.log('[fetchSSSPs] Table access test:', {
+      success: !countError,
+      count,
+      error: countError
+    });
+  } catch (e) {
+    console.error('[fetchSSSPs] Table access test failed:', e);
+  }
+
   const { data: { user } } = await supabase.auth.getUser();
-  console.log('[fetchSSSPs] Current user details:', {
+  console.log('[fetchSSSPs] Auth state:', {
     id: user?.id,
     email: user?.email,
     aud: user?.aud,
-    role: user?.role
+    role: user?.role,
+    session: !!user
   });
-  
+
   if (!user) {
     console.log('[fetchSSSPs] No authenticated user found');
     throw new Error('Authentication required');
   }
 
-  console.log('[fetchSSSPs] Attempting database query...');
-  
+  // Test simplified query first
   try {
+    const { data: testData, error: testError } = await supabase
+      .from('sssps')
+      .select('id')
+      .limit(1);
+
+    console.log('[fetchSSSPs] Simple query test:', {
+      success: !testError,
+      hasData: !!testData?.length,
+      error: testError
+    });
+  } catch (e) {
+    console.error('[fetchSSSPs] Simple query test failed:', e);
+  }
+
+  // Main query
+  try {
+    console.log('[fetchSSSPs] Attempting main query...');
     const { data: sssps, error } = await supabase
       .from('sssps')
-      .select(`
-        id,
-        title,
-        status,
-        created_at,
-        updated_at,
-        visitor_rules,
-        company_name,
-        created_by,
-        modified_by,
-        version
-      `)
+      .select()
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[fetchSSSPs] Database query error:', {
+      console.error('[fetchSSSPs] Main query error:', {
         code: error.code,
         message: error.message,
         details: error.details,
@@ -70,10 +91,10 @@ const fetchSSSPs = async () => {
       throw error;
     }
 
-    console.log('[fetchSSSPs] Raw query results:', {
+    console.log('[fetchSSSPs] Query succeeded:', {
       count: sssps?.length || 0,
-      firstItem: sssps?.[0],
-      userIdMatch: sssps?.some(s => s.created_by === user.id)
+      hasData: !!sssps?.length,
+      firstItem: sssps?.[0]?.id
     });
 
     const transformedSssps = (sssps || []).map(item => ({
@@ -81,10 +102,9 @@ const fetchSSSPs = async () => {
       visitor_rules: item.visitor_rules || undefined
     }));
     
-    console.log('[fetchSSSPs] ====== Fetch attempt completed ======');
     return transformedSssps;
   } catch (error) {
-    console.error('[fetchSSSPs] Detailed error:', {
+    console.error('[fetchSSSPs] Fatal error:', {
       name: error.name,
       message: error.message,
       stack: error.stack,
