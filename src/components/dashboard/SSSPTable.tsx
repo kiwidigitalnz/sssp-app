@@ -178,10 +178,10 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     setIsSubmitting(true);
     
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       console.log('Current user:', user);
       
-      if (userError || !user) {
+      if (!user) {
         throw new Error("You must be logged in to share SSSPs");
       }
 
@@ -191,9 +191,14 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         .eq('sssp_id', selectedSSSP.id)
         .eq('email', shareForm.email)
         .eq('status', 'pending')
-        .single();
+        .maybeSingle();
 
       console.log('Existing invitation check:', { existingInvite, checkError });
+
+      if (checkError) {
+        console.error('Error checking existing invitation:', checkError);
+        throw new Error("Failed to check existing invitations");
+      }
 
       if (existingInvite) {
         toast({
@@ -219,8 +224,9 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
       console.log('Invitation creation:', { invitation, inviteError });
 
-      if (inviteError || !invitation) {
-        throw inviteError || new Error("Failed to create invitation");
+      if (inviteError) {
+        console.error('Error creating invitation:', inviteError);
+        throw new Error("Failed to create invitation");
       }
 
       const toastId = toast({
@@ -241,11 +247,12 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       console.log('Edge function response:', { functionData, functionError });
 
       if (functionError) {
-        await supabase
-          .from('sssp_invitations')
-          .delete()
-          .eq('id', invitation.id);
-          
+        if (invitation) {
+          await supabase
+            .from('sssp_invitations')
+            .delete()
+            .eq('id', invitation.id);
+        }
         throw functionError;
       }
 
