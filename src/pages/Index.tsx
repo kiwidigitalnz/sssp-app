@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +24,88 @@ interface SSSPQueryResult {
   created_by: string;
   modified_by: string;
   version: number;
+  monitoring_review: {
+    review_schedule?: {
+      frequency?: string;
+      last_review?: string | null;
+      next_review?: string | null;
+      responsible_person?: string | null;
+    };
+    kpis?: any[];
+    corrective_actions?: {
+      process?: string;
+      tracking_method?: string;
+      responsible_person?: string | null;
+    };
+    audits?: any[];
+    worker_consultation?: {
+      method?: string;
+      frequency?: string;
+      last_consultation?: string | null;
+    };
+    review_triggers?: any[];
+    documentation?: {
+      storage_location?: string;
+      retention_period?: string;
+      access_details?: string;
+    };
+  } | null;
 }
+
+const transformMonitoringReview = (raw: any) => {
+  if (!raw) return null;
+  
+  const defaultReview = {
+    review_schedule: {
+      frequency: '',
+      last_review: null,
+      next_review: null,
+      responsible_person: null
+    },
+    kpis: [],
+    corrective_actions: {
+      process: '',
+      tracking_method: '',
+      responsible_person: null
+    },
+    audits: [],
+    worker_consultation: {
+      method: '',
+      frequency: '',
+      last_consultation: null
+    },
+    review_triggers: [],
+    documentation: {
+      storage_location: '',
+      retention_period: '',
+      access_details: ''
+    }
+  };
+
+  // If raw is a string (JSON), parse it
+  const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  
+  return {
+    ...defaultReview,
+    ...data,
+    review_schedule: {
+      ...defaultReview.review_schedule,
+      ...(data?.review_schedule || {})
+    },
+    corrective_actions: {
+      ...defaultReview.corrective_actions,
+      ...(data?.corrective_actions || {})
+    },
+    worker_consultation: {
+      ...defaultReview.worker_consultation,
+      ...(data?.worker_consultation || {})
+    },
+    documentation: {
+      ...defaultReview.documentation,
+      ...(data?.documentation || {})
+    }
+  };
+};
 
 const fetchSSSPs = async () => {
   console.log('[fetchSSSPs] ====== Starting new fetch attempt ======');
@@ -99,10 +181,11 @@ const fetchSSSPs = async () => {
 
     const transformedSssps = (sssps || []).map(item => ({
       ...item,
-      visitor_rules: item.visitor_rules || undefined
+      visitor_rules: item.visitor_rules || undefined,
+      monitoring_review: transformMonitoringReview(item.monitoring_review)
     }));
     
-    return transformedSssps;
+    return transformedSssps as SSSP[];
   } catch (error) {
     console.error('[fetchSSSPs] Fatal error:', {
       name: error.name,
