@@ -188,8 +188,25 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw new Error("You must be logged in to share SSSPs");
       }
 
+      const { data: existingAccess } = await supabase
+        .from('sssp_access')
+        .select('id')
+        .eq('sssp_id', selectedSSSP.id)
+        .eq('email', shareForm.email)
+        .maybeSingle();
+
+      if (existingAccess) {
+        toast({
+          variant: "destructive",
+          title: "User Already Has Access",
+          description: "This user already has access to this SSSP",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data: existingInvite, error: checkError } = await supabase
-        .from('sssp_invitation_details')
+        .from('sssp_invitations')
         .select('id')
         .eq('sssp_id', selectedSSSP.id)
         .eq('email', shareForm.email)
@@ -197,6 +214,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         .maybeSingle();
 
       if (checkError) {
+        console.error('Check error:', checkError);
         throw new Error("Failed to check existing invitations");
       }
 
@@ -223,7 +241,12 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         .single();
 
       if (inviteError) {
-        throw new Error("Failed to create invitation");
+        console.error('Invite error:', inviteError);
+        throw new Error(inviteError.message || "Failed to create invitation");
+      }
+
+      if (!invitation) {
+        throw new Error("Failed to create invitation - no data returned");
       }
 
       const { error: functionError } = await supabase.functions.invoke('send-invitation', {
@@ -264,6 +287,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       });
 
       setShareForm({ email: '', accessLevel: 'view' });
+      setShareDialogOpen(false);
     } catch (error: any) {
       console.error('Share error:', error);
       toast({
