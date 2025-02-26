@@ -26,48 +26,71 @@ interface SSSPQueryResult {
 }
 
 const fetchSSSPs = async () => {
-  console.log('[fetchSSSPs] Starting fetch...');
+  console.log('[fetchSSSPs] ====== Starting new fetch attempt ======');
   
   const { data: { user } } = await supabase.auth.getUser();
-  console.log('[fetchSSSPs] Current user:', user?.email);
+  console.log('[fetchSSSPs] Current user details:', {
+    id: user?.id,
+    email: user?.email,
+    aud: user?.aud,
+    role: user?.role
+  });
   
   if (!user) {
     console.log('[fetchSSSPs] No authenticated user found');
     throw new Error('Authentication required');
   }
 
-  // Use a single query with OR condition to get both owned and shared SSSPs
-  const { data: sssps, error } = await supabase
-    .from('sssps')
-    .select(`
-      id,
-      title,
-      status,
-      created_at,
-      updated_at,
-      visitor_rules,
-      company_name,
-      created_by,
-      modified_by,
-      version
-    `)
-    .order('created_at', { ascending: false });
+  console.log('[fetchSSSPs] Attempting database query...');
+  
+  try {
+    const { data: sssps, error } = await supabase
+      .from('sssps')
+      .select(`
+        id,
+        title,
+        status,
+        created_at,
+        updated_at,
+        visitor_rules,
+        company_name,
+        created_by,
+        modified_by,
+        version
+      `)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('[fetchSSSPs] Error fetching SSSPs:', error);
+    if (error) {
+      console.error('[fetchSSSPs] Database query error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+      throw error;
+    }
+
+    console.log('[fetchSSSPs] Raw query results:', {
+      count: sssps?.length || 0,
+      firstItem: sssps?.[0],
+      userIdMatch: sssps?.some(s => s.created_by === user.id)
+    });
+
+    const transformedSssps = (sssps || []).map(item => ({
+      ...item,
+      visitor_rules: item.visitor_rules || undefined
+    }));
+    
+    console.log('[fetchSSSPs] ====== Fetch attempt completed ======');
+    return transformedSssps;
+  } catch (error) {
+    console.error('[fetchSSSPs] Detailed error:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    });
     throw error;
   }
-
-  // Transform the data to match SSSP type
-  const transformToSSSP = (item: SSSPQueryResult): SSSP => ({
-    ...item,
-    visitor_rules: item.visitor_rules || undefined
-  });
-
-  const transformedSssps = (sssps || []).map(transformToSSSP);
-  
-  console.log('[fetchSSSPs] Success! Fetched data:', transformedSssps);
-  return transformedSssps;
 };
 
 const Index = () => {
