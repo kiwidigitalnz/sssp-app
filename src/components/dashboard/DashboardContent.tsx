@@ -40,15 +40,20 @@ export function DashboardContent({ session }: DashboardContentProps) {
 
       return data || [];
     },
-    onError: (error) => {
-      console.error('Query error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load SSSPs"
-      });
-    }
+    meta: {
+      errorMessage: "Failed to load SSSPs"
+    },
+    retry: 1
   });
+
+  // Handle error state with toast
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "Failed to load SSSPs"
+    });
+  }
 
   if (isLoading) {
     return (
