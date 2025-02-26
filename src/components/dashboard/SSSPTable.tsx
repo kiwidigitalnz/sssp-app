@@ -1,20 +1,10 @@
+
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { PlusCircle, Share2, Copy, Printer, Trash2, Users } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import type { SSSP } from "@/types/sssp";
-import { ShareSSSP } from "@/components/SSSPForm/ShareSSSP";
-import { useAuth } from "@/contexts/AuthContext";
+import { Copy, Share2, FileText, Trash2, MoreHorizontal } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,207 +15,127 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { logActivity } from "@/utils/activityLogging";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
-interface SSSPTableProps {
-  ssspList: SSSP[];
+interface SSSP {
+  id: string;
+  title: string;
+  description: string;
+  company_name: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  version: number;
 }
 
-export function SSSPTable({ ssspList }: SSSPTableProps) {
-  const navigate = useNavigate();
+interface SSSPTableProps {
+  sssps: SSSP[];
+  onRefresh: () => void;
+}
+
+export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [ssspToDelete, setSsspToDelete] = useState<string | null>(null);
-  const [ssspToClone, setSsspToClone] = useState<SSSP | null>(null);
-  const [isCloning, setIsCloning] = useState(false);
-  const isMobile = useIsMobile();
-  const { user, session } = useAuth();
+  const navigate = useNavigate();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedSSSP, setSelectedSSSP] = useState<SSSP | null>(null);
 
-  const { data: sharingInfo, refetch: refetchSharing } = useQuery({
-    queryKey: ['sssp-sharing'],
-    queryFn: async () => {
-      if (!session?.access_token) {
-        throw new Error("Authentication required");
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('sssp_access')
-          .select('sssp_id, user_id')
-          .in('sssp_id', ssspList.map(sssp => sssp.id));
-        
-        if (error) throw error;
-        
-        const counts: Record<string, number> = {};
-        data?.forEach(access => {
-          counts[access.sssp_id] = (counts[access.sssp_id] || 0) + 1;
-        });
-        
-        return counts;
-      } catch (error) {
-        console.error('Error fetching sharing info:', error);
-        return {};
-      }
-    },
-    enabled: Boolean(session?.access_token) && ssspList.length > 0,
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
-    retry: 1
-  });
-
+  // Clone SSSP
   const handleClone = async (sssp: SSSP) => {
-    if (!user || !session?.access_token) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You must be logged in to clone an SSSP",
-      });
-      navigate('/auth');
-      return;
-    }
-
     try {
-      setIsCloning(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
-      const newSSPP = {
-        title: `Clone - ${sssp.title}`,
-        company_name: sssp.company_name,
-        status: 'draft' as const,
-        created_by: user.id,
-        modified_by: user.id,
-        version: 1,
-        description: sssp.description,
-        company_address: sssp.company_address,
-        company_contact_name: sssp.company_contact_name,
-        company_contact_email: sssp.company_contact_email,
-        company_contact_phone: sssp.company_contact_phone,
-        services: sssp.services,
-        locations: sssp.locations,
-        considerations: sssp.considerations,
-        pcbu_duties: sssp.pcbu_duties,
-        site_supervisor_duties: sssp.site_supervisor_duties,
-        worker_duties: sssp.worker_duties,
-        contractor_duties: sssp.contractor_duties,
-        emergency_plan: sssp.emergency_plan,
-        assembly_points: sssp.assembly_points,
-        emergency_equipment: sssp.emergency_equipment,
-        incident_reporting: sssp.incident_reporting,
-        emergency_contacts: sssp.emergency_contacts,
-        competency_requirements: sssp.competency_requirements,
-        training_records: sssp.training_records,
-        required_training: sssp.required_training,
-        drug_and_alcohol: sssp.drug_and_alcohol,
-        fatigue_management: sssp.fatigue_management,
-        ppe: sssp.ppe,
-        mobile_phone: sssp.mobile_phone,
-        entry_exit_procedures: sssp.entry_exit_procedures,
-        speed_limits: sssp.speed_limits,
-        parking_rules: sssp.parking_rules,
-        site_specific_ppe: sssp.site_specific_ppe,
-        communication_methods: sssp.communication_methods,
-        toolbox_meetings: sssp.toolbox_meetings,
-        reporting_procedures: sssp.reporting_procedures,
-        communication_protocols: sssp.communication_protocols,
-        visitor_rules: sssp.visitor_rules,
-        hazards: sssp.hazards,
-        meetings_schedule: sssp.meetings_schedule,
-        monitoring_review: sssp.monitoring_review ? {
-          review_schedule: {
-            frequency: sssp.monitoring_review.review_schedule?.frequency || '',
-            last_review: null,
-            next_review: null,
-            responsible_person: sssp.monitoring_review.review_schedule?.responsible_person
-          },
-          kpis: sssp.monitoring_review.kpis || [],
-          corrective_actions: {
-            process: sssp.monitoring_review.corrective_actions?.process || '',
-            tracking_method: sssp.monitoring_review.corrective_actions?.tracking_method || '',
-            responsible_person: sssp.monitoring_review.corrective_actions?.responsible_person
-          },
-          audits: sssp.monitoring_review.audits || [],
-          worker_consultation: {
-            method: sssp.monitoring_review.worker_consultation?.method || '',
-            frequency: sssp.monitoring_review.worker_consultation?.frequency || '',
-            last_consultation: null
-          },
-          review_triggers: sssp.monitoring_review.review_triggers || [],
-          documentation: {
-            storage_location: sssp.monitoring_review.documentation?.storage_location || '',
-            retention_period: sssp.monitoring_review.documentation?.retention_period || '',
-            access_details: sssp.monitoring_review.documentation?.access_details || ''
-          }
-        } : null,
-        start_date: sssp.start_date,
-        end_date: sssp.end_date,
-        version_history: []
-      };
-
-      const { data, error } = await supabase
+      // Fetch full SSSP data
+      const { data: originalSSSP, error: fetchError } = await supabase
         .from('sssps')
-        .insert(newSSPP)
+        .select('*')
+        .eq('id', sssp.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Create new SSSP with cloned data
+      const { data: newSSSP, error: insertError } = await supabase
+        .from('sssps')
+        .insert({
+          ...originalSSSP,
+          id: undefined, // Let Supabase generate a new ID
+          title: `${originalSSSP.title} (Copy)`,
+          created_by: user.id,
+          modified_by: user.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          version: 1,
+          status: 'draft'
+        })
         .select()
         .single();
 
-      if (error) throw error;
-
-      // Log the clone activity
-      await logActivity(data.id, 'cloned', user.id, {
-        source_sssp_id: sssp.id,
-        source_title: sssp.title
-      });
+      if (insertError) throw insertError;
 
       toast({
-        title: "SSSP Cloned",
-        description: "The SSSP has been cloned successfully.",
+        title: "Success",
+        description: "SSSP cloned successfully",
       });
 
-      queryClient.invalidateQueries({ queryKey: ['sssps'] });
-      
-      if (data) {
-        navigate(`/edit-sssp/${data.id}`);
-      }
+      onRefresh();
     } catch (error) {
-      console.error('Error cloning SSSP:', error);
+      console.error('Clone error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to clone SSSP. Please try again.",
+        description: "Failed to clone SSSP",
       });
-    } finally {
-      setIsCloning(false);
-      setSsspToClone(null);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!user) return;
-    
+  // Share SSSP
+  const handleShare = (sssp: SSSP) => {
+    setSelectedSSSP(sssp);
+    setShareDialogOpen(true);
+  };
+
+  // Print to PDF
+  const handlePrintToPDF = async (sssp: SSSP) => {
     try {
-      // Log the delete activity before actually deleting
-      await logActivity(id, 'deleted', user.id);
+      // Navigate to a print-friendly version of the SSSP
+      window.open(`/sssp/${sssp.id}/print`, '_blank');
       
+      toast({
+        title: "Success",
+        description: "Preparing PDF for download...",
+      });
+    } catch (error) {
+      console.error('PDF error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate PDF",
+      });
+    }
+  };
+
+  // Delete SSSP
+  const handleDelete = async (sssp: SSSP) => {
+    try {
       const { error } = await supabase
         .from('sssps')
         .delete()
-        .eq('id', id);
+        .eq('id', sssp.id);
 
       if (error) throw error;
 
       toast({
-        title: "SSSP deleted",
-        description: "The SSSP has been successfully deleted",
+        title: "Success",
+        description: "SSSP deleted successfully",
       });
 
-      queryClient.invalidateQueries({ queryKey: ['sssps'] });
+      setDeleteDialogOpen(false);
+      setSelectedSSSP(null);
+      onRefresh();
     } catch (error) {
       console.error('Delete error:', error);
       toast({
@@ -234,212 +144,111 @@ export function SSSPTable({ ssspList }: SSSPTableProps) {
         description: "Failed to delete SSSP",
       });
     }
-    setSsspToDelete(null);
   };
 
-  const handleExportPDF = async (sssp: SSSP) => {
-    toast({
-      title: "Coming Soon",
-      description: "PDF export functionality will be available in the next update",
-    });
+  const confirmDelete = (sssp: SSSP) => {
+    setSelectedSSSP(sssp);
+    setDeleteDialogOpen(true);
   };
 
   return (
-    <Card className="bg-white shadow-sm">
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-4">
-        <CardTitle>Site-Specific Safety Plans</CardTitle>
-        <Button 
-          onClick={() => navigate("/create-sssp")}
-          className="w-full sm:w-auto transition-all hover:scale-105"
-        >
-          <PlusCircle className="mr-2 h-5 w-5" />
-          Create New SSSP
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <div className="inline-block min-w-full align-middle">
-            <div className="rounded-lg border bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="min-w-[140px] font-semibold">Title</TableHead>
-                    <TableHead className="hidden sm:table-cell font-semibold">Created Date</TableHead>
-                    <TableHead className="font-semibold w-[100px]">Status</TableHead>
-                    <TableHead className="hidden sm:table-cell font-semibold">Shared With</TableHead>
-                    <TableHead className="hidden sm:table-cell font-semibold">Last Modified</TableHead>
-                    <TableHead className="text-right font-semibold w-[140px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ssspList.map((sssp) => (
-                    <TableRow 
-                      key={sssp.id} 
-                      className="transition-colors hover:bg-muted/50 border-t"
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Company</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Version</TableHead>
+            <TableHead>Last Updated</TableHead>
+            <TableHead className="w-[80px]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sssps.map((sssp) => (
+            <TableRow key={sssp.id} className="cursor-pointer">
+              <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.title}</TableCell>
+              <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.company_name}</TableCell>
+              <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.status}</TableCell>
+              <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.version}</TableCell>
+              <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>
+                {new Date(sssp.updated_at).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleClone(sssp)}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Clone
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShare(sssp)}>
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handlePrintToPDF(sssp)}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Print to PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => confirmDelete(sssp)}
                     >
-                      <TableCell className="font-medium">
-                        <div className="flex flex-col">
-                          <button 
-                            onClick={() => navigate(`/edit-sssp/${sssp.id}`)}
-                            className="text-left hover:underline truncate max-w-[200px]"
-                          >
-                            {sssp.title}
-                          </button>
-                          {isMobile && (
-                            <span className="text-xs text-muted-foreground mt-1">
-                              {new Date(sssp.created_at).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {new Date(sssp.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            sssp.status === "draft"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {sssp.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {sharingInfo && sharingInfo[sssp.id] ? (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span>{sharingInfo[sssp.id]} users</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Not shared</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {new Date(sssp.updated_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right p-2">
-                        <TooltipProvider>
-                          <div className="flex items-center justify-end gap-2">
-                            <ShareSSSP ssspId={sssp.id} onShare={() => refetchSharing()}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8 p-0 flex items-center justify-center"
-                                  >
-                                    <Share2 className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Share SSSP</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </ShareSSSP>
-
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => setSsspToClone(sssp)}
-                                  className="h-8 w-8 p-0 flex items-center justify-center"
-                                  disabled={isCloning}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Clone SSSP</p>
-                              </TooltipContent>
-                            </Tooltip>
-
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleExportPDF(sssp)}
-                                  className="h-8 w-8 p-0 flex items-center justify-center"
-                                >
-                                  <Printer className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Export as PDF</p>
-                              </TooltipContent>
-                            </Tooltip>
-
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => setSsspToDelete(sssp.id)}
-                                  className="h-8 w-8 p-0 flex items-center justify-center text-destructive hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Delete SSSP</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </TooltipProvider>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-
-      {/* Clone Confirmation Dialog */}
-      <AlertDialog open={!!ssspToClone} onOpenChange={() => setSsspToClone(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clone SSSP</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will create a new copy of the SSSP with all its data. The new SSSP will be in draft status.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => ssspToClone && handleClone(ssspToClone)}
-              disabled={isCloning}
-            >
-              {isCloning ? "Cloning..." : "Clone"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!ssspToDelete} onOpenChange={() => setSsspToDelete(null)}>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the SSSP.
+              This action cannot be undone. This will permanently delete the SSSP
+              "{selectedSSSP?.title}" and remove all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => ssspToDelete && handleDelete(ssspToDelete)}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => selectedSSSP && handleDelete(selectedSSSP)}
             >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+
+      {/* Share Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share SSSP</DialogTitle>
+            <DialogDescription>
+              Share access to "{selectedSSSP?.title}" with other users.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p>Sharing functionality will be implemented in the next phase.</p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShareDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
