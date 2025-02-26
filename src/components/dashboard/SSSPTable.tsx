@@ -1,9 +1,8 @@
-
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Copy, Share2, FileText, Trash2, MoreHorizontal, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Copy, Share2, FileText, Trash2, MoreHorizontal, Loader2, Users } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -21,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 interface SSSP {
   id: string;
@@ -43,6 +43,12 @@ interface SSSPTableProps {
   onRefresh: () => void;
 }
 
+interface SharedUser {
+  email: string;
+  access_level: string;
+  status: string;
+}
+
 export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -54,6 +60,28 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     accessLevel: 'view'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sharedUsers, setSharedUsers] = useState<Record<string, SharedUser[]>>({});
+
+  useEffect(() => {
+    const fetchSharedUsers = async () => {
+      const sharedData: Record<string, SharedUser[]> = {};
+      
+      for (const sssp of sssps) {
+        const { data: invitations, error: invitationError } = await supabase
+          .from('sssp_invitations')
+          .select('email, access_level, status')
+          .eq('sssp_id', sssp.id);
+
+        if (!invitationError && invitations) {
+          sharedData[sssp.id] = invitations;
+        }
+      }
+      
+      setSharedUsers(sharedData);
+    };
+
+    fetchSharedUsers();
+  }, [sssps]);
 
   const handleClone = async (sssp: SSSP) => {
     try {
@@ -109,7 +137,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   };
 
   const handleShareSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault();
     
     if (!selectedSSSP || !shareForm.email) {
       toast({
@@ -123,14 +151,12 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     setIsSubmitting(true);
     
     try {
-      // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !user) {
         throw new Error("You must be logged in to share SSSPs");
       }
 
-      // Check for existing invitation
       const { data: existingInvite, error: checkError } = await supabase
         .from('sssp_invitations')
         .select('*')
@@ -149,7 +175,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         return;
       }
 
-      // Create invitation record
       const { error: inviteError } = await supabase
         .from('sssp_invitations')
         .insert({
@@ -164,13 +189,11 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw inviteError;
       }
 
-      // Show sending status
       const sendingToast = toast({
         title: "Sending Invitation",
         description: "Please wait while we send the invitation...",
       });
 
-      // Send invitation email
       const { error: functionError } = await supabase.functions.invoke('send-invitation', {
         body: {
           to: shareForm.email,
@@ -181,7 +204,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       });
 
       if (functionError) {
-        // Clean up the invitation if email fails
         await supabase
           .from('sssp_invitations')
           .delete()
@@ -191,16 +213,15 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw functionError;
       }
 
-      // Close sending toast and show success
       toast({
         title: "✅ Invitation Sent",
         description: `Successfully shared with ${shareForm.email}`,
       });
 
-      // Reset form and close dialog
       setShareForm({ email: '', accessLevel: 'view' });
       setShareDialogOpen(false);
       setSelectedSSSP(null);
+      onRefresh();
 
     } catch (error: any) {
       console.error('Share error:', error);
@@ -273,6 +294,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
             <TableHead>Company</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Version</TableHead>
+            <TableHead>Shared With</TableHead>
             <TableHead>Last Updated</TableHead>
             <TableHead className="w-[80px]">Actions</TableHead>
           </TableRow>
@@ -284,6 +306,18 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.company_name}</TableCell>
               <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.status}</TableCell>
               <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.version}</TableCell>
+              <TableCell>
+                {sharedUsers[sssp.id]?.length > 0 ? (
+                  <div className="flex gap-1 items-center">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      {sharedUsers[sssp.id].length} user{sharedUsers[sssp.id].length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Not shared</span>
+                )}
+              </TableCell>
               <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>
                 {new Date(sssp.updated_at).toLocaleDateString()}
               </TableCell>
@@ -368,6 +402,21 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                 </SelectContent>
               </Select>
             </div>
+            {selectedSSSP && sharedUsers[selectedSSSP.id]?.length > 0 && (
+              <div className="space-y-2">
+                <Label>Currently shared with</Label>
+                <div className="rounded-md border p-4 space-y-2">
+                  {sharedUsers[selectedSSSP.id].map((user, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-sm">
+                      <span>{user.email}</span>
+                      <Badge variant={user.status === 'pending' ? 'secondary' : 'default'}>
+                        {user.status === 'pending' ? 'Pending' : user.access_level}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="text-sm text-muted-foreground">
               <p>The user will receive an email invitation to collaborate on this SSSP.</p>
               {shareForm.accessLevel === 'edit' && (
