@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,8 +36,8 @@ const fetchSSSPs = async () => {
     throw new Error('Authentication required');
   }
 
-  // First fetch SSSPs directly owned by the user
-  const { data: ownedSssps, error: ownedError } = await supabase
+  // Use a single query with OR condition to get both owned and shared SSSPs
+  const { data: sssps, error } = await supabase
     .from('sssps')
     .select(`
       id,
@@ -52,42 +51,12 @@ const fetchSSSPs = async () => {
       modified_by,
       version
     `)
-    .eq('created_by', user.id)
     .order('created_at', { ascending: false });
 
-  if (ownedError) {
-    console.error('[fetchSSSPs] Error fetching owned SSSPs:', ownedError);
-    throw ownedError;
+  if (error) {
+    console.error('[fetchSSSPs] Error fetching SSSPs:', error);
+    throw error;
   }
-
-  // Then fetch SSSPs the user has access to via sssp_access
-  const { data: sharedSssps, error: sharedError } = await supabase
-    .from('sssp_access')
-    .select(`
-      sssp:sssps (
-        id,
-        title,
-        status,
-        created_at,
-        updated_at,
-        visitor_rules,
-        company_name,
-        created_by,
-        modified_by,
-        version
-      )
-    `)
-    .eq('user_id', user.id);
-
-  if (sharedError) {
-    console.error('[fetchSSSPs] Error fetching shared SSSPs:', sharedError);
-    throw sharedError;
-  }
-
-  // Combine and deduplicate the results
-  const sharedSsspList = sharedSssps
-    .map(item => item.sssp)
-    .filter((sssp): sssp is NonNullable<typeof sssp> => sssp !== null);
 
   // Transform the data to match SSSP type
   const transformToSSSP = (item: SSSPQueryResult): SSSP => ({
@@ -95,15 +64,10 @@ const fetchSSSPs = async () => {
     visitor_rules: item.visitor_rules || undefined
   });
 
-  const allSssps = [
-    ...(ownedSssps || []).map(transformToSSSP),
-    ...sharedSsspList.map(transformToSSSP)
-  ];
+  const transformedSssps = (sssps || []).map(transformToSSSP);
   
-  const uniqueSssps = Array.from(new Map(allSssps.map(item => [item.id, item])).values());
-  
-  console.log('[fetchSSSPs] Success! Combined data:', uniqueSssps);
-  return uniqueSssps;
+  console.log('[fetchSSSPs] Success! Fetched data:', transformedSssps);
+  return transformedSssps;
 };
 
 const Index = () => {
