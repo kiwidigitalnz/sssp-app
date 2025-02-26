@@ -1,4 +1,3 @@
-
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 interface SSSP {
   id: string;
@@ -55,13 +55,11 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Clone SSSP
   const handleClone = async (sssp: SSSP) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch full SSSP data
       const { data: originalSSSP, error: fetchError } = await supabase
         .from('sssps')
         .select('*')
@@ -70,12 +68,11 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
       if (fetchError) throw fetchError;
 
-      // Create new SSSP with cloned data
       const { data: newSSSP, error: insertError } = await supabase
         .from('sssps')
         .insert({
           ...originalSSSP,
-          id: undefined, // Let Supabase generate a new ID
+          id: undefined,
           title: `${originalSSSP.title} (Copy)`,
           created_by: user.id,
           modified_by: user.id,
@@ -105,7 +102,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     }
   };
 
-  // Share SSSP
   const handleShare = (sssp: SSSP) => {
     setSelectedSSSP(sssp);
     setShareDialogOpen(true);
@@ -120,7 +116,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Check if invitation already exists
       const { data: existingInvite } = await supabase
         .from('sssp_invitations')
         .select('*')
@@ -138,7 +133,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         return;
       }
 
-      // Create new invitation
       const { error: inviteError } = await supabase
         .from('sssp_invitations')
         .insert({
@@ -151,9 +145,27 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
       if (inviteError) throw inviteError;
 
+      const response = await fetch('/api/send-invitation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          to: shareForm.email,
+          ssspTitle: selectedSSSP.title,
+          accessLevel: shareForm.accessLevel,
+          inviterEmail: user.email,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send invitation email');
+      }
+
       toast({
-        title: "Success",
-        description: "Invitation sent successfully",
+        title: "Invitation Sent",
+        description: `An invitation has been sent to ${shareForm.email}`,
       });
 
       setShareDialogOpen(false);
@@ -162,18 +174,16 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       console.error('Share error:', error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to send invitation",
+        title: "Error Sending Invitation",
+        description: "There was a problem sending the invitation. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Print to PDF
   const handlePrintToPDF = async (sssp: SSSP) => {
     try {
-      // Navigate to a print-friendly version of the SSSP
       window.open(`/sssp/${sssp.id}/print`, '_blank');
       
       toast({
@@ -190,7 +200,11 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     }
   };
 
-  // Delete SSSP
+  const confirmDelete = (sssp: SSSP) => {
+    setSelectedSSSP(sssp);
+    setDeleteDialogOpen(true);
+  };
+
   const handleDelete = async (sssp: SSSP) => {
     try {
       const { error } = await supabase
@@ -216,11 +230,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         description: "Failed to delete SSSP",
       });
     }
-  };
-
-  const confirmDelete = (sssp: SSSP) => {
-    setSelectedSSSP(sssp);
-    setDeleteDialogOpen(true);
   };
 
   return (
@@ -282,7 +291,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         </TableBody>
       </Table>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -304,7 +312,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Share Dialog */}
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -341,6 +348,14 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                 </SelectContent>
               </Select>
             </div>
+            <div className="text-sm text-muted-foreground">
+              <p>The user will receive an email invitation to collaborate on this SSSP.</p>
+              {shareForm.accessLevel === 'edit' && (
+                <p className="mt-2 text-amber-600">
+                  ⚠️ Edit access will allow the user to make changes to this SSSP.
+                </p>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShareDialogOpen(false)}>
@@ -350,7 +365,14 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               onClick={handleShareSubmit}
               disabled={!shareForm.email || isSubmitting}
             >
-              Share
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Share"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
