@@ -74,6 +74,7 @@ export interface SSSP {
   end_date?: string;
   version: number;
   version_history?: any[];
+  user_id?: string | null;
   template_version?: {
     version: string;
     metadata: any;
