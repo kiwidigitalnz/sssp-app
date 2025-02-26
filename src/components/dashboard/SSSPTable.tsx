@@ -175,7 +175,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         return;
       }
 
-      const { error: inviteError } = await supabase
+      const { data: invitation, error: inviteError } = await supabase
         .from('sssp_invitations')
         .insert({
           sssp_id: selectedSSSP.id,
@@ -183,10 +183,12 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
           access_level: shareForm.accessLevel,
           invited_by: user.id,
           status: 'pending'
-        });
+        })
+        .select()
+        .single();
 
-      if (inviteError) {
-        throw inviteError;
+      if (inviteError || !invitation) {
+        throw inviteError || new Error("Failed to create invitation");
       }
 
       const sendingToast = toast({
@@ -198,6 +200,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         body: {
           to: shareForm.email,
           ssspTitle: selectedSSSP.title,
+          sssp_id: selectedSSSP.id,
           accessLevel: shareForm.accessLevel,
           inviterEmail: user.email,
         },
@@ -207,8 +210,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         await supabase
           .from('sssp_invitations')
           .delete()
-          .eq('sssp_id', selectedSSSP.id)
-          .eq('email', shareForm.email);
+          .eq('id', invitation.id);
           
         throw functionError;
       }
@@ -217,6 +219,18 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         title: "✅ Invitation Sent",
         description: `Successfully shared with ${shareForm.email}`,
       });
+
+      const { data: updatedInvitations } = await supabase
+        .from('sssp_invitations')
+        .select('email, access_level, status')
+        .eq('sssp_id', selectedSSSP.id);
+
+      if (updatedInvitations) {
+        setSharedUsers(prev => ({
+          ...prev,
+          [selectedSSSP.id]: updatedInvitations
+        }));
+      }
 
       setShareForm({ email: '', accessLevel: 'view' });
       setShareDialogOpen(false);
