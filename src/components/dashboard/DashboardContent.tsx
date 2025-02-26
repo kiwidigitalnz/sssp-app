@@ -23,6 +23,8 @@ export function DashboardContent({ session }: DashboardContentProps) {
         throw new Error('User not authenticated');
       }
       
+      console.log('Fetching SSSPs for user:', session.user.id);
+      
       const { data, error } = await supabase
         .from('sssps')
         .select(`
@@ -37,11 +39,17 @@ export function DashboardContent({ session }: DashboardContentProps) {
         `)
         .eq('created_by', session.user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Fetched SSSPs:', data);
       return data || [];
     },
     retry: 2,
     retryDelay: 1000,
+    enabled: !!session?.user?.id,
     meta: {
       errorMessage: "Failed to load SSSPs"
     }
@@ -49,6 +57,7 @@ export function DashboardContent({ session }: DashboardContentProps) {
 
   useEffect(() => {
     if (error) {
+      console.error('Query error:', error);
       toast({
         variant: "destructive",
         title: "Error",
