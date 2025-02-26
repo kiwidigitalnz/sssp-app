@@ -18,6 +18,9 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface SSSP {
   id: string;
@@ -28,6 +31,11 @@ interface SSSP {
   created_at: string;
   updated_at: string;
   version: number;
+}
+
+interface ShareFormData {
+  email: string;
+  accessLevel: 'view' | 'edit';
 }
 
 interface SSSPTableProps {
@@ -41,6 +49,11 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedSSSP, setSelectedSSSP] = useState<SSSP | null>(null);
+  const [shareForm, setShareForm] = useState<ShareFormData>({
+    email: '',
+    accessLevel: 'view'
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Clone SSSP
   const handleClone = async (sssp: SSSP) => {
@@ -96,6 +109,65 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const handleShare = (sssp: SSSP) => {
     setSelectedSSSP(sssp);
     setShareDialogOpen(true);
+    setShareForm({ email: '', accessLevel: 'view' });
+  };
+
+  const handleShareSubmit = async () => {
+    if (!selectedSSSP || !shareForm.email) return;
+
+    setIsSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Check if invitation already exists
+      const { data: existingInvite } = await supabase
+        .from('sssp_invitations')
+        .select('*')
+        .eq('sssp_id', selectedSSSP.id)
+        .eq('email', shareForm.email)
+        .eq('status', 'pending')
+        .single();
+
+      if (existingInvite) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An invitation has already been sent to this email",
+        });
+        return;
+      }
+
+      // Create new invitation
+      const { error: inviteError } = await supabase
+        .from('sssp_invitations')
+        .insert({
+          sssp_id: selectedSSSP.id,
+          email: shareForm.email,
+          access_level: shareForm.accessLevel,
+          invited_by: user.id,
+          status: 'pending'
+        });
+
+      if (inviteError) throw inviteError;
+
+      toast({
+        title: "Success",
+        description: "Invitation sent successfully",
+      });
+
+      setShareDialogOpen(false);
+      setShareForm({ email: '', accessLevel: 'view' });
+    } catch (error) {
+      console.error('Share error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to send invitation",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Print to PDF
@@ -241,11 +313,45 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               Share access to "{selectedSSSP?.title}" with other users.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <p>Sharing functionality will be implemented in the next phase.</p>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter recipient's email"
+                value={shareForm.email}
+                onChange={(e) => setShareForm(prev => ({ ...prev, email: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="access-level">Access level</Label>
+              <Select
+                value={shareForm.accessLevel}
+                onValueChange={(value: 'view' | 'edit') => 
+                  setShareForm(prev => ({ ...prev, accessLevel: value }))
+                }
+              >
+                <SelectTrigger id="access-level">
+                  <SelectValue placeholder="Select access level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="view">View only</SelectItem>
+                  <SelectItem value="edit">Can edit</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => setShareDialogOpen(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setShareDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleShareSubmit}
+              disabled={!shareForm.email || isSubmitting}
+            >
+              Share
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
