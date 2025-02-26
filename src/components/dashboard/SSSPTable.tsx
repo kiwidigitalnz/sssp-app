@@ -1,7 +1,7 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Copy, Share2, FileText, Trash2, MoreHorizontal, Loader2, Users } from "lucide-react";
+import { Copy, Share2, FileText, Trash2, MoreHorizontal, Loader2, Users, RefreshCw, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -299,6 +299,100 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     }
   };
 
+  const handleResendInvite = async (ssspId: string, email: string) => {
+    try {
+      const { data: invitation } = await supabase
+        .from('sssp_invitations')
+        .select('*')
+        .eq('sssp_id', ssspId)
+        .eq('email', email)
+        .eq('status', 'pending')
+        .single();
+
+      if (!invitation) {
+        throw new Error('Invitation not found');
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error: functionError } = await supabase.functions.invoke('send-invitation', {
+        body: {
+          to: email,
+          ssspTitle: selectedSSSP?.title || '',
+          sssp_id: ssspId,
+          accessLevel: invitation.access_level,
+          inviterEmail: user.email,
+        },
+      });
+
+      if (functionError) throw functionError;
+
+      toast({
+        title: "Invitation Resent",
+        description: `A new invitation has been sent to ${email}`,
+      });
+    } catch (error: any) {
+      console.error('Resend error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to resend invitation",
+      });
+    }
+  };
+
+  const handleRevokeAccess = async (ssspId: string, email: string) => {
+    try {
+      await supabase
+        .from('sssp_invitations')
+        .delete()
+        .eq('sssp_id', ssspId)
+        .eq('email', email);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: userToRevoke } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (userToRevoke) {
+        await supabase
+          .from('sssp_access')
+          .delete()
+          .eq('sssp_id', ssspId)
+          .eq('user_id', userToRevoke.id);
+      }
+
+      const { data: updatedInvitations } = await supabase
+        .from('sssp_invitations')
+        .select('email, access_level, status')
+        .eq('sssp_id', ssspId);
+
+      if (updatedInvitations) {
+        setSharedUsers(prev => ({
+          ...prev,
+          [ssspId]: updatedInvitations
+        }));
+      }
+
+      toast({
+        title: "Access Revoked",
+        description: `Access has been revoked for ${email}`,
+      });
+    } catch (error: any) {
+      console.error('Revoke error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to revoke access",
+      });
+    }
+  };
+
   return (
     <>
       <Table>
@@ -378,14 +472,14 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         }
         setShareDialogOpen(open);
       }}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Share SSSP</DialogTitle>
             <DialogDescription>
               Share access to "{selectedSSSP?.title}" with other users.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleShareSubmit} className="py-4 space-y-4">
+          <form onSubmit={handleShareSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -416,29 +510,46 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                 </SelectContent>
               </Select>
             </div>
+
             {selectedSSSP && sharedUsers[selectedSSSP.id]?.length > 0 && (
               <div className="space-y-2">
-                <Label>Currently shared with</Label>
-                <div className="rounded-md border p-4 space-y-2">
+                <Label>Shared with</Label>
+                <div className="rounded-md border divide-y">
                   {sharedUsers[selectedSSSP.id].map((user, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-sm">
-                      <span>{user.email}</span>
-                      <Badge variant={user.status === 'pending' ? 'secondary' : 'default'}>
-                        {user.status === 'pending' ? 'Pending' : user.access_level}
-                      </Badge>
+                    <div key={idx} className="p-3 flex items-center justify-between text-sm">
+                      <div className="space-y-1">
+                        <div>{user.email}</div>
+                        <div className="flex gap-2">
+                          <Badge variant={user.status === 'pending' ? 'secondary' : 'default'}>
+                            {user.status === 'pending' ? 'Pending' : 'Accepted'}
+                          </Badge>
+                          <Badge variant="outline">{user.access_level}</Badge>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {user.status === 'pending' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleResendInvite(selectedSSSP.id, user.email)}
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRevokeAccess(selectedSSSP.id, user.email)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            <div className="text-sm text-muted-foreground">
-              <p>The user will receive an email invitation to collaborate on this SSSP.</p>
-              {shareForm.accessLevel === 'edit' && (
-                <p className="mt-2 text-amber-600">
-                  ⚠️ Edit access will allow the user to make changes to this SSSP.
-                </p>
-              )}
-            </div>
+
             <DialogFooter>
               <Button 
                 type="button" 
