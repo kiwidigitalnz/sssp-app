@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SSSPForm from "./pages/SSSPForm";
@@ -18,6 +19,14 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route
             path="/create-sssp"
+            element={
+              <ProtectedRoute>
+                <SSSPForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sssp/:id"
             element={
               <ProtectedRoute>
                 <SSSPForm />
