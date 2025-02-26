@@ -13,185 +13,32 @@ import { addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface SSSPQueryResult {
-  id: string;
-  title: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  visitor_rules: string | null;
-  company_name: string;
-  created_by: string;
-  modified_by: string;
-  version: number;
-  monitoring_review: {
-    review_schedule?: {
-      frequency?: string;
-      last_review?: string | null;
-      next_review?: string | null;
-      responsible_person?: string | null;
-    };
-    kpis?: any[];
-    corrective_actions?: {
-      process?: string;
-      tracking_method?: string;
-      responsible_person?: string | null;
-    };
-    audits?: any[];
-    worker_consultation?: {
-      method?: string;
-      frequency?: string;
-      last_consultation?: string | null;
-    };
-    review_triggers?: any[];
-    documentation?: {
-      storage_location?: string;
-      retention_period?: string;
-      access_details?: string;
-    };
-  } | null;
-}
-
-const transformMonitoringReview = (raw: any) => {
-  if (!raw) return null;
-  
-  const defaultReview = {
-    review_schedule: {
-      frequency: '',
-      last_review: null,
-      next_review: null,
-      responsible_person: null
-    },
-    kpis: [],
-    corrective_actions: {
-      process: '',
-      tracking_method: '',
-      responsible_person: null
-    },
-    audits: [],
-    worker_consultation: {
-      method: '',
-      frequency: '',
-      last_consultation: null
-    },
-    review_triggers: [],
-    documentation: {
-      storage_location: '',
-      retention_period: '',
-      access_details: ''
-    }
-  };
-
-  // If raw is a string (JSON), parse it
-  const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-  
-  return {
-    ...defaultReview,
-    ...data,
-    review_schedule: {
-      ...defaultReview.review_schedule,
-      ...(data?.review_schedule || {})
-    },
-    corrective_actions: {
-      ...defaultReview.corrective_actions,
-      ...(data?.corrective_actions || {})
-    },
-    worker_consultation: {
-      ...defaultReview.worker_consultation,
-      ...(data?.worker_consultation || {})
-    },
-    documentation: {
-      ...defaultReview.documentation,
-      ...(data?.documentation || {})
-    }
-  };
-};
-
 const fetchSSSPs = async () => {
-  console.log('[fetchSSSPs] ====== Starting new fetch attempt ======');
+  console.log('[fetchSSSPs] Starting fetch with simplified logic');
   
-  // Test direct table access first
-  try {
-    const { count, error: countError } = await supabase
-      .from('sssps')
-      .select('*', { count: 'exact', head: true });
-    
-    console.log('[fetchSSSPs] Table access test:', {
-      success: !countError,
-      count,
-      error: countError
-    });
-  } catch (e) {
-    console.error('[fetchSSSPs] Table access test failed:', e);
-  }
-
   const { data: { user } } = await supabase.auth.getUser();
-  console.log('[fetchSSSPs] Auth state:', {
-    id: user?.id,
-    email: user?.email,
-    aud: user?.aud,
-    role: user?.role,
-    session: !!user
-  });
-
   if (!user) {
     console.log('[fetchSSSPs] No authenticated user found');
     throw new Error('Authentication required');
   }
 
-  // Test simplified query first
   try {
-    const { data: testData, error: testError } = await supabase
+    const { data, error } = await supabase
       .from('sssps')
-      .select('id')
-      .limit(1);
+      .select('*');
 
-    console.log('[fetchSSSPs] Simple query test:', {
-      success: !testError,
-      hasData: !!testData?.length,
-      error: testError
-    });
-  } catch (e) {
-    console.error('[fetchSSSPs] Simple query test failed:', e);
-  }
-
-  // Main query
-  try {
-    console.log('[fetchSSSPs] Attempting main query...');
-    const { data: sssps, error } = await supabase
-      .from('sssps')
-      .select()
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('[fetchSSSPs] Main query error:', {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
-      throw error;
-    }
-
-    console.log('[fetchSSSPs] Query succeeded:', {
-      count: sssps?.length || 0,
-      hasData: !!sssps?.length,
-      firstItem: sssps?.[0]?.id
+    console.log('[fetchSSSPs] Query result:', {
+      success: !error,
+      hasData: !!data?.length,
+      error: error,
+      data: data
     });
 
-    const transformedSssps = (sssps || []).map(item => ({
-      ...item,
-      visitor_rules: item.visitor_rules || undefined,
-      monitoring_review: transformMonitoringReview(item.monitoring_review)
-    }));
+    if (error) throw error;
     
-    return transformedSssps as SSSP[];
+    return data as SSSP[];
   } catch (error) {
-    console.error('[fetchSSSPs] Fatal error:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    });
+    console.error('[fetchSSSPs] Error details:', error);
     throw error;
   }
 };
@@ -215,14 +62,20 @@ const Index = () => {
     console.log('[Index] Component mounted');
     
     const initializeAuth = async () => {
-      const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log('[Index] Initial session check:', initialSession?.user?.email, sessionError);
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      console.log('[Index] Initial auth check:', {
+        hasSession: !!initialSession,
+        email: initialSession?.user?.email
+      });
       setSession(initialSession);
 
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
-        console.log('[Index] Auth state changed:', _event, session?.user?.email);
+        console.log('[Index] Auth state changed:', {
+          event: _event,
+          email: session?.user?.email
+        });
         setSession(session);
       });
 
@@ -231,30 +84,6 @@ const Index = () => {
 
     initializeAuth();
   }, []);
-
-  useEffect(() => {
-    if (!session) return;
-
-    const channel = supabase
-      .channel('table-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sssps'
-        },
-        (payload) => {
-          console.log('Change received:', payload);
-          queryClient.invalidateQueries({ queryKey: ['sssps'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session, queryClient]);
 
   useEffect(() => {
     if (error) {
