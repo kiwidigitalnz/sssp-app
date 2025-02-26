@@ -1,3 +1,4 @@
+
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,10 @@ interface SharedUser {
   access_level: string;
   status: string;
   is_creator?: boolean;
+}
+
+interface SSSPAccess {
+  id: string;
 }
 
 export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
@@ -188,11 +193,12 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw new Error("You must be logged in to share SSSPs");
       }
 
+      // Check for existing access with explicit typing
       const { data: existingAccess } = await supabase
         .from('sssp_access')
-        .select('id')
+        .select<'id', SSSPAccess>('id')
         .eq('sssp_id', selectedSSSP.id)
-        .eq('email', shareForm.email)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (existingAccess) {
@@ -205,6 +211,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         return;
       }
 
+      // Check for existing invites
       const { data: existingInvite, error: checkError } = await supabase
         .from('sssp_invitations')
         .select('id')
@@ -228,6 +235,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         return;
       }
 
+      // Create invitation
       const { data: invitation, error: inviteError } = await supabase
         .from('sssp_invitations')
         .insert({
