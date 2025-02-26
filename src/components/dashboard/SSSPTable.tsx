@@ -52,7 +52,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sharedUsers, setSharedUsers] = useState<Record<string, SharedUser[]>>({});
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchSharedUsers = async () => {
@@ -428,7 +427,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const handleModalClose = () => {
     setShareDialogOpen(false);
     setDeleteDialogOpen(false);
-    setIsDropdownOpen(false);
     setSelectedSSSP(null);
     setShareForm({ email: '', accessLevel: 'view' });
   };
@@ -470,14 +468,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                 {new Date(sssp.updated_at).toLocaleDateString()}
               </TableCell>
               <TableCell>
-                <DropdownMenu open={selectedSSSP?.id === sssp.id && isDropdownOpen} onOpenChange={(open) => {
-                  setIsDropdownOpen(open);
-                  if (open) {
-                    setSelectedSSSP(sssp);
-                  } else {
-                    setSelectedSSSP(null);
-                  }
-                }}>
+                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0">
                       <MoreHorizontal className="h-4 w-4" />
@@ -486,21 +477,18 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => {
                       handleClone(sssp);
-                      setIsDropdownOpen(false);
                     }}>
                       <Copy className="mr-2 h-4 w-4" />
                       Clone
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {
                       handleShare(sssp);
-                      setIsDropdownOpen(false);
                     }}>
                       <Share2 className="mr-2 h-4 w-4" />
                       Share
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {
                       handlePrintToPDF(sssp);
-                      setIsDropdownOpen(false);
                     }}>
                       <FileText className="mr-2 h-4 w-4" />
                       Print to PDF
@@ -510,7 +498,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                       className="text-red-600"
                       onClick={() => {
                         confirmDelete(sssp);
-                        setIsDropdownOpen(false);
                       }}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
