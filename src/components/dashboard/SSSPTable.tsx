@@ -241,28 +241,26 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw functionError;
       }
 
+      if (selectedSSSP) {
+        setSharedUsers(prev => ({
+          ...prev,
+          [selectedSSSP.id]: [
+            ...(prev[selectedSSSP.id] || []),
+            {
+              email: shareForm.email,
+              access_level: shareForm.accessLevel,
+              status: 'pending'
+            }
+          ]
+        }));
+      }
+
       toast({
         title: "✅ Invitation Sent",
         description: `Successfully shared with ${shareForm.email}`,
       });
 
-      const { data: updatedInvitations } = await supabase
-        .from('sssp_invitations')
-        .select('email, access_level, status')
-        .eq('sssp_id', selectedSSSP.id);
-
-      if (updatedInvitations) {
-        setSharedUsers(prev => ({
-          ...prev,
-          [selectedSSSP.id]: updatedInvitations
-        }));
-      }
-
       setShareForm({ email: '', accessLevel: 'view' });
-      setShareDialogOpen(false);
-      setSelectedSSSP(null);
-      onRefresh();
-
     } catch (error: any) {
       console.error('Share error:', error);
       toast({
@@ -526,105 +524,124 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
           </DialogHeader>
           <div className="grid gap-6 py-4">
             <form onSubmit={handleShareSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter recipient's email"
-                    value={shareForm.email}
-                    disabled={isSubmitting}
-                    onChange={(e) => setShareForm(prev => ({ ...prev, email: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="access-level">Access level</Label>
-                  <Select
-                    value={shareForm.accessLevel}
-                    disabled={isSubmitting}
-                    onValueChange={(value: 'view' | 'edit') => 
-                      setShareForm(prev => ({ ...prev, accessLevel: value }))
-                    }
-                  >
-                    <SelectTrigger id="access-level">
-                      <SelectValue placeholder="Select access level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="view">View only</SelectItem>
-                      <SelectItem value="edit">Can edit</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Shared with</Label>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-[100px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedSSSP && sharedUsers[selectedSSSP.id]?.map((user, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>
-                            <span className="font-medium">{user.email}</span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant={user.is_creator ? "default" : "outline"}
-                              className="capitalize"
-                            >
-                              {getRoleLabel(user)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={user.status === 'pending' ? 'secondary' : 'default'}>
-                              {user.status === 'pending' ? 'Pending' : 'Accepted'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {!user.is_creator && (
-                              <div className="flex gap-2 justify-end">
-                                {user.status === 'pending' && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleResendInvite(selectedSSSP.id, user.email)}
-                                    title="Resend invitation"
-                                  >
-                                    <RefreshCw className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRevokeAccess(selectedSSSP.id, user.email)}
-                                  title="Revoke access"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {selectedSSSP && (!sharedUsers[selectedSSSP.id] || sharedUsers[selectedSSSP.id].length === 0) && (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                            No users shared yet
-                          </TableCell>
-                        </TableRow>
+              <div className="grid gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="email">Email address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter recipient's email"
+                      value={shareForm.email}
+                      disabled={isSubmitting}
+                      onChange={(e) => setShareForm(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="w-full md:w-48 space-y-2">
+                    <Label htmlFor="access-level">Access level</Label>
+                    <Select
+                      value={shareForm.accessLevel}
+                      disabled={isSubmitting}
+                      onValueChange={(value: 'view' | 'edit') => 
+                        setShareForm(prev => ({ ...prev, accessLevel: value }))
+                      }
+                    >
+                      <SelectTrigger id="access-level">
+                        <SelectValue placeholder="Select access level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="view">View only</SelectItem>
+                        <SelectItem value="edit">Can edit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      type="submit"
+                      disabled={!shareForm.email || isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        "Share"
                       )}
-                    </TableBody>
-                  </Table>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Shared with</Label>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>User</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedSSSP && sharedUsers[selectedSSSP.id]?.map((user, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>
+                              <span className="font-medium">{user.email}</span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={user.is_creator ? "default" : "outline"}
+                                className="capitalize"
+                              >
+                                {getRoleLabel(user)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={user.status === 'pending' ? 'secondary' : 'default'}>
+                                {user.status === 'pending' ? 'Pending' : 'Accepted'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {!user.is_creator && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    {user.status === 'pending' && (
+                                      <DropdownMenuItem onClick={() => handleResendInvite(selectedSSSP.id, user.email)}>
+                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                        Resend Invitation
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem
+                                      className="text-red-600"
+                                      onClick={() => handleRevokeAccess(selectedSSSP.id, user.email)}
+                                    >
+                                      <X className="mr-2 h-4 w-4" />
+                                      Revoke Access
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {selectedSSSP && (!sharedUsers[selectedSSSP.id] || sharedUsers[selectedSSSP.id].length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                              No users shared yet
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </div>
 
@@ -635,20 +652,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                   onClick={() => setShareDialogOpen(false)} 
                   disabled={isSubmitting}
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={!shareForm.email || isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    "Share"
-                  )}
+                  Close
                 </Button>
               </DialogFooter>
             </form>
