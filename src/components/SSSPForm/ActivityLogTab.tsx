@@ -5,7 +5,11 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 
-export const ActivityLogTab = () => {
+interface ActivityLogTabProps {
+  inModal?: boolean;
+}
+
+export const ActivityLogTab = ({ inModal = false }: ActivityLogTabProps) => {
   const { id: sssp_id } = useParams();
 
   if (!sssp_id) {
@@ -22,6 +26,11 @@ export const ActivityLogTab = () => {
         </CardHeader>
       </Card>
     );
+  }
+
+  // If in modal, we don't need the outer spacing
+  if (inModal) {
+    return <ActivityLog sssp_id={sssp_id} />;
   }
 
   return (

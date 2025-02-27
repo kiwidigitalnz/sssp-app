@@ -15,11 +15,10 @@ import { SiteSafetyRules } from "@/components/features/sssp/SiteSafetyRules";
 import { Communication } from "@/components/SSSPForm/Communication";
 import { MonitoringReview } from "@/components/SSSPForm/MonitoringReview";
 import { SummaryScreen } from "@/components/SSSPForm/SummaryScreen";
-import { ActivityLogTab } from "@/components/SSSPForm/ActivityLogTab";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { logActivity } from "@/utils/activityLogging";
+import { logActivity, FieldChange } from "@/utils/activityLogging";
 import type { SSSP } from "@/types/sssp";
 
 export default function SSSPForm() {
@@ -29,6 +28,7 @@ export default function SSSPForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isValid, setIsValid] = useState(true);
   const [isNew, setIsNew] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Total number of steps in the form (0-indexed, so 10 means 11 steps)
   const totalSteps = 10;
@@ -67,67 +67,83 @@ export default function SSSPForm() {
     }
   }, [error, toast]);
 
+  // Handle cancel button click
+  const handleCancel = () => {
+    navigate('/');
+  };
+
+  // Handle exit button click - navigate back to dashboard
+  const handleExit = () => {
+    navigate('/');
+  };
+
   const handleSave = async () => {
-    // If new SSSP, need to create it first
-    if (isNew) {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
+    setIsSaving(true);
+    
+    try {
+      // If new SSSP, need to create it first
+      if (isNew) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (!user) {
+            toast({
+              title: "Authentication Error",
+              description: "You must be logged in to create an SSSP.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          // Ensure required fields are present
+          const newSSSP = {
+            ...formData,
+            created_by: user.id,
+            modified_by: user.id,
+            user_id: user.id,
+            title: formData.title || "Untitled SSSP",
+            company_name: formData.company_name || "Unknown Company",
+            status: formData.status || "draft"
+          };
+
+          const { data, error } = await supabase
+            .from("sssps")
+            .insert(newSSSP as any)
+            .select()
+            .single();
+
+          if (error) {
+            throw error;
+          }
+
+          // Log the creation activity
+          await logActivity(data.id, 'created', user.id, {
+            description: 'Created new SSSP',
+            severity: 'major'
+          });
+
           toast({
-            title: "Authentication Error",
-            description: "You must be logged in to create an SSSP.",
+            title: "SSSP Created",
+            description: "Your SSSP has been created successfully.",
+          });
+
+          // Navigate to the new SSSP edit page
+          navigate(`/sssp/${data.id}`);
+          setIsNew(false);
+        } catch (error) {
+          console.error("Error creating SSSP:", error);
+          toast({
+            title: "Error",
+            description: "There was a problem creating your SSSP.",
             variant: "destructive",
           });
-          return;
         }
-
-        // Ensure required fields are present
-        const newSSSP = {
-          ...formData,
-          created_by: user.id,
-          modified_by: user.id,
-          user_id: user.id,
-          title: formData.title || "Untitled SSSP",
-          company_name: formData.company_name || "Unknown Company",
-          status: formData.status || "draft"
-        };
-
-        const { data, error } = await supabase
-          .from("sssps")
-          .insert(newSSSP as any)
-          .select()
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        // Log the creation activity
-        await logActivity(data.id, 'created', user.id, {
-          description: 'Created new SSSP',
-          severity: 'major'
-        });
-
-        toast({
-          title: "SSSP Created",
-          description: "Your SSSP has been created successfully.",
-        });
-
-        // Navigate to the new SSSP edit page
-        navigate(`/sssp/${data.id}`);
-        setIsNew(false);
-      } catch (error) {
-        console.error("Error creating SSSP:", error);
-        toast({
-          title: "Error",
-          description: "There was a problem creating your SSSP.",
-          variant: "destructive",
-        });
+      } else {
+        // Just save changes
+        await save();
       }
-    } else {
-      // Just save changes
-      save();
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -156,8 +172,6 @@ export default function SSSPForm() {
         return <MonitoringReview formData={formData} setFormData={setFormData as any} isLoading={isLoading} />;
       case 10:
         return <SummaryScreen formData={formData} setFormData={setFormData as any} />;
-      case 11:
-        return <ActivityLogTab />;
       default:
         return <ProjectDetails formData={formData} setFormData={setFormData as any} />;
     }
@@ -166,9 +180,14 @@ export default function SSSPForm() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
       <FormHeader
+        id={id}
         title={formData.title || "Untitled SSSP"}
         status={formData.status || "draft"}
         isNew={isNew}
+        isLoading={isSaving}
+        onCancel={handleCancel}
+        onSave={handleExit}
+        currentStep={currentStep}
       />
 
       <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm space-y-6">
