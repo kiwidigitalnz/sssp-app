@@ -1,4 +1,3 @@
-
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Users, ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +8,7 @@ import { DeleteDialog } from "./DeleteDialog";
 import type { SSSPTableProps } from "./types";
 import { SSSPTableFilters } from "./components/SSSPTableFilters";
 import { useSSSPTable } from "./hooks/useSSSPTable";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const navigate = useNavigate();
@@ -35,7 +35,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     handleDelete,
     handleRevokeAccess,
     handleResendInvite,
-    handleSort
+    handleSort,
+    handleStatusChange
   } = useSSSPTable(sssps, onRefresh);
 
   const filteredAndSortedSSSPs = sssps
@@ -77,6 +78,19 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       return <ArrowUpDown className={`ml-2 h-4 w-4 inline ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`} />;
     }
     return <ArrowUpDown className="ml-2 h-4 w-4 inline opacity-30" />;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'published':
+        return 'bg-green-50 text-green-700 ring-1 ring-green-600/20';
+      case 'draft':
+        return 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20';
+      case 'archived':
+        return 'bg-gray-50 text-gray-700 ring-1 ring-gray-600/20';
+      default:
+        return 'bg-gray-50 text-gray-700 ring-1 ring-gray-600/20';
+    }
   };
 
   return (
@@ -147,15 +161,22 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                   {sssp.company_name}
                 </TableCell>
                 <TableCell 
-                  onClick={() => navigate(`/sssp/${sssp.id}`)}
                   className="py-4"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
-                    ${sssp.status === 'published' ? 'bg-green-50 text-green-700 ring-1 ring-green-600/20' :
-                      sssp.status === 'draft' ? 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20' :
-                      'bg-gray-50 text-gray-700 ring-1 ring-gray-600/20'}`}>
-                    {sssp.status}
-                  </span>
+                  <Select
+                    value={sssp.status}
+                    onValueChange={(value) => handleStatusChange(sssp, value)}
+                  >
+                    <SelectTrigger className={`w-28 h-7 border-0 ${getStatusColor(sssp.status)}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell className="py-4">
                   {sharedUsers[sssp.id]?.length > 0 ? (

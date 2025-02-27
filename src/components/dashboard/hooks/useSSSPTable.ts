@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -265,6 +264,43 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     });
   };
 
+  const handleStatusChange = async (sssp: SSSP, newStatus: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { error } = await supabase
+        .from('sssps')
+        .update({ 
+          status: newStatus,
+          modified_by: user.id 
+        })
+        .eq('id', sssp.id);
+
+      if (error) throw error;
+
+      await logActivity(sssp.id, 'updated', user.id, {
+        field: 'status',
+        old_value: sssp.status,
+        new_value: newStatus
+      });
+
+      toast({
+        title: "Status updated",
+        description: `Status changed to ${newStatus}`
+      });
+
+      onRefresh();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Error updating status",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return {
     deleteDialogOpen,
     setDeleteDialogOpen,
@@ -290,6 +326,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     handleDelete,
     handleRevokeAccess,
     handleResendInvite,
-    handleSort
+    handleSort,
+    handleStatusChange
   };
 }
