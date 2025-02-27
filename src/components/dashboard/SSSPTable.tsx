@@ -1,5 +1,7 @@
 
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +20,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedSSSP, setSelectedSSSP] = useState<SSSP | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const { data: sharedUsers = {}, refetch: refetchSharedUsers } = useQuery({
     queryKey: ['shared-users', selectedSSSP?.id],
@@ -84,6 +88,17 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       return { [selectedSSSP.id]: users };
     },
     enabled: !!selectedSSSP && shareDialogOpen
+  });
+
+  // Filter SSSPs based on search term and status
+  const filteredSSSPs = sssps.filter((sssp) => {
+    const matchesSearch = 
+      sssp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sssp.company_name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || sssp.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
   });
 
   const handleShare = async (email: string, accessLevel: 'view' | 'edit') => {
@@ -308,7 +323,29 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   };
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="flex gap-4 items-center">
+        <div className="flex-1">
+          <Input
+            placeholder="Search by title or company name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="archived">Archived</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -322,7 +359,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sssps.map((sssp) => (
+          {filteredSSSPs.map((sssp) => (
             <TableRow key={sssp.id} className="cursor-pointer">
               <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.title}</TableCell>
               <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.company_name}</TableCell>
@@ -379,6 +416,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         selectedSSSP={selectedSSSP}
         onDelete={handleDelete}
       />
-    </>
+    </div>
   );
 }
