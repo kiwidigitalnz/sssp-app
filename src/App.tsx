@@ -7,6 +7,7 @@ import Auth from "./pages/Auth";
 import { TopNav } from "./components/layout/TopNav";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
+import { Toaster } from "@/components/ui/toaster";
 import "./App.css";
 
 function App() {
@@ -51,6 +52,7 @@ function App() {
           />
         </Routes>
       </main>
+      <Toaster />
     </div>
   );
 }
