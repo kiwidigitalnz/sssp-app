@@ -51,6 +51,7 @@ const Toast = React.forwardRef<
         "data-[state=open]:slide-in-from-right-full data-[state=closed]:slide-out-to-right-full",
         "data-[swipe=end]:animate-out data-[state=closed]:fade-out-80",
         "text-sm",
+        variant === "destructive" ? "shadow-lg border-2" : "",
         className
       )}
       {...props}
@@ -86,9 +87,7 @@ const ToastClose = React.forwardRef<
     )}
     toast-close=""
     {...props}
-  >
-    <X className="h-3 w-3" />
-  </ToastPrimitives.Close>
+  />
 ))
 ToastClose.displayName = ToastPrimitives.Close.displayName
 

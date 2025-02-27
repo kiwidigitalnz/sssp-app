@@ -140,7 +140,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast({ variant, ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -153,6 +153,7 @@ function toast({ ...props }: Toast) {
   dispatch({
     type: "ADD_TOAST",
     toast: {
+      variant,
       ...props,
       id,
       open: true,
@@ -162,10 +163,12 @@ function toast({ ...props }: Toast) {
     },
   })
 
-  // Automatically dismiss toast after TOAST_REMOVE_DELAY
-  setTimeout(() => {
-    dismiss()
-  }, TOAST_REMOVE_DELAY)
+  // Only auto-dismiss non-destructive toasts
+  if (variant !== "destructive") {
+    setTimeout(() => {
+      dismiss()
+    }, TOAST_REMOVE_DELAY)
+  }
 
   return {
     id: id,
