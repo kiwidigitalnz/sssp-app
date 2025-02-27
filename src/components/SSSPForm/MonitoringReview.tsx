@@ -22,11 +22,21 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
     });
   };
 
+  // Ensure the audits have the required status field
+  const normalizedAudits = useMemo(() => {
+    if (!formData.monitoring_review?.audits) return [];
+    
+    return formData.monitoring_review.audits.map((audit: any) => ({
+      ...audit,
+      status: audit.status || (audit.last_completed ? 'completed' : 'pending')
+    }));
+  }, [formData.monitoring_review?.audits]);
+
   // Memoize the monitoring review data
   const monitoringData = useMemo(() => ({
     review_schedule: formData.monitoring_review?.review_schedule || {},
-    audits: formData.monitoring_review?.audits || []
-  }), [formData.monitoring_review]);
+    audits: normalizedAudits
+  }), [formData.monitoring_review, normalizedAudits]);
 
   return (
     <div className="space-y-6">
