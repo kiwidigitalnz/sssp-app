@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +24,18 @@ export const HazardSelection = ({
 }: HazardSelectionProps) => {
   const [selected, setSelected] = React.useState<Set<number>>(new Set());
 
+  const uniqueHazards = useMemo(() => {
+    const hazardMap = new Map<string, HazardFormData>();
+    
+    previousHazards.forEach(hazard => {
+      if (!hazardMap.has(hazard.hazard)) {
+        hazardMap.set(hazard.hazard, hazard);
+      }
+    });
+    
+    return Array.from(hazardMap.values());
+  }, [previousHazards]);
+
   const handleToggle = (index: number) => {
     const newSelected = new Set(selected);
     if (selected.has(index)) {
@@ -37,7 +48,7 @@ export const HazardSelection = ({
 
   const handleAdd = () => {
     const selectedHazards = Array.from(selected).map(
-      (index) => previousHazards[index]
+      (index) => uniqueHazards[index]
     );
     onSelect(selectedHazards);
     setSelected(new Set());
@@ -64,7 +75,7 @@ export const HazardSelection = ({
         </DialogHeader>
         <ScrollArea className="h-[400px] pr-4 mt-4">
           <div className="space-y-3">
-            {previousHazards.map((hazard, index) => (
+            {uniqueHazards.map((hazard, index) => (
               <div
                 key={index}
                 className="flex items-start space-x-3 border p-4 rounded-lg hover:bg-accent/50 transition-colors"
