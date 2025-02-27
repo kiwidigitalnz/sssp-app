@@ -1,13 +1,15 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FormStepsProps {
   totalSteps: number;
   currentStep: number;
+  onStepChange?: (step: number) => void;
 }
 
-export const FormSteps = ({ totalSteps, currentStep }: FormStepsProps) => {
+export const FormSteps = ({ totalSteps, currentStep, onStepChange }: FormStepsProps) => {
   // Steps for the form
   const steps = [
     { name: "Project Details", number: 0 },
@@ -27,56 +29,77 @@ export const FormSteps = ({ totalSteps, currentStep }: FormStepsProps) => {
   // We only want to display steps up to the total number specified
   const visibleSteps = steps.slice(0, totalSteps + 1);
 
-  return (
-    <nav aria-label="Progress" className="relative">
-      <ol className="flex space-x-4">
-        {visibleSteps.map((step) => {
-          // Define the status: upcoming, current, or completed
-          const status =
-            step.number < currentStep
-              ? "completed"
-              : step.number === currentStep
-              ? "current"
-              : "upcoming";
+  const handleStepClick = (stepNumber: number) => {
+    if (onStepChange && (stepNumber <= currentStep || stepNumber < currentStep)) {
+      onStepChange(stepNumber);
+    }
+  };
 
-          return (
-            <li key={step.name} className="relative">
-              {status === "completed" ? (
-                <div className="flex items-center">
-                  <div className="relative flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                    <svg
-                      className="h-3 w-3 text-white"
-                      viewBox="0 0 12 12"
-                      fill="currentColor"
+  return (
+    <TooltipProvider>
+      <nav aria-label="Progress" className="relative">
+        <ol className="flex space-x-4">
+          {visibleSteps.map((step) => {
+            // Define the status: upcoming, current, or completed
+            const status =
+              step.number < currentStep
+                ? "completed"
+                : step.number === currentStep
+                ? "current"
+                : "upcoming";
+
+            return (
+              <li key={step.name} className="relative">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      onClick={() => handleStepClick(step.number)}
+                      className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full"
+                      aria-label={`Go to ${step.name}`}
                     >
-                      <path d="M10.28 2.28L4 8.56l-2.28-2.28-1.42 1.41L4 11.41l8-8-1.72-1.13z" />
-                    </svg>
-                  </div>
-                </div>
-              ) : status === "current" ? (
-                <div
-                  className="relative flex h-5 w-5 items-center justify-center rounded-full border-2 border-primary"
-                  aria-current="step"
-                >
-                  <span
-                    className="h-2.5 w-2.5 rounded-full bg-primary"
-                    aria-hidden="true"
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <div className="relative flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full bg-transparent"
-                      aria-hidden="true"
-                    />
-                  </div>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
+                      {status === "completed" ? (
+                        <div className="flex items-center">
+                          <div className="relative flex h-5 w-5 items-center justify-center rounded-full bg-primary cursor-pointer hover:bg-primary/80 transition-colors">
+                            <svg
+                              className="h-3 w-3 text-white"
+                              viewBox="0 0 12 12"
+                              fill="currentColor"
+                            >
+                              <path d="M10.28 2.28L4 8.56l-2.28-2.28-1.42 1.41L4 11.41l8-8-1.72-1.13z" />
+                            </svg>
+                          </div>
+                        </div>
+                      ) : status === "current" ? (
+                        <div
+                          className="relative flex h-5 w-5 items-center justify-center rounded-full border-2 border-primary cursor-pointer"
+                          aria-current="step"
+                        >
+                          <span
+                            className="h-2.5 w-2.5 rounded-full bg-primary"
+                            aria-hidden="true"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center">
+                          <div className="relative flex h-5 w-5 items-center justify-center rounded-full border-2 border-gray-300 cursor-pointer hover:border-gray-400 transition-colors">
+                            <span
+                              className="h-2.5 w-2.5 rounded-full bg-transparent"
+                              aria-hidden="true"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{step.name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+    </TooltipProvider>
   );
 };
