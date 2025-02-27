@@ -1,7 +1,7 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, ArrowUpDown, Search } from "lucide-react";
+import { Users, ArrowUpDown, Search, Calendar, Share2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -11,12 +11,21 @@ import { useQuery } from '@tanstack/react-query';
 import { SSSPActions } from "./SSSPActions";
 import { ShareDialog } from "./ShareDialog";
 import { DeleteDialog } from "./DeleteDialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import type { SSSPTableProps, SharedUser } from "./types";
 
 type SortConfig = {
   key: keyof SSSP;
   direction: 'asc' | 'desc';
 } | null;
+
+type DateRange = {
+  from: Date | undefined;
+  to: Date | undefined;
+};
 
 export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const { toast } = useToast();
@@ -26,6 +35,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const [selectedSSSP, setSelectedSSSP] = useState<SSSP | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [shareFilter, setShareFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
   const { data: sharedUsers = {}, refetch: refetchSharedUsers } = useQuery({
@@ -235,8 +246,17 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         sssp.company_name.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === "all" || sssp.status === statusFilter;
+
+      const matchesShared = shareFilter === "all" || 
+        (shareFilter === "shared" && sharedUsers[sssp.id]?.length > 0) ||
+        (shareFilter === "not-shared" && (!sharedUsers[sssp.id] || sharedUsers[sssp.id].length === 0));
+
+      const matchesDate = !dateRange.from || !dateRange.to || (
+        new Date(sssp.updated_at) >= dateRange.from &&
+        new Date(sssp.updated_at) <= dateRange.to
+      );
       
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesShared && matchesDate;
     })
     .sort((a, b) => {
       if (!sortConfig) return 0;
@@ -263,7 +283,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -284,6 +304,57 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={shareFilter} onValueChange={setShareFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by sharing" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All SSSPs</SelectItem>
+              <SelectItem value="shared">Shared</SelectItem>
+              <SelectItem value="not-shared">Not Shared</SelectItem>
+            </SelectContent>
+          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`w-full justify-start text-left font-normal ${
+                  !dateRange.from && !dateRange.to ? 'text-muted-foreground' : ''
+                }`}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                {dateRange.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
+                    </>
+                  ) : (
+                    format(dateRange.from, "LLL dd")
+                  )
+                ) : (
+                  "Filter by date"
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <CalendarComponent
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange.from}
+                selected={{ 
+                  from: dateRange.from,
+                  to: dateRange.to
+                }}
+                onSelect={(range) => {
+                  setDateRange({
+                    from: range?.from,
+                    to: range?.to
+                  });
+                }}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
