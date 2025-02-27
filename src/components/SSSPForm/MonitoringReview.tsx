@@ -49,7 +49,7 @@ export const MonitoringReview = ({ formData, setFormData }: MonitoringReviewProp
             <TabsList className="grid grid-cols-2 gap-4">
               <TabsTrigger value="schedule" className="space-x-2">
                 <CalendarRange className="h-4 w-4" />
-                <span>Schedule</span>
+                <span>SSSP Review</span>
               </TabsTrigger>
               <TabsTrigger value="audits" className="space-x-2">
                 <ClipboardList className="h-4 w-4" />
