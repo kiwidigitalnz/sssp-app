@@ -1,8 +1,7 @@
-
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, ArrowUpDown, Search, Filter } from "lucide-react";
+import { Users, ArrowUpDown, Search } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -262,53 +261,36 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Filter Section with improved styling */}
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-primary/10 p-2 rounded-lg">
-            <Filter className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Filter SSSPs</h2>
-            <p className="text-sm text-gray-500 mt-1">Narrow down your SSSP list using the filters below</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-400" />
-              Search SSSPs
-            </label>
+    <div className="space-y-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Enter title or company name..."
+              placeholder="Search by title or company..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-11 px-4 text-base placeholder:text-gray-400"
+              className="pl-9 w-full"
             />
           </div>
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-gray-700">Status</label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full h-11">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Table Section with improved styling */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50/80 hover:bg-gray-50/80 border-b border-gray-100">
+            <TableRow className="bg-gray-50/80 hover:bg-gray-50/80 border-b border-gray-200">
               <TableHead 
                 className="cursor-pointer font-semibold text-gray-700 py-4"
                 onClick={() => handleSort('title')}
@@ -345,7 +327,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
             {filteredAndSortedSSSPs.map((sssp) => (
               <TableRow 
                 key={sssp.id} 
-                className="cursor-pointer hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0"
+                className="cursor-pointer hover:bg-gray-50/50 transition-colors border-b border-gray-200 last:border-0"
               >
                 <TableCell 
                   onClick={() => navigate(`/sssp/${sssp.id}`)}
@@ -363,7 +345,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                   onClick={() => navigate(`/sssp/${sssp.id}`)}
                   className="py-4"
                 >
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
                     ${sssp.status === 'published' ? 'bg-green-50 text-green-700 ring-1 ring-green-600/20' :
                       sssp.status === 'draft' ? 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20' :
                       'bg-gray-50 text-gray-700 ring-1 ring-gray-600/20'}`}>
@@ -409,7 +391,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
               <TableRow>
                 <TableCell 
                   colSpan={6} 
-                  className="text-center py-12 text-gray-500"
+                  className="text-center py-8 text-gray-500"
                 >
                   <p className="text-gray-400">No SSSPs found matching your filters</p>
                 </TableCell>
