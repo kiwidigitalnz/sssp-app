@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
@@ -10,10 +11,10 @@ const corsHeaders = {
   'Vary': 'Origin'
 };
 
-// Colors for the PDF - removed light backgrounds
+// Colors for the PDF
 const colors = {
   primary: [41, 63, 82], // Dark blue
-  secondary: [70, 123, 163], // Muted blue
+  secondary: [245, 247, 250], // Light gray-blue
   text: [51, 51, 51], // Dark gray
   subtext: [102, 102, 102], // Medium gray
   accent: [70, 123, 163], // Muted blue
@@ -86,7 +87,7 @@ serve(async (req) => {
     const pageWidth = doc.internal.pageSize.width;
     const maxWidth = pageWidth - 2 * margin;
 
-    // Enhanced styling functions with removed backgrounds
+    // Enhanced styling functions with new typography system
     const addHeader = (text: string, level = 1) => {
       if (y > doc.internal.pageSize.height - 40) {
         doc.addPage();
@@ -94,7 +95,7 @@ serve(async (req) => {
       }
 
       if (level === 1) {
-        // H1 Style - kept the dark background for main sections
+        // H1 Style
         doc.setFillColor(...colors.primary);
         doc.rect(margin, y - 4, maxWidth, 10, 'F');
         doc.setFont('helvetica', 'bold');
@@ -103,11 +104,13 @@ serve(async (req) => {
         doc.text(text.toUpperCase(), margin + 3, y + 2);
         y += 16;
       } else {
-        // H2 Style - removed background, using just color
+        // H2 Style - with background
+        doc.setFillColor(...colors.secondary);
+        doc.rect(margin, y - 3, maxWidth, 8, 'F');
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(...colors.secondary);
-        doc.text(text, margin + 2, y);
+        doc.setTextColor(...colors.primary);
+        doc.text(text, margin + 2, y + 2);
         y += 14;
       }
     };
@@ -124,6 +127,7 @@ serve(async (req) => {
         y = 20;
       }
       
+      // No background for paragraph text
       doc.text(lines, margin + (indent * 10), y);
       y += lines.length * 6 + 8;
     };
