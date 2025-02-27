@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -133,15 +134,30 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         required_training: sssp.required_training ? [...sssp.required_training] : [],
         meetings_schedule: sssp.meetings_schedule ? [...sssp.meetings_schedule] : [],
         monitoring_review: sssp.monitoring_review ? {
-          ...sssp.monitoring_review,
           review_schedule: {
-            ...sssp.monitoring_review.review_schedule,
+            frequency: sssp.monitoring_review.review_schedule?.frequency || "",
             last_review: null,
-            next_review: null
+            next_review: null,
+            responsible_person: sssp.monitoring_review.review_schedule?.responsible_person || null
           },
           kpis: sssp.monitoring_review.kpis ? [...sssp.monitoring_review.kpis] : [],
+          corrective_actions: {
+            process: sssp.monitoring_review.corrective_actions?.process || "",
+            tracking_method: sssp.monitoring_review.corrective_actions?.tracking_method || "",
+            responsible_person: sssp.monitoring_review.corrective_actions?.responsible_person || null
+          },
           audits: sssp.monitoring_review.audits ? [...sssp.monitoring_review.audits] : [],
-          review_triggers: sssp.monitoring_review.review_triggers ? [...sssp.monitoring_review.review_triggers] : []
+          worker_consultation: {
+            method: sssp.monitoring_review.worker_consultation?.method || "",
+            frequency: sssp.monitoring_review.worker_consultation?.frequency || "",
+            last_consultation: null
+          },
+          review_triggers: sssp.monitoring_review.review_triggers ? [...sssp.monitoring_review.review_triggers] : [],
+          documentation: {
+            storage_location: sssp.monitoring_review.documentation?.storage_location || "",
+            retention_period: sssp.monitoring_review.documentation?.retention_period || "",
+            access_details: sssp.monitoring_review.documentation?.access_details || ""
+          }
         } : null
       };
 
@@ -169,6 +185,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       const previousSssps = queryClient.getQueryData<SSSP[]>(['sssps']);
 
+      // Create an optimistic clone with proper typing
       const optimisticClone: SSSP = {
         ...sssp,
         id: `temp-${Date.now()}`,
@@ -176,6 +193,34 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         status: "draft",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        version: 1,
+        version_history: [],
+        monitoring_review: sssp.monitoring_review ? {
+          review_schedule: {
+            frequency: sssp.monitoring_review.review_schedule?.frequency || "",
+            last_review: null,
+            next_review: null,
+            responsible_person: sssp.monitoring_review.review_schedule?.responsible_person || null
+          },
+          kpis: [],
+          corrective_actions: {
+            process: "",
+            tracking_method: "",
+            responsible_person: null
+          },
+          audits: [],
+          worker_consultation: {
+            method: "",
+            frequency: "",
+            last_consultation: null
+          },
+          review_triggers: [],
+          documentation: {
+            storage_location: "",
+            retention_period: "",
+            access_details: ""
+          }
+        } : null
       };
 
       queryClient.setQueryData<SSSP[]>(['sssps'], old => {
