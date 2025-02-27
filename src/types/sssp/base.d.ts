@@ -46,6 +46,13 @@ export interface SSSP {
       last_review?: string | null;
       next_review?: string | null;
       responsible_person?: string | null;
+      past_reviews?: Array<{
+        date: string;
+        reviewer: string;
+        reviewer_id?: string;
+        findings: string;
+        changes_made: string;
+      }>;
     };
     kpis?: any[];
     corrective_actions?: {
