@@ -1,10 +1,10 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, ChevronDown, ChevronUp, Check, AlertCircle, Edit } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, Check, AlertCircle, Edit, Search } from "lucide-react";
 import { 
   Card, 
   CardContent, 
@@ -18,6 +18,19 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { format, addDays, addWeeks, addMonths, addQuarters, addYears, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Audit {
   id?: string;
@@ -35,9 +48,49 @@ interface AuditsSectionProps {
   onChange: (data: Audit[]) => void;
 }
 
+// Predefined common audit types
+const COMMON_AUDIT_TYPES = [
+  "Site Safety Inspection",
+  "Equipment Safety Audit",
+  "PPE Compliance Check",
+  "Emergency Response Drill",
+  "First Aid Kit Inspection",
+  "Fire Safety Audit",
+  "Hazardous Materials Handling",
+  "Working at Heights Safety",
+  "Vehicle & Mobile Equipment",
+  "Environmental Compliance",
+  "Contractor Safety Audit",
+  "Housekeeping Audit",
+  "Electrical Safety Inspection",
+  "Manual Handling Assessment",
+  "Noise Level Assessment",
+  "Workplace Ergonomics Evaluation"
+];
+
 export const AuditsSection = ({ data = [], onChange }: AuditsSectionProps) => {
   const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
+  const [customAuditTypes, setCustomAuditTypes] = useState<string[]>([]);
+  const [openTypePopover, setOpenTypePopover] = useState<string | null>(null);
+  const [searchValue, setSearchValue] = useState("");
   const { toast } = useToast();
+
+  // Get all unique audit types from existing data
+  useEffect(() => {
+    if (data && data.length > 0) {
+      const existingTypes = data
+        .map(audit => audit.type)
+        .filter(type => 
+          type && 
+          type.trim() !== "" && 
+          !COMMON_AUDIT_TYPES.includes(type)
+        );
+      
+      if (existingTypes.length > 0) {
+        setCustomAuditTypes(Array.from(new Set(existingTypes)));
+      }
+    }
+  }, [data]);
 
   // Generate unique ID for each audit if not already present
   const audits = data.map(audit => ({
@@ -77,6 +130,16 @@ export const AuditsSection = ({ data = [], onChange }: AuditsSectionProps) => {
       return audit;
     });
     onChange(newData);
+  };
+
+  const handleSelectAuditType = (id: string, value: string) => {
+    handleUpdateAudit(id, "type", value);
+    setOpenTypePopover(null);
+    
+    // If it's a custom type (not in predefined list), add it to our custom types
+    if (value && !COMMON_AUDIT_TYPES.includes(value) && !customAuditTypes.includes(value)) {
+      setCustomAuditTypes(prev => [...prev, value]);
+    }
   };
 
   const calculateNextDueDate = (frequency: string, fromDate: string): string => {
@@ -178,6 +241,9 @@ export const AuditsSection = ({ data = [], onChange }: AuditsSectionProps) => {
     }
   };
 
+  // Combine common audit types with custom ones for the dropdown
+  const allAuditTypes = [...COMMON_AUDIT_TYPES, ...customAuditTypes];
+  
   // Sort audits: drafts first, then pending (by due date), then completed
   const sortedAudits = [...audits].sort((a, b) => {
     // First, sort by status
@@ -257,11 +323,93 @@ export const AuditsSection = ({ data = [], onChange }: AuditsSectionProps) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Audit Type</Label>
-                      <Input
-                        value={audit.type}
-                        onChange={(e) => handleUpdateAudit(audit.id!, "type", e.target.value)}
-                        placeholder="e.g., Site Safety Inspection"
-                      />
+                      <Popover 
+                        open={openTypePopover === audit.id}
+                        onOpenChange={(open) => setOpenTypePopover(open ? audit.id : null)}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openTypePopover === audit.id}
+                            className="w-full justify-between"
+                          >
+                            {audit.type || "Select audit type..."}
+                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput 
+                              placeholder="Search audit types..." 
+                              value={searchValue}
+                              onValueChange={setSearchValue}
+                            />
+                            <CommandList>
+                              <CommandEmpty>
+                                {searchValue ? (
+                                  <div className="py-3 px-4 text-sm">
+                                    <p>No existing audit type matches "{searchValue}"</p>
+                                    <Button
+                                      variant="outline"
+                                      className="mt-2 w-full"
+                                      onClick={() => {
+                                        handleSelectAuditType(audit.id!, searchValue);
+                                      }}
+                                    >
+                                      <Plus className="mr-2 h-4 w-4" />
+                                      Add "{searchValue}" as new type
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  "No audit types found."
+                                )}
+                              </CommandEmpty>
+                              <CommandGroup heading="Common Audit Types">
+                                {COMMON_AUDIT_TYPES.filter(type => 
+                                  type.toLowerCase().includes(searchValue.toLowerCase())
+                                ).map(type => (
+                                  <CommandItem
+                                    key={type}
+                                    value={type}
+                                    onSelect={() => handleSelectAuditType(audit.id!, type)}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        audit.type === type ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {type}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                              
+                              {customAuditTypes.length > 0 && (
+                                <CommandGroup heading="Custom Audit Types">
+                                  {customAuditTypes.filter(type => 
+                                    type.toLowerCase().includes(searchValue.toLowerCase())
+                                  ).map(type => (
+                                    <CommandItem
+                                      key={type}
+                                      value={type}
+                                      onSelect={() => handleSelectAuditType(audit.id!, type)}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          audit.type === type ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {type}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     <div className="space-y-2">
