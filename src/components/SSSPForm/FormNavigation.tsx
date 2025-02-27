@@ -34,7 +34,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { logActivity } from "@/utils/activityLogging";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityLog } from "./ActivityLog/ActivityLog";
 import { Badge } from "@/components/ui/badge";
@@ -95,19 +94,7 @@ export const FormNavigation = ({
       return;
     }
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await logActivity(id, 'viewed', user.id, {
-          description: 'Viewed activity log',
-          section: 'Activity Log',
-          severity: 'minor'
-        }, 'system');
-      }
-    } catch (error) {
-      console.error('Error logging activity view:', error);
-    }
-
+    // Don't log viewing activity log anymore
     setActivityLogOpen(true);
   };
 

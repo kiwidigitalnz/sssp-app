@@ -35,7 +35,6 @@ const ACTIVITY_ACTIONS = [
   { value: 'deleted', label: 'Deleted', icon: <Trash className="h-4 w-4" /> },
   { value: 'reviewed', label: 'Reviewed', icon: <RefreshCw className="h-4 w-4" /> },
   { value: 'downloaded', label: 'Downloaded', icon: <Download className="h-4 w-4" /> },
-  { value: 'viewed', label: 'Viewed', icon: <Eye className="h-4 w-4" /> },
 ];
 
 const ACTIVITY_CATEGORIES = [
@@ -87,7 +86,11 @@ export const ActivityLog = ({ sssp_id }: ActivityLogProps) => {
       };
 
       const activityLogs = await getActivityLogs(sssp_id, options);
-      setLogs(activityLogs);
+      
+      // Filter out 'viewed' actions from the activity logs
+      const filteredActivityLogs = activityLogs.filter(log => log.action !== 'viewed');
+      
+      setLogs(filteredActivityLogs);
       applyFilters();
     } catch (error) {
       console.error('Error fetching activity logs:', error);
@@ -185,8 +188,6 @@ export const ActivityLog = ({ sssp_id }: ActivityLogProps) => {
         return 'bg-amber-100 text-amber-800';
       case 'downloaded':
         return 'bg-teal-100 text-teal-800';
-      case 'viewed':
-        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
