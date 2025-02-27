@@ -168,6 +168,16 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw new Error("You must be logged in to share SSSPs");
       }
 
+      if (user.email === shareForm.email) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Invitation",
+          description: "You cannot invite yourself",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       console.log('Checking if invited user exists in profiles...');
       const { data: invitedUserProfile, error: profileError } = await supabase
         .from('profiles')
@@ -202,7 +212,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         email: shareForm.email,
         access_level: shareForm.accessLevel,
         invited_by: user.id,
-        status: 'pending'
+        status: 'pending' as const
       };
       console.log('Attempting to create invitation with data:', invitationData);
 
