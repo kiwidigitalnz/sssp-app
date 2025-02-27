@@ -355,6 +355,11 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     setShareForm({ email: '', accessLevel: 'view' });
   };
 
+  const handleConfirmDelete = (sssp: SSSP) => {
+    setSelectedSSSP(sssp);
+    setDeleteDialogOpen(true);
+  };
+
   return (
     <>
       <Table>
@@ -399,30 +404,22 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => {
-                      handleClone(sssp);
-                    }}>
+                    <DropdownMenuItem onClick={() => handleClone(sssp)}>
                       <Copy className="mr-2 h-4 w-4" />
                       Clone
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      handleShare(sssp);
-                    }}>
+                    <DropdownMenuItem onClick={() => handleShare(sssp)}>
                       <Share2 className="mr-2 h-4 w-4" />
                       Share
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      handlePrintToPDF(sssp);
-                    }}>
+                    <DropdownMenuItem onClick={() => handlePrintToPDF(sssp)}>
                       <FileText className="mr-2 h-4 w-4" />
                       Print to PDF
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-red-600"
-                      onClick={() => {
-                        confirmDelete(sssp);
-                      }}
+                      onClick={() => handleConfirmDelete(sssp)}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
