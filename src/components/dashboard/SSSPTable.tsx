@@ -1,339 +1,42 @@
+
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, ArrowUpDown, Search, Calendar, Share2 } from "lucide-react";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { Users, ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
-import { useQuery } from '@tanstack/react-query';
 import { SSSPActions } from "./SSSPActions";
 import { ShareDialog } from "./ShareDialog";
 import { DeleteDialog } from "./DeleteDialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import type { SSSPTableProps, SharedUser } from "./types";
-import { logActivity } from "@/utils/activityLogging";
-
-type SortConfig = {
-  key: keyof SSSP;
-  direction: 'asc' | 'desc';
-} | null;
-
-type DateRange = {
-  from: Date | undefined;
-  to: Date | undefined;
-};
+import type { SSSPTableProps } from "./types";
+import { SSSPTableFilters } from "./components/SSSPTableFilters";
+import { useSSSPTable } from "./hooks/useSSSPTable";
 
 export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [selectedSSSP, setSelectedSSSP] = useState<SSSP | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [shareFilter, setShareFilter] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
-  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
-  const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
-
-  const { data: sharedUsers = {}, refetch: refetchSharedUsers } = useQuery({
-    queryKey: ['shared-users', selectedSSSP?.id],
-    queryFn: async () => {
-      if (!selectedSSSP) return {};
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data: invitations, error: invitationsError } = await supabase
-        .from('sssp_invitations')
-        .select('email, access_level, status')
-        .eq('sssp_id', selectedSSSP.id);
-
-      if (invitationsError) {
-        console.error('Error fetching invitations:', invitationsError);
-        return { [selectedSSSP.id]: [] };
-      }
-
-      const { data: creatorProfile, error: creatorError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', selectedSSSP.created_by)
-        .single();
-
-      if (creatorError) {
-        console.error('Error fetching creator profile:', creatorError);
-      }
-
-      const users: SharedUser[] = [];
-      
-      if (creatorProfile) {
-        users.push({
-          email: creatorProfile.email,
-          access_level: 'owner',
-          status: 'accepted',
-          is_creator: true
-        });
-      }
-
-      if (invitations) {
-        users.push(...invitations.map(inv => ({
-          email: inv.email,
-          access_level: inv.access_level,
-          status: inv.status,
-          is_creator: false
-        })));
-      }
-
-      return { [selectedSSSP.id]: users };
-    },
-    enabled: !!selectedSSSP && shareDialogOpen
-  });
-
-  const handleShare = async (email: string, accessLevel: 'view' | 'edit') => {
-    if (!selectedSSSP) return;
-
-    try {
-      const { error } = await supabase.functions.invoke('send-invitation', {
-        body: { 
-          ssspId: selectedSSSP.id,
-          recipientEmail: email,
-          accessLevel
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Invitation sent",
-        description: `An invitation has been sent to ${email}`
-      });
-
-      await refetchSharedUsers();
-    } catch (error) {
-      console.error('Error sending invitation:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send invitation. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleClone = async (sssp: SSSP) => {
-    try {
-      setGeneratingPdfFor(sssp.id);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const newSSSPData = {
-        ...sssp,
-        title: `${sssp.title} (Copy)`,
-        created_by: user.id,
-        modified_by: user.id,
-        version: 1,
-        version_history: [],
-        status: "draft",
-        hazards: sssp.hazards ? [...sssp.hazards] : [],
-        emergency_contacts: sssp.emergency_contacts ? [...sssp.emergency_contacts] : [],
-        required_training: sssp.required_training ? [...sssp.required_training] : [],
-        meetings_schedule: sssp.meetings_schedule ? [...sssp.meetings_schedule] : [],
-        monitoring_review: sssp.monitoring_review ? {
-          ...sssp.monitoring_review,
-          review_schedule: {
-            ...sssp.monitoring_review.review_schedule,
-            last_review: null,
-            next_review: null
-          },
-          kpis: sssp.monitoring_review.kpis ? [...sssp.monitoring_review.kpis] : [],
-          audits: sssp.monitoring_review.audits ? [...sssp.monitoring_review.audits] : [],
-          review_triggers: sssp.monitoring_review.review_triggers ? [...sssp.monitoring_review.review_triggers] : []
-        } : null
-      };
-
-      delete newSSSPData.id;
-      delete newSSSPData.created_at;
-      delete newSSSPData.updated_at;
-
-      const { data: newSSSP, error } = await supabase
-        .from('sssps')
-        .insert([newSSSPData])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await logActivity(newSSSP.id, 'cloned', user.id, {
-        original_sssp_id: sssp.id,
-        original_title: sssp.title
-      });
-
-      toast({
-        title: "SSSP cloned successfully",
-        description: `"${sssp.title}" has been cloned successfully`
-      });
-
-      onRefresh();
-    } catch (error) {
-      console.error('Error cloning SSSP:', error);
-      toast({
-        title: "Error cloning SSSP",
-        description: error instanceof Error ? error.message : "Failed to clone SSSP. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setGeneratingPdfFor(null);
-    }
-  };
-
-  const handlePrintToPDF = async (sssp: SSSP) => {
-    setGeneratingPdfFor(sssp.id);
-    try {
-      console.log('Generating PDF for SSSP:', sssp.id);
-      const { data, error } = await supabase.functions.invoke('generate-sssp-pdf', {
-        body: { ssspId: sssp.id }
-      });
-
-      if (error) {
-        console.error('Error from edge function:', error);
-        throw error;
-      }
-
-      console.log('Response from edge function:', data);
-
-      if (data?.url) {
-        try {
-          const response = await fetch(data.url);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          const blob = await response.blob();
-          
-          const objectUrl = window.URL.createObjectURL(blob);
-          
-          const link = document.createElement('a');
-          link.href = objectUrl;
-          link.download = `${sssp.title}-SSSP.pdf`.replace(/[^a-z0-9\.]/gi, '_');
-          document.body.appendChild(link);
-          link.click();
-          
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(objectUrl);
-
-          toast({
-            title: "PDF generated successfully",
-            description: "Your PDF has been generated and downloaded"
-          });
-        } catch (downloadError) {
-          console.error('Error downloading file:', downloadError);
-          throw new Error('Failed to download the generated file');
-        }
-      } else {
-        throw new Error('No URL returned from PDF generation');
-      }
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setGeneratingPdfFor(null);
-    }
-  };
-
-  const handleDelete = async (sssp: SSSP) => {
-    try {
-      const { error } = await supabase
-        .from('sssps')
-        .delete()
-        .eq('id', sssp.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "SSSP deleted",
-        description: `Successfully deleted "${sssp.title}"`
-      });
-
-      setDeleteDialogOpen(false);
-      onRefresh();
-    } catch (error) {
-      console.error('Error deleting SSSP:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete SSSP. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleRevokeAccess = async (ssspId: string, email: string) => {
-    try {
-      const { error } = await supabase
-        .from('sssp_invitations')
-        .delete()
-        .match({ sssp_id: ssspId, email });
-
-      if (error) throw error;
-
-      toast({
-        title: "Access revoked",
-        description: `Successfully revoked access for ${email}`
-      });
-
-      await refetchSharedUsers();
-    } catch (error) {
-      console.error('Error revoking access:', error);
-      toast({
-        title: "Error",
-        description: "Failed to revoke access. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleResendInvite = async (ssspId: string, email: string) => {
-    try {
-      const { error } = await supabase.functions.invoke('resend-invitation', {
-        body: { ssspId, email }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Invitation resent",
-        description: `Successfully resent invitation to ${email}`
-      });
-    } catch (error) {
-      console.error('Error resending invitation:', error);
-      toast({
-        title: "Error",
-        description: "Failed to resend invitation. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleSort = (key: keyof SSSP) => {
-    setSortConfig((currentSort) => {
-      if (currentSort?.key === key) {
-        return currentSort.direction === 'asc'
-          ? { key, direction: 'desc' }
-          : null;
-      }
-      return { key, direction: 'asc' };
-    });
-  };
+  const {
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    shareDialogOpen,
+    setShareDialogOpen,
+    selectedSSSP,
+    setSelectedSSSP,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    shareFilter,
+    setShareFilter,
+    dateRange,
+    setDateRange,
+    sortConfig,
+    generatingPdfFor,
+    sharedUsers,
+    handleShare,
+    handleClone,
+    handleDelete,
+    handleRevokeAccess,
+    handleResendInvite,
+    handleSort
+  } = useSSSPTable(sssps, onRefresh);
 
   const filteredAndSortedSSSPs = sssps
     .filter((sssp) => {
@@ -378,81 +81,16 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search by title or company..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 w-full"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={shareFilter} onValueChange={setShareFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by sharing" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All SSSPs</SelectItem>
-              <SelectItem value="shared">Shared</SelectItem>
-              <SelectItem value="not-shared">Not Shared</SelectItem>
-            </SelectContent>
-          </Select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                className={`w-full justify-start text-left font-normal ${
-                  !dateRange.from && !dateRange.to ? 'text-muted-foreground' : ''
-                }`}
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                {dateRange.from ? (
-                  dateRange.to ? (
-                    <>
-                      {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
-                    </>
-                  ) : (
-                    format(dateRange.from, "LLL dd")
-                  )
-                ) : (
-                  "Filter by date"
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                initialFocus
-                mode="range"
-                defaultMonth={dateRange.from}
-                selected={{ 
-                  from: dateRange.from,
-                  to: dateRange.to
-                }}
-                onSelect={(range) => {
-                  setDateRange({
-                    from: range?.from,
-                    to: range?.to
-                  });
-                }}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+      <SSSPTableFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        shareFilter={shareFilter}
+        onShareFilterChange={setShareFilter}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+      />
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <Table>
@@ -545,7 +183,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                       setShareDialogOpen(true);
                     }}
                     onClone={handleClone}
-                    onPrintToPDF={handlePrintToPDF}
+                    onPrintToPDF={() => {}}
                     isGeneratingPdf={generatingPdfFor === sssp.id}
                     onDelete={(sssp) => {
                       setSelectedSSSP(sssp);
