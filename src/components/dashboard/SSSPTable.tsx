@@ -1,3 +1,4 @@
+
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -261,30 +262,36 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <div className="flex items-center gap-3 mb-6">
-          <Filter className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold text-gray-900">Filter SSSPs</h2>
+    <div className="space-y-8">
+      {/* Filter Section with improved styling */}
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="bg-primary/10 p-2 rounded-lg">
+            <Filter className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Filter SSSPs</h2>
+            <p className="text-sm text-gray-500 mt-1">Narrow down your SSSP list using the filters below</p>
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-3">
             <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
               <Search className="h-4 w-4 text-gray-400" />
-              Search
+              Search SSSPs
             </label>
             <Input
-              placeholder="Search by title or company..."
+              placeholder="Enter title or company name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
+              className="w-full h-11 px-4 text-base placeholder:text-gray-400"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <label className="text-sm font-medium text-gray-700">Status</label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Filter by status" />
+              <SelectTrigger className="w-full h-11">
+                <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -297,72 +304,91 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      {/* Table Section with improved styling */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50 hover:bg-gray-50">
+            <TableRow className="bg-gray-50/80 hover:bg-gray-50/80 border-b border-gray-100">
               <TableHead 
-                className="cursor-pointer font-semibold"
+                className="cursor-pointer font-semibold text-gray-700 py-4"
                 onClick={() => handleSort('title')}
               >
                 Title {getSortIcon('title')}
               </TableHead>
               <TableHead 
-                className="cursor-pointer font-semibold"
+                className="cursor-pointer font-semibold text-gray-700 py-4"
                 onClick={() => handleSort('company_name')}
               >
                 Company {getSortIcon('company_name')}
               </TableHead>
               <TableHead 
-                className="cursor-pointer font-semibold"
+                className="cursor-pointer font-semibold text-gray-700 py-4"
                 onClick={() => handleSort('status')}
               >
                 Status {getSortIcon('status')}
               </TableHead>
-              <TableHead>Shared With</TableHead>
+              <TableHead className="font-semibold text-gray-700 py-4">
+                Shared With
+              </TableHead>
               <TableHead 
-                className="cursor-pointer font-semibold"
+                className="cursor-pointer font-semibold text-gray-700 py-4"
                 onClick={() => handleSort('updated_at')}
               >
                 Last Updated {getSortIcon('updated_at')}
               </TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
+              <TableHead className="w-[80px] font-semibold text-gray-700 py-4">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredAndSortedSSSPs.map((sssp) => (
               <TableRow 
                 key={sssp.id} 
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                className="cursor-pointer hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0"
               >
-                <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>
-                  <div className="font-medium">{sssp.title}</div>
+                <TableCell 
+                  onClick={() => navigate(`/sssp/${sssp.id}`)}
+                  className="py-4"
+                >
+                  <div className="font-medium text-gray-900">{sssp.title}</div>
                 </TableCell>
-                <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>{sssp.company_name}</TableCell>
-                <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                    ${sssp.status === 'published' ? 'bg-green-100 text-green-800' :
-                      sssp.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'}`}>
+                <TableCell 
+                  onClick={() => navigate(`/sssp/${sssp.id}`)}
+                  className="py-4 text-gray-600"
+                >
+                  {sssp.company_name}
+                </TableCell>
+                <TableCell 
+                  onClick={() => navigate(`/sssp/${sssp.id}`)}
+                  className="py-4"
+                >
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                    ${sssp.status === 'published' ? 'bg-green-50 text-green-700 ring-1 ring-green-600/20' :
+                      sssp.status === 'draft' ? 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20' :
+                      'bg-gray-50 text-gray-700 ring-1 ring-gray-600/20'}`}>
                     {sssp.status}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-4">
                   {sharedUsers[sssp.id]?.length > 0 ? (
-                    <div className="flex gap-1 items-center">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
+                    <div className="flex gap-1.5 items-center">
+                      <Users className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
                         {sharedUsers[sssp.id].length} user{sharedUsers[sssp.id].length !== 1 ? 's' : ''}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">Not shared</span>
+                    <span className="text-sm text-gray-500">Not shared</span>
                   )}
                 </TableCell>
-                <TableCell onClick={() => navigate(`/sssp/${sssp.id}`)}>
+                <TableCell 
+                  onClick={() => navigate(`/sssp/${sssp.id}`)}
+                  className="py-4 text-gray-600"
+                >
                   {new Date(sssp.updated_at).toLocaleDateString()}
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-4">
                   <SSSPActions
                     sssp={sssp}
                     onShare={(sssp) => {
@@ -381,8 +407,11 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
             ))}
             {filteredAndSortedSSSPs.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No SSSPs found matching your filters
+                <TableCell 
+                  colSpan={6} 
+                  className="text-center py-12 text-gray-500"
+                >
+                  <p className="text-gray-400">No SSSPs found matching your filters</p>
                 </TableCell>
               </TableRow>
             )}
