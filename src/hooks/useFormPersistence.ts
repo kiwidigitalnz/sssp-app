@@ -97,6 +97,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   const { toast } = useToast();
   const lastSavedRef = useRef<string | null>(null);
   const storageRetryCount = useRef(0);
+  const previousDataRef = useRef<T | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['sssp', options.key],
@@ -133,8 +134,108 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   useEffect(() => {
     if (data) {
       setFormData(data as T);
+      previousDataRef.current = data as T;
     }
   }, [data]);
+
+  // Function to identify what fields have changed
+  const getChangedFields = (oldData: any, newData: any, prefix = ''): string[] => {
+    if (!oldData || typeof oldData !== 'object' || !newData || typeof newData !== 'object') {
+      return oldData !== newData ? [prefix.slice(0, -1)] : [];
+    }
+
+    return Object.keys(newData).reduce((changes, key) => {
+      const newPath = prefix + key;
+      
+      // Skip arrays with special handling
+      if (Array.isArray(newData[key])) {
+        if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
+          changes.push(key);
+        }
+        return changes;
+      }
+      
+      // Recursively check nested objects
+      if (
+        typeof newData[key] === 'object' && 
+        newData[key] !== null &&
+        typeof oldData[key] === 'object' && 
+        oldData[key] !== null &&
+        !Array.isArray(newData[key])
+      ) {
+        return [
+          ...changes,
+          ...getChangedFields(oldData[key], newData[key], newPath + '.')
+        ];
+      }
+      
+      // Check primitive values
+      if (oldData[key] !== newData[key]) {
+        changes.push(key);
+      }
+      
+      return changes;
+    }, [] as string[]);
+  };
+
+  // Identify which section a field belongs to
+  const getSectionFromField = (field: string): string => {
+    // Map fields to sections
+    const sectionMap: Record<string, string> = {
+      title: 'Project Details',
+      description: 'Project Details',
+      company_name: 'Company Info',
+      company_address: 'Company Info',
+      company_contact_name: 'Company Info',
+      company_contact_email: 'Company Info',
+      company_contact_phone: 'Company Info',
+      services: 'Scope of Work',
+      locations: 'Scope of Work',
+      considerations: 'Scope of Work',
+      emergency_plan: 'Emergency Procedures',
+      assembly_points: 'Emergency Procedures',
+      emergency_equipment: 'Emergency Procedures',
+      incident_reporting: 'Emergency Procedures',
+      emergency_contacts: 'Emergency Procedures',
+      pcbu_duties: 'Health & Safety',
+      site_supervisor_duties: 'Health & Safety',
+      worker_duties: 'Health & Safety',
+      contractor_duties: 'Health & Safety',
+      competency_requirements: 'Training Requirements',
+      training_records: 'Training Requirements',
+      required_training: 'Training Requirements',
+      hazards: 'Hazard Management',
+      drug_and_alcohol: 'Site Safety Rules',
+      fatigue_management: 'Site Safety Rules',
+      ppe: 'Site Safety Rules',
+      mobile_phone: 'Site Safety Rules',
+      entry_exit_procedures: 'Site Safety Rules',
+      speed_limits: 'Site Safety Rules',
+      parking_rules: 'Site Safety Rules',
+      site_specific_ppe: 'Site Safety Rules',
+      communication_methods: 'Communication',
+      toolbox_meetings: 'Communication',
+      reporting_procedures: 'Communication',
+      communication_protocols: 'Communication',
+      visitor_rules: 'Communication',
+      meetings_schedule: 'Communication',
+      monitoring_review: 'Monitoring & Review'
+    };
+
+    // Check if the field has a direct match
+    if (field in sectionMap) {
+      return sectionMap[field];
+    }
+
+    // Check for partial matches (for nested fields)
+    for (const key in sectionMap) {
+      if (field.startsWith(key)) {
+        return sectionMap[key];
+      }
+    }
+
+    return 'General';
+  };
 
   const mutation = useMutation({
     mutationFn: async (dataToSave: T = formData) => {
@@ -144,14 +245,44 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
 
         const { error } = await supabase
           .from('sssps')
-          .update(dataToSave)
+          .update({
+            ...dataToSave,
+            modified_by: user.id
+          })
           .eq('id', options.key);
         
         if (error) throw error;
 
-        await logActivity(options.key, 'updated', user.id, {
-          updated_fields: Object.keys(dataToSave)
+        // Identify what fields have changed
+        const changedFields = getChangedFields(previousDataRef.current || {}, dataToSave);
+        
+        // If no fields changed, don't log an activity
+        if (changedFields.length === 0) {
+          return dataToSave;
+        }
+        
+        // Group changes by section
+        const changesBySection: Record<string, string[]> = {};
+        changedFields.forEach(field => {
+          const section = getSectionFromField(field);
+          if (!changesBySection[section]) {
+            changesBySection[section] = [];
+          }
+          changesBySection[section].push(field);
         });
+        
+        // Log an activity for each section that had changes
+        for (const [section, fields] of Object.entries(changesBySection)) {
+          await logActivity(options.key, 'updated', user.id, {
+            updated_fields: fields,
+            section: section,
+            severity: fields.length > 5 ? 'major' : 'minor',
+            description: `Updated ${fields.length} field${fields.length === 1 ? '' : 's'} in ${section}`
+          });
+        }
+
+        // Update the reference to the current data
+        previousDataRef.current = {...dataToSave};
       }
       return dataToSave;
     },
