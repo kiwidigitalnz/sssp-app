@@ -17,6 +17,34 @@ export type SortConfig = {
   direction: 'asc' | 'desc';
 } | null;
 
+// Helper function to create a properly typed monitoring review object
+const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> => ({
+  review_schedule: {
+    frequency: "",
+    last_review: null,
+    next_review: null,
+    responsible_person: null
+  },
+  kpis: [],
+  corrective_actions: {
+    process: "",
+    tracking_method: "",
+    responsible_person: null
+  },
+  audits: [],
+  worker_consultation: {
+    method: "",
+    frequency: "",
+    last_consultation: null
+  },
+  review_triggers: [],
+  documentation: {
+    storage_location: "",
+    retention_period: "",
+    access_details: ""
+  }
+});
+
 export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -121,7 +149,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         throw new Error("User not authenticated");
       }
 
-      const newSSSPData = {
+      const newSSSPData: Omit<SSSP, 'id' | 'created_at' | 'updated_at'> = {
         ...sssp,
         title: `${sssp.title} (Copy)`,
         created_by: user.id,
@@ -161,10 +189,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         } : null
       };
 
-      delete newSSSPData.id;
-      delete newSSSPData.created_at;
-      delete newSSSPData.updated_at;
-
       const { data: newSSSP, error } = await supabase
         .from('sssps')
         .insert([newSSSPData])
@@ -195,36 +219,19 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         updated_at: new Date().toISOString(),
         version: 1,
         version_history: [],
-        monitoring_review: sssp.monitoring_review ? {
-          review_schedule: {
-            frequency: sssp.monitoring_review.review_schedule?.frequency || "",
-            last_review: null,
-            next_review: null,
-            responsible_person: sssp.monitoring_review.review_schedule?.responsible_person || null
-          },
-          kpis: [],
-          corrective_actions: {
-            process: "",
-            tracking_method: "",
-            responsible_person: null
-          },
-          audits: [],
-          worker_consultation: {
-            method: "",
-            frequency: "",
-            last_consultation: null
-          },
-          review_triggers: [],
-          documentation: {
-            storage_location: "",
-            retention_period: "",
-            access_details: ""
-          }
-        } : null
+        created_by: sssp.created_by,
+        modified_by: sssp.modified_by,
+        company_name: sssp.company_name,
+        monitoring_review: createEmptyMonitoringReview(),
+        hazards: [],
+        emergency_contacts: [],
+        required_training: [],
+        meetings_schedule: []
       };
 
-      queryClient.setQueryData<SSSP[]>(['sssps'], old => {
-        return old ? [...old, optimisticClone] : [optimisticClone];
+      queryClient.setQueryData<SSSP[]>(['sssps'], (old) => {
+        if (!old) return [optimisticClone];
+        return [...old, optimisticClone];
       });
 
       return { previousSssps, optimisticId: optimisticClone.id };
@@ -246,8 +253,9 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         description: `"${originalSSSP.title}" has been cloned successfully`
       });
 
-      queryClient.setQueryData<SSSP[]>(['sssps'], old => {
-        return old ? old.map(s => s.id.startsWith('temp-') ? newSSSP : s) : [newSSSP];
+      queryClient.setQueryData<SSSP[]>(['sssps'], (old) => {
+        if (!old) return [newSSSP];
+        return old.map(s => s.id.startsWith('temp-') ? newSSSP : s);
       });
     },
     onSettled: () => {
