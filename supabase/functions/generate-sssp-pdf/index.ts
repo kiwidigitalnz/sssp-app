@@ -86,26 +86,6 @@ serve(async (req) => {
     const margin = 20;
     const pageWidth = doc.internal.pageSize.width;
     const maxWidth = pageWidth - 2 * margin;
-    const cornerRadius = 3; // Radius for rounded corners
-
-    // Add rounded rectangle function
-    const roundedRect = (x: number, y: number, w: number, h: number, r: number) => {
-      const pts = [
-        [x + r, y],
-        [x + w - r, y],
-        [x + w, y],
-        [x + w, y + r],
-        [x + w, y + h - r],
-        [x + w, y + h],
-        [x + w - r, y + h],
-        [x + r, y + h],
-        [x, y + h],
-        [x, y + h - r],
-        [x, y + r],
-        [x, y]
-      ];
-      doc.lines(pts, x, y, [1, 1], 'F');
-    };
 
     // Enhanced styling functions with new typography system
     const addHeader = (text: string, level = 1) => {
@@ -115,18 +95,18 @@ serve(async (req) => {
       }
 
       if (level === 1) {
-        // H1 Style with rounded corners
+        // H1 Style
         doc.setFillColor(...colors.primary);
-        roundedRect(margin, y - 4, maxWidth, 10, cornerRadius);
+        doc.rect(margin, y - 4, maxWidth, 10, 'F');
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
         doc.setTextColor(255, 255, 255);
         doc.text(text.toUpperCase(), margin + 3, y + 2);
         y += 16;
       } else {
-        // H2 Style with rounded corners and background
+        // H2 Style - with background
         doc.setFillColor(...colors.secondary);
-        roundedRect(margin, y - 3, maxWidth, 8, cornerRadius);
+        doc.rect(margin, y - 3, maxWidth, 8, 'F');
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
         doc.setTextColor(...colors.primary);
@@ -137,7 +117,7 @@ serve(async (req) => {
 
     const addContent = (text: string | null | undefined, indent = 0) => {
       if (!text) return;
-      doc.setFont('times', 'normal'); // Changed to Times for better readability
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(...colors.text);
       const lines = doc.splitTextToSize(text, maxWidth - (indent * 10));
@@ -167,7 +147,7 @@ serve(async (req) => {
         doc.setTextColor(...colors.text);
         doc.text(row[0], margin + cellPadding, y);
         
-        doc.setFont('times', 'normal'); // Changed to Times for better readability
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(...colors.subtext);
         const valueLines = doc.splitTextToSize(row[1], maxWidth - 70);
         doc.text(valueLines, margin + 70, y);
