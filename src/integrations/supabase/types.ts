@@ -259,6 +259,7 @@ export type Database = {
           reporting_procedures: string | null
           required_training: Json[] | null
           services: string | null
+          site_address: string | null
           site_specific_ppe: string | null
           site_supervisor_duties: string | null
           speed_limits: string | null
@@ -310,6 +311,7 @@ export type Database = {
           reporting_procedures?: string | null
           required_training?: Json[] | null
           services?: string | null
+          site_address?: string | null
           site_specific_ppe?: string | null
           site_supervisor_duties?: string | null
           speed_limits?: string | null
@@ -361,6 +363,7 @@ export type Database = {
           reporting_procedures?: string | null
           required_training?: Json[] | null
           services?: string | null
+          site_address?: string | null
           site_specific_ppe?: string | null
           site_supervisor_duties?: string | null
           speed_limits?: string | null

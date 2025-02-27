@@ -29,7 +29,7 @@ export const ProjectDetails = ({ formData, setFormData, isLoading }: ProjectDeta
     resolver: zodResolver(projectDetailsSchema),
     defaultValues: {
       projectName: formData?.title || "",
-      siteAddress: formData?.company_address || "", // Updated from address to company_address
+      siteAddress: formData?.site_address || "", // Updated to use site_address
       startDate: formData?.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : "",
       endDate: formData?.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : "",
       projectDescription: formData?.description || ""
@@ -39,7 +39,7 @@ export const ProjectDetails = ({ formData, setFormData, isLoading }: ProjectDeta
   useEffect(() => {
     if (formData) {
       setValue("projectName", formData.title || "");
-      setValue("siteAddress", formData.company_address || ""); // Updated from address to company_address
+      setValue("siteAddress", formData.site_address || ""); // Updated to use site_address
       setValue("startDate", formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : "");
       setValue("endDate", formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : "");
       setValue("projectDescription", formData.description || "");
@@ -57,7 +57,7 @@ export const ProjectDetails = ({ formData, setFormData, isLoading }: ProjectDeta
         updates.title = value;
         break;
       case "siteAddress":
-        updates.company_address = value; // Updated from address to company_address
+        updates.site_address = value; // Updated to use site_address
         break;
       case "startDate":
         updates.start_date = value;

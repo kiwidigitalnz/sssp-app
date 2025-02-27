@@ -6,6 +6,7 @@ export interface SSSP {
   description?: string;
   company_name: string;
   company_address?: string;
+  site_address?: string;
   company_contact_name?: string;
   company_contact_email?: string;
   company_contact_phone?: string;

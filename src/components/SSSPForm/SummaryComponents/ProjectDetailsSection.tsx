@@ -14,7 +14,7 @@ export const ProjectDetailsSection = ({ data, setFormData }: ProjectDetailsSecti
 
   const fields = [
     { key: "title", label: "Project Name" },
-    { key: "company_address", label: "Site Address" },
+    { key: "site_address", label: "Site Address" }, // Updated to use site_address
     { key: "start_date", label: "Start Date", isDate: true },
     { key: "end_date", label: "End Date", isDate: true },
     { key: "description", label: "Project Description", isTextArea: true }

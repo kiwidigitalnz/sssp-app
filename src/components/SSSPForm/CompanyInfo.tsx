@@ -54,7 +54,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
     resolver: zodResolver(companyInfoSchema),
     defaultValues: {
       companyName: formData.companyName || "",
-      address: formData.address || "",
+      address: formData.company_address || "", // Using company_address here
       contactPerson: formData.contactPerson || "",
       contactEmail: formData.contactEmail || "",
       contactPhone: formData.contactPhone || ""
@@ -64,7 +64,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
   useEffect(() => {
     if (sssp) {
       setValue("companyName", sssp.company_name || "");
-      setValue("address", sssp.company_address || "");
+      setValue("address", sssp.company_address || ""); // Using company_address here
       setValue("contactPerson", sssp.company_contact_name || "");
       setValue("contactEmail", sssp.company_contact_email || "");
       setValue("contactPhone", sssp.company_contact_phone || "");
@@ -72,7 +72,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
       setFormData({
         ...formData,
         companyName: sssp.company_name,
-        address: sssp.company_address,
+        company_address: sssp.company_address, // Using company_address here
         contactPerson: sssp.company_contact_name,
         contactEmail: sssp.company_contact_email,
         contactPhone: sssp.company_contact_phone
@@ -81,7 +81,34 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
   }, [sssp, setValue, setFormData]);
 
   const handleFieldChange = async (field: keyof CompanyInfoFormData, value: string) => {
-    setFormData({ ...formData, [field]: value });
+    // Create a copy of formData to update
+    const updatedFormData = { ...formData };
+    
+    // Map form fields to database fields
+    switch (field) {
+      case "companyName":
+        updatedFormData.companyName = value;
+        updatedFormData.company_name = value;
+        break;
+      case "address":
+        updatedFormData.address = value;
+        updatedFormData.company_address = value; // Updating company_address here
+        break;
+      case "contactPerson":
+        updatedFormData.contactPerson = value;
+        updatedFormData.company_contact_name = value;
+        break;
+      case "contactEmail":
+        updatedFormData.contactEmail = value;
+        updatedFormData.company_contact_email = value;
+        break;
+      case "contactPhone":
+        updatedFormData.contactPhone = value;
+        updatedFormData.company_contact_phone = value;
+        break;
+    }
+    
+    setFormData(updatedFormData);
     setValue(field, value);
     const result = await trigger(field);
     if (!result) {
@@ -119,7 +146,7 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
         />
 
         <AddressSection
-          value={formData.address || ""}
+          value={formData.company_address || ""} // Using company_address here
           onChange={(value) => handleFieldChange("address", value)}
           error={errors.address?.message}
         />

@@ -60,6 +60,7 @@ async function fetchSSSP(id: string) {
         access_details: ''
       }
     },
+    site_address: data.site_address || '', // Added site_address with empty default
     services: data.services || '',
     locations: data.locations || '',
     considerations: data.considerations || '',
