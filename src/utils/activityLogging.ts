@@ -31,17 +31,20 @@ export async function logActivity(
   console.log(`[activityLogging] Logging activity: ${action} for SSSP ${sssp_id}`);
   
   try {
+    // Create a details object that will be properly serialized as JSON
+    const detailsObject = {
+      ...details,
+      category,
+      timestamp: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('sssp_activity')
       .insert({
         sssp_id,
         action,
         user_id,
-        details: {
-          ...details,
-          category,
-          timestamp: new Date().toISOString()
-        }
+        details: detailsObject
       });
 
     if (error) {
