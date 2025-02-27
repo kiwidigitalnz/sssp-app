@@ -162,13 +162,19 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('Current auth state:', { user, authError });
+      console.log('Checking auth state:', { user, authError });
       
       if (!user) {
         throw new Error("You must be logged in to share SSSPs");
       }
 
-      if (user.email === shareForm.email) {
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user.id)
+        .single();
+
+      if (userProfile?.email === shareForm.email) {
         toast({
           variant: "destructive",
           title: "Invalid Invitation",
@@ -178,20 +184,22 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         return;
       }
 
-      const { data: existingInvite, error: inviteCheckError } = await supabase
+      console.log('Checking for existing invitations...');
+      
+      const { data: existingInvitations, error: inviteCheckError } = await supabase
         .from('sssp_invitations')
         .select('*')
         .eq('sssp_id', selectedSSSP.id)
-        .eq('email', shareForm.email)
-        .eq('status', 'pending')
-        .maybeSingle();
+        .eq('email', shareForm.email);
 
       if (inviteCheckError) {
-        console.error('Error checking existing invitation:', inviteCheckError);
+        console.error('Error checking existing invitations:', inviteCheckError);
         throw new Error('Failed to check existing invitations');
       }
 
-      if (existingInvite) {
+      const pendingInvite = existingInvitations?.find(invite => invite.status === 'pending');
+      
+      if (pendingInvite) {
         toast({
           variant: "destructive",
           title: "Invitation Exists",
@@ -200,6 +208,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         setIsSubmitting(false);
         return;
       }
+
+      console.log('Creating new invitation...');
 
       const { data: invitation, error: inviteError } = await supabase
         .from('sssp_invitations')
@@ -220,13 +230,15 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         throw new Error('Failed to create invitation');
       }
 
+      console.log('Sending invitation email...');
+
       const { error: functionError } = await supabase.functions.invoke('send-invitation', {
         body: {
           to: shareForm.email,
           ssspTitle: selectedSSSP.title,
           sssp_id: selectedSSSP.id,
           accessLevel: shareForm.accessLevel,
-          inviterEmail: user.email,
+          inviterEmail: userProfile?.email || user.email,
         },
       });
 
@@ -240,6 +252,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         }
         throw new Error('Failed to send invitation email');
       }
+
+      console.log('Refreshing shared users list...');
 
       const updatedUsers = await fetchSharedUsers(selectedSSSP);
       setSharedUsers(prev => ({
