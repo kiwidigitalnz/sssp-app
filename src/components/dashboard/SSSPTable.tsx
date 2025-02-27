@@ -125,27 +125,70 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
   const handleClone = async (sssp: SSSP) => {
     try {
+      setGeneratingPdfFor(sssp.id);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const newSSSPData = {
+        ...sssp,
+        title: `${sssp.title} (Copy)`,
+        created_by: user.id,
+        modified_by: user.id,
+        version: 1,
+        version_history: [],
+        status: "draft",
+        hazards: sssp.hazards ? [...sssp.hazards] : [],
+        emergency_contacts: sssp.emergency_contacts ? [...sssp.emergency_contacts] : [],
+        required_training: sssp.required_training ? [...sssp.required_training] : [],
+        meetings_schedule: sssp.meetings_schedule ? [...sssp.meetings_schedule] : [],
+        monitoring_review: sssp.monitoring_review ? {
+          ...sssp.monitoring_review,
+          review_schedule: {
+            ...sssp.monitoring_review.review_schedule,
+            last_review: null,
+            next_review: null
+          },
+          kpis: sssp.monitoring_review.kpis ? [...sssp.monitoring_review.kpis] : [],
+          audits: sssp.monitoring_review.audits ? [...sssp.monitoring_review.audits] : [],
+          review_triggers: sssp.monitoring_review.review_triggers ? [...sssp.monitoring_review.review_triggers] : []
+        } : null
+      };
+
+      delete newSSSPData.id;
+      delete newSSSPData.created_at;
+      delete newSSSPData.updated_at;
+
       const { data: newSSSP, error } = await supabase
         .from('sssps')
-        .insert([{ ...sssp, title: `${sssp.title} (Copy)` }])
+        .insert([newSSSPData])
         .select()
         .single();
 
       if (error) throw error;
 
+      await logActivity(newSSSP.id, 'cloned', user.id, {
+        original_sssp_id: sssp.id,
+        original_title: sssp.title
+      });
+
       toast({
-        title: "SSSP cloned",
-        description: `Successfully created a copy of "${sssp.title}"`
+        title: "SSSP cloned successfully",
+        description: `"${sssp.title}" has been cloned successfully`
       });
 
       onRefresh();
     } catch (error) {
       console.error('Error cloning SSSP:', error);
       toast({
-        title: "Error",
-        description: "Failed to clone SSSP. Please try again.",
+        title: "Error cloning SSSP",
+        description: error instanceof Error ? error.message : "Failed to clone SSSP. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setGeneratingPdfFor(null);
     }
   };
 
