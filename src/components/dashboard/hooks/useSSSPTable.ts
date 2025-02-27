@@ -113,10 +113,8 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     }
   };
 
-  const handleClone = async (sssp: SSSP) => {
-    try {
-      setGeneratingPdfFor(sssp.id);
-
+  const cloneMutation = useMutation({
+    mutationFn: async (sssp: SSSP) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("User not authenticated");
@@ -164,19 +162,58 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         original_title: sssp.title
       });
 
-      toast({
-        title: "SSSP cloned successfully",
-        description: `"${sssp.title}" has been cloned successfully`
+      return newSSSP;
+    },
+    onMutate: async (sssp) => {
+      await queryClient.cancelQueries({ queryKey: ['sssps'] });
+
+      const previousSssps = queryClient.getQueryData<SSSP[]>(['sssps']);
+
+      const optimisticClone: SSSP = {
+        ...sssp,
+        id: `temp-${Date.now()}`,
+        title: `${sssp.title} (Copy)`,
+        status: "draft",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      queryClient.setQueryData<SSSP[]>(['sssps'], old => {
+        return old ? [...old, optimisticClone] : [optimisticClone];
       });
 
-      onRefresh();
-    } catch (error) {
-      console.error('Error cloning SSSP:', error);
+      return { previousSssps, optimisticId: optimisticClone.id };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousSssps) {
+        queryClient.setQueryData(['sssps'], context.previousSssps);
+      }
+      console.error('Error cloning SSSP:', err);
       toast({
         title: "Error cloning SSSP",
-        description: error instanceof Error ? error.message : "Failed to clone SSSP. Please try again.",
+        description: err instanceof Error ? err.message : "Failed to clone SSSP. Please try again.",
         variant: "destructive"
       });
+    },
+    onSuccess: (newSSSP, originalSSSP) => {
+      toast({
+        title: "SSSP cloned successfully",
+        description: `"${originalSSSP.title}" has been cloned successfully`
+      });
+
+      queryClient.setQueryData<SSSP[]>(['sssps'], old => {
+        return old ? old.map(s => s.id.startsWith('temp-') ? newSSSP : s) : [newSSSP];
+      });
+    },
+    onSettled: () => {
+      onRefresh();
+    }
+  });
+
+  const handleClone = async (sssp: SSSP) => {
+    setGeneratingPdfFor(sssp.id);
+    try {
+      await cloneMutation.mutateAsync(sssp);
     } finally {
       setGeneratingPdfFor(null);
     }
