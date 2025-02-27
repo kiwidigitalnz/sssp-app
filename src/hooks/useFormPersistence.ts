@@ -137,23 +137,23 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   }, [data]);
 
   const mutation = useMutation({
-    mutationFn: async (newData: T) => {
+    mutationFn: async (dataToSave: T = formData) => {
       if (options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("User not authenticated");
 
         const { error } = await supabase
           .from('sssps')
-          .update(newData)
+          .update(dataToSave)
           .eq('id', options.key);
         
         if (error) throw error;
 
         await logActivity(options.key, 'updated', user.id, {
-          updated_fields: Object.keys(newData)
+          updated_fields: Object.keys(dataToSave)
         });
       }
-      return newData;
+      return dataToSave;
     },
     onSuccess: (newData) => {
       queryClient.setQueryData(['sssp', options.key], newData);
@@ -187,7 +187,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     setFormData,
     clearSavedData,
     isLoading,
-    save: () => mutation.mutate(formData),
+    save: (dataToSave?: T) => mutation.mutate(dataToSave || formData),
     error
   };
 }

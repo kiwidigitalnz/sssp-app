@@ -118,7 +118,7 @@ const SSSPForm = () => {
       // Transform data before saving
       const transformedData = transformFormDataForSaving(formData);
       
-      // Save transformed data
+      // Save transformed data using the save function with an argument
       await save(transformedData);
       clearSavedData();
       navigate("/");
