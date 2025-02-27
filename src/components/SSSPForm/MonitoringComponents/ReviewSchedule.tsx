@@ -2,9 +2,12 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, addMonths, addWeeks, parseISO } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Check, CalendarClock } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ReviewScheduleData {
   frequency: string;
@@ -112,6 +115,64 @@ export const ReviewSchedule = ({ data, onChange }: ReviewScheduleProps) => {
     onChange(updatedData);
   };
 
+  const handleCompleteReview = () => {
+    if (!reviewData.frequency) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a review frequency before marking as completed",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const today = format(new Date(), 'yyyy-MM-dd');
+    let nextDate;
+    
+    // Calculate next review date based on frequency
+    switch (reviewData.frequency) {
+      case "weekly":
+        nextDate = addWeeks(new Date(), 1);
+        break;
+      case "monthly":
+        nextDate = addMonths(new Date(), 1);
+        break;
+      case "quarterly":
+        nextDate = addMonths(new Date(), 3);
+        break;
+      case "biannually":
+        nextDate = addMonths(new Date(), 6);
+        break;
+      case "annually":
+        nextDate = addMonths(new Date(), 12);
+        break;
+      default:
+        nextDate = addMonths(new Date(), 3); // Default to quarterly
+    }
+
+    const nextReviewDate = format(nextDate, 'yyyy-MM-dd');
+    
+    // Update review schedule data
+    const updatedData = {
+      ...reviewData,
+      last_review: today,
+      next_review: nextReviewDate
+    };
+    
+    onChange(updatedData);
+    
+    toast({
+      title: "Review Completed",
+      description: `The review has been marked as completed. Next review scheduled for ${nextReviewDate}.`
+    });
+  };
+
+  // Calculate how many days until next review (if dates are valid)
+  const daysUntilNextReview = reviewData.next_review ? 
+    Math.ceil((new Date(reviewData.next_review).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+  const isOverdue = daysUntilNextReview !== null && daysUntilNextReview < 0;
+  const isUpcoming = daysUntilNextReview !== null && daysUntilNextReview >= 0 && daysUntilNextReview <= 7;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -169,6 +230,40 @@ export const ReviewSchedule = ({ data, onChange }: ReviewScheduleProps) => {
           </p>
         </div>
       </div>
+
+      {reviewData.next_review && (
+        <Card className={`mt-4 ${isOverdue ? 'border-red-400' : isUpcoming ? 'border-amber-400' : ''}`}>
+          <CardContent className="py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarClock className={`h-5 w-5 ${isOverdue ? 'text-red-500' : isUpcoming ? 'text-amber-500' : 'text-muted-foreground'}`} />
+              <div>
+                <p className="font-medium">
+                  {isOverdue 
+                    ? `Overdue by ${Math.abs(daysUntilNextReview || 0)} days` 
+                    : isUpcoming 
+                      ? `Due soon: ${daysUntilNextReview} days remaining` 
+                      : `Next review in ${daysUntilNextReview} days`}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Next review date: {reviewData.next_review}
+                </p>
+              </div>
+            </div>
+            
+            <Button onClick={handleCompleteReview} className="gap-2">
+              <Check className="h-4 w-4" />
+              Mark Review as Completed
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!reviewData.next_review && (
+        <Button onClick={handleCompleteReview} className="gap-2 mt-4">
+          <Check className="h-4 w-4" />
+          Mark Review as Completed
+        </Button>
+      )}
     </div>
   );
 };
