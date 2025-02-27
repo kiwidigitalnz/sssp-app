@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
 import type { SharedUser } from "../types";
@@ -18,6 +18,8 @@ export type SortConfig = {
 
 export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedSSSP, setSelectedSSSP] = useState<SSSP | null>(null);
@@ -264,18 +266,20 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     });
   };
 
-  const handleStatusChange = async (sssp: SSSP, newStatus: string) => {
-    try {
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ sssp, newStatus }: { sssp: SSSP, newStatus: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('sssps')
         .update({ 
           status: newStatus,
           modified_by: user.id 
         })
-        .eq('id', sssp.id);
+        .eq('id', sssp.id)
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -285,13 +289,16 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         new_value: newStatus
       });
 
+      return data;
+    },
+    onSuccess: () => {
       toast({
         title: "Status updated",
-        description: `Status changed to ${newStatus}`
+        description: "Status has been updated successfully"
       });
-
-      onRefresh();
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['sssps'] });
+    },
+    onError: (error) => {
       console.error('Error updating status:', error);
       toast({
         title: "Error updating status",
@@ -299,6 +306,10 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         variant: "destructive"
       });
     }
+  });
+
+  const handleStatusChange = (sssp: SSSP, newStatus: string) => {
+    updateStatusMutation.mutate({ sssp, newStatus });
   };
 
   return {
