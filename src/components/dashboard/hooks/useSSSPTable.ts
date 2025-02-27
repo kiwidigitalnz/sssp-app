@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,38 @@ export type SortConfig = {
   key: keyof SSSP;
   direction: 'asc' | 'desc';
 } | null;
+
+// Helper function to transform and validate monitoring review data
+const transformMonitoringReview = (rawData: any): NonNullable<SSSP['monitoring_review']> => {
+  if (!rawData) return createEmptyMonitoringReview();
+  
+  return {
+    review_schedule: {
+      frequency: rawData.review_schedule?.frequency || "",
+      last_review: rawData.review_schedule?.last_review || null,
+      next_review: rawData.review_schedule?.next_review || null,
+      responsible_person: rawData.review_schedule?.responsible_person || null
+    },
+    kpis: Array.isArray(rawData.kpis) ? rawData.kpis : [],
+    corrective_actions: {
+      process: rawData.corrective_actions?.process || "",
+      tracking_method: rawData.corrective_actions?.tracking_method || "",
+      responsible_person: rawData.corrective_actions?.responsible_person || null
+    },
+    audits: Array.isArray(rawData.audits) ? rawData.audits : [],
+    worker_consultation: {
+      method: rawData.worker_consultation?.method || "",
+      frequency: rawData.worker_consultation?.frequency || "",
+      last_consultation: rawData.worker_consultation?.last_consultation || null
+    },
+    review_triggers: Array.isArray(rawData.review_triggers) ? rawData.review_triggers : [],
+    documentation: {
+      storage_location: rawData.documentation?.storage_location || "",
+      retention_period: rawData.documentation?.retention_period || "",
+      access_details: rawData.documentation?.access_details || ""
+    }
+  };
+};
 
 // Helper function to create a properly typed monitoring review object
 const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> => ({
@@ -42,6 +75,17 @@ const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> =
     retention_period: "",
     access_details: ""
   }
+});
+
+// Helper function to transform Supabase response to SSSP type
+const transformToSSSP = (data: any): SSSP => ({
+  ...data,
+  hazards: Array.isArray(data.hazards) ? data.hazards : [],
+  emergency_contacts: Array.isArray(data.emergency_contacts) ? data.emergency_contacts : [],
+  required_training: Array.isArray(data.required_training) ? data.required_training : [],
+  meetings_schedule: Array.isArray(data.meetings_schedule) ? data.meetings_schedule : [],
+  monitoring_review: transformMonitoringReview(data.monitoring_review),
+  version_history: Array.isArray(data.version_history) ? data.version_history : []
 });
 
 export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
@@ -148,7 +192,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         throw new Error("User not authenticated");
       }
 
-      const newSSSPData: Omit<SSSP, 'id' | 'created_at' | 'updated_at'> = {
+      const newSSSPData = {
         ...sssp,
         title: `${sssp.title} (Copy)`,
         created_by: user.id,
@@ -156,37 +200,16 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         version: 1,
         version_history: [],
         status: "draft",
-        hazards: sssp.hazards ? [...sssp.hazards] : [],
-        emergency_contacts: sssp.emergency_contacts ? [...sssp.emergency_contacts] : [],
-        required_training: sssp.required_training ? [...sssp.required_training] : [],
-        meetings_schedule: sssp.meetings_schedule ? [...sssp.meetings_schedule] : [],
-        monitoring_review: sssp.monitoring_review ? {
-          review_schedule: {
-            frequency: sssp.monitoring_review.review_schedule?.frequency || "",
-            last_review: null,
-            next_review: null,
-            responsible_person: sssp.monitoring_review.review_schedule?.responsible_person || null
-          },
-          kpis: sssp.monitoring_review.kpis ? [...sssp.monitoring_review.kpis] : [],
-          corrective_actions: {
-            process: sssp.monitoring_review.corrective_actions?.process || "",
-            tracking_method: sssp.monitoring_review.corrective_actions?.tracking_method || "",
-            responsible_person: sssp.monitoring_review.corrective_actions?.responsible_person || null
-          },
-          audits: sssp.monitoring_review.audits ? [...sssp.monitoring_review.audits] : [],
-          worker_consultation: {
-            method: sssp.monitoring_review.worker_consultation?.method || "",
-            frequency: sssp.monitoring_review.worker_consultation?.frequency || "",
-            last_consultation: null
-          },
-          review_triggers: sssp.monitoring_review.review_triggers ? [...sssp.monitoring_review.review_triggers] : [],
-          documentation: {
-            storage_location: sssp.monitoring_review.documentation?.storage_location || "",
-            retention_period: sssp.monitoring_review.documentation?.retention_period || "",
-            access_details: sssp.monitoring_review.documentation?.access_details || ""
-          }
-        } : createEmptyMonitoringReview()
+        hazards: sssp.hazards || [],
+        emergency_contacts: sssp.emergency_contacts || [],
+        required_training: sssp.required_training || [],
+        meetings_schedule: sssp.meetings_schedule || [],
+        monitoring_review: transformMonitoringReview(sssp.monitoring_review)
       };
+
+      delete (newSSSPData as any).id;
+      delete (newSSSPData as any).created_at;
+      delete (newSSSPData as any).updated_at;
 
       const { data: newSSSP, error } = await supabase
         .from('sssps')
@@ -201,14 +224,13 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         original_title: sssp.title
       });
 
-      return newSSSP as SSSP;
+      return transformToSSSP(newSSSP);
     },
     onMutate: async (sssp) => {
       await queryClient.cancelQueries({ queryKey: ['sssps'] });
 
       const previousSssps = queryClient.getQueryData<SSSP[]>(['sssps']);
 
-      // Create an optimistic clone with proper typing
       const optimisticClone: SSSP = {
         ...sssp,
         id: `temp-${Date.now()}`,
@@ -228,7 +250,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         meetings_schedule: []
       };
 
-      queryClient.setQueryData<SSSP[]>(['sssps'], (old) => {
+      queryClient.setQueryData<SSSP[]>(['sssps'], old => {
         const oldData = old || [];
         return [...oldData, optimisticClone];
       });
@@ -252,9 +274,9 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         description: `"${originalSSSP.title}" has been cloned successfully`
       });
 
-      queryClient.setQueryData<SSSP[]>(['sssps'], (old) => {
+      queryClient.setQueryData<SSSP[]>(['sssps'], old => {
         const oldData = old || [];
-        return oldData.map(s => s.id.startsWith('temp-') ? (newSSSP as SSSP) : s);
+        return oldData.map(s => s.id.startsWith('temp-') ? newSSSP : s);
       });
     },
     onSettled: () => {
