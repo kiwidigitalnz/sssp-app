@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
@@ -11,14 +10,13 @@ const corsHeaders = {
   'Vary': 'Origin'
 };
 
-// Colors for the PDF
+// Colors for the PDF - removed light backgrounds
 const colors = {
   primary: [41, 63, 82], // Dark blue
-  secondary: [245, 247, 250], // Light gray-blue
+  secondary: [70, 123, 163], // Muted blue
   text: [51, 51, 51], // Dark gray
   subtext: [102, 102, 102], // Medium gray
   accent: [70, 123, 163], // Muted blue
-  subtle: [249, 250, 251], // Very light gray
 };
 
 const formatDate = (date: string | null | undefined): string => {
@@ -88,7 +86,7 @@ serve(async (req) => {
     const pageWidth = doc.internal.pageSize.width;
     const maxWidth = pageWidth - 2 * margin;
 
-    // Enhanced styling functions with new typography system
+    // Enhanced styling functions with removed backgrounds
     const addHeader = (text: string, level = 1) => {
       if (y > doc.internal.pageSize.height - 40) {
         doc.addPage();
@@ -96,7 +94,7 @@ serve(async (req) => {
       }
 
       if (level === 1) {
-        // H1 Style
+        // H1 Style - kept the dark background for main sections
         doc.setFillColor(...colors.primary);
         doc.rect(margin, y - 4, maxWidth, 10, 'F');
         doc.setFont('helvetica', 'bold');
@@ -105,13 +103,11 @@ serve(async (req) => {
         doc.text(text.toUpperCase(), margin + 3, y + 2);
         y += 16;
       } else {
-        // H2 Style
-        doc.setFillColor(...colors.secondary);
-        doc.rect(margin, y - 3, maxWidth, 8, 'F');
+        // H2 Style - removed background, using just color
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(...colors.primary);
-        doc.text(text, margin + 2, y + 2);
+        doc.setTextColor(...colors.secondary);
+        doc.text(text, margin + 2, y);
         y += 14;
       }
     };
@@ -132,19 +128,14 @@ serve(async (req) => {
       y += lines.length * 6 + 8;
     };
 
-    const addSimpleTable = (data: Array<[string, string]>, shaded = true) => {
+    const addSimpleTable = (data: Array<[string, string]>) => {
       const rowHeight = 7;
       const cellPadding = 2;
       
-      data.forEach((row, index) => {
+      data.forEach((row) => {
         if (y + rowHeight > doc.internal.pageSize.height - margin) {
           doc.addPage();
           y = 20;
-        }
-
-        if (shaded && index % 2 === 0) {
-          doc.setFillColor(...colors.subtle);
-          doc.rect(margin, y - 4, maxWidth, rowHeight + 5, 'F');
         }
 
         doc.setFont('helvetica', 'bold');
