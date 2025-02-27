@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
-  ChevronLeft, 
   Save, 
   X, 
   CheckCircle2
@@ -19,6 +18,14 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { ChevronLeft, Home } from "lucide-react";
 
 interface FormHeaderProps {
   id?: string;
@@ -89,18 +96,38 @@ export const FormHeader: React.FC<FormHeaderProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:space-y-0">
-        <div className="flex flex-col space-y-1">
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1"
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/" className="flex items-center gap-1">
+              <Home className="h-4 w-4" />
+              <span>Dashboard</span>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <Button 
+              variant="link" 
+              className="p-0 h-auto flex items-center gap-1 text-sm font-medium"
               onClick={handleBack}
             >
               <ChevronLeft className="h-4 w-4" />
-              Back
+              <span>Back to SSSPs</span>
             </Button>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink className="font-medium">
+              {formattedTitle}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:space-y-0">
+        <div className="flex flex-col space-y-1">
+          <div className="flex items-center space-x-2">
             <h1 className="text-2xl font-bold tracking-tight">{formattedTitle}</h1>
             {status && (
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor()}`}>
