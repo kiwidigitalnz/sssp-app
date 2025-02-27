@@ -1,132 +1,146 @@
 
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Save, X, Home, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
+import { 
+  ChevronLeft, 
+  Save, 
+  X, 
+  CheckCircle2
+} from "lucide-react";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
 
 interface FormHeaderProps {
   id?: string;
   title: string;
   status: string;
   isNew: boolean;
-  isLoading?: boolean;
-  onSave?: () => void;
-  onCancel?: () => void;
-  currentStep?: number;
+  isLoading: boolean;
+  onCancel: () => void;
+  onSave: (showToast?: boolean) => void;
+  currentStep: number;
+  saveButtonText?: string;
 }
 
-export const FormHeader = ({ 
-  id, 
-  title, 
-  status, 
-  isNew, 
-  isLoading, 
-  onSave, 
+export const FormHeader: React.FC<FormHeaderProps> = ({
+  id,
+  title,
+  status,
+  isNew,
+  isLoading,
   onCancel,
-  currentStep
-}: FormHeaderProps) => {
-  // Map status to appropriate color
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+  onSave,
+  currentStep,
+  saveButtonText = "Save",
+}) => {
+  const navigate = useNavigate();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  // Handle back button click (navigate to dashboard)
+  const handleBack = () => {
+    navigate('/');
+  };
+
+  // Get status badge color
+  const getStatusColor = () => {
+    switch (status) {
       case 'draft':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'submitted':
         return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-amber-100 text-amber-800';
-      case 'active':
+      case 'approved':
         return 'bg-green-100 text-green-800';
-      case 'expired':
+      case 'rejected':
         return 'bg-red-100 text-red-800';
-      case 'archived':
-        return 'bg-gray-100 text-gray-800';
       default:
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  // Get section name based on current step
-  const getSectionName = (step?: number) => {
-    if (step === undefined) return "";
-    
-    const sections = [
-      "Project Details",
-      "Company Info",
-      "Scope of Work",
-      "Emergency Procedures",
-      "Health & Safety",
-      "Training Requirements",
-      "Hazard Management",
-      "Site Safety Rules",
-      "Communication",
-      "Monitoring & Review",
-      "SSSP Summary"
-    ];
-    
-    return sections[step] || "";
-  };
+  // Format title for display
+  const formattedTitle = title || (isNew ? "New SSSP" : "Untitled SSSP");
 
   return (
-    <div className="space-y-4">
-      {/* Breadcrumb navigation */}
-      <div className="flex items-center text-sm text-gray-500 mb-2">
-        <Link to="/" className="flex items-center hover:text-gray-700">
-          <Home className="h-4 w-4 mr-1" />
-          Dashboard
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="font-medium text-gray-700">
-          {isNew ? "Create SSSP" : title || "Edit SSSP"}
-        </span>
-        {currentStep !== undefined && (
-          <>
-            <span className="mx-2">/</span>
-            <span>{getSectionName(currentStep)}</span>
-          </>
-        )}
-      </div>
-      
-      {/* Main header content */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">
-            {title || "Untitled SSSP"}
-          </h1>
-          <div className="mt-2 flex items-center space-x-2">
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(status)}`}>
-              {status || "draft"}
-            </span>
-            {!isNew && id && (
-              <span className="text-xs text-gray-500">ID: {id.slice(0, 8)}</span>
+    <>
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes that will be lost if you exit now. Do you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onCancel}>
+              Discard Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:space-y-0">
+        <div className="flex flex-col space-y-1">
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={handleBack}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">{formattedTitle}</h1>
+            {status && (
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor()}`}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </span>
             )}
           </div>
+          <p className="text-sm text-muted-foreground">
+            {isNew ? "Create a new" : "Edit your"} Site Specific Safety Plan
+          </p>
         </div>
-        
-        {(onSave || onCancel) && (
-          <div className="flex gap-4">
-            {onCancel && (
-              <Button
-                variant="outline"
-                onClick={onCancel}
-                className="gap-2"
-                disabled={isLoading}
-              >
-                <X className="h-4 w-4" />
-                Cancel
-              </Button>
+
+        <div className="flex flex-row space-x-2 items-center">
+          {!isNew && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowCancelDialog(true)}
+              className="gap-1"
+            >
+              <X className="h-4 w-4" />
+              Cancel
+            </Button>
+          )}
+          
+          <Button
+            onClick={() => onSave(true)}
+            disabled={isLoading}
+            size="sm"
+            className="gap-1"
+          >
+            {saveButtonText === "Saved!" ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <Save className="h-4 w-4" />
             )}
-            {onSave && (
-              <Button
-                onClick={onSave}
-                variant="outline"
-                className="gap-2"
-                disabled={isLoading}
-              >
-                <Save className="h-4 w-4" />
-                {isLoading ? "Saving..." : "Save & Exit"}
-              </Button>
-            )}
-          </div>
-        )}
+            {saveButtonText}
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 };

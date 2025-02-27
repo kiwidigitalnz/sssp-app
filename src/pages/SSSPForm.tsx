@@ -29,6 +29,7 @@ export default function SSSPForm() {
   const [isValid, setIsValid] = useState(true);
   const [isNew, setIsNew] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveButtonText, setSaveButtonText] = useState("Save");
 
   // Total number of steps in the form (0-indexed, so 10 means 11 steps)
   const totalSteps = 10;
@@ -84,7 +85,18 @@ export default function SSSPForm() {
     navigate('/');
   };
 
-  const handleSave = async () => {
+  const handleSaveWithFeedback = async (showToast = false) => {
+    setSaveButtonText("Saving...");
+    await handleSave(showToast);
+    setSaveButtonText("Saved!");
+    
+    // Reset the button text after a delay
+    setTimeout(() => {
+      setSaveButtonText("Save");
+    }, 2000);
+  };
+
+  const handleSave = async (showToast = false) => {
     setIsSaving(true);
     
     try {
@@ -103,13 +115,14 @@ export default function SSSPForm() {
           }
 
           // Ensure required fields are present
+          // Map companyName to company_name field for database compatibility
           const newSSSP = {
             ...formData,
             created_by: user.id,
             modified_by: user.id,
             user_id: user.id,
             title: formData.title || "Untitled SSSP",
-            company_name: formData.company_name || "Unknown Company",
+            company_name: formData.company_name || formData.companyName || "Unknown Company",
             status: formData.status || "draft"
           };
 
@@ -129,10 +142,12 @@ export default function SSSPForm() {
             severity: 'major'
           });
 
-          toast({
-            title: "SSSP Created",
-            description: "Your SSSP has been created successfully.",
-          });
+          if (showToast) {
+            toast({
+              title: "SSSP Created",
+              description: "Your SSSP has been created successfully.",
+            });
+          }
 
           // Navigate to the new SSSP edit page
           navigate(`/sssp/${data.id}`);
@@ -147,7 +162,22 @@ export default function SSSPForm() {
         }
       } else {
         // Just save changes
+        // Make sure to map companyName to company_name
+        if (formData.companyName && !formData.company_name) {
+          setFormData({ 
+            ...formData, 
+            company_name: formData.companyName 
+          });
+        }
+        
         await save();
+        
+        if (showToast) {
+          toast({
+            title: "Changes saved",
+            description: "Your SSSP has been saved successfully.",
+          });
+        }
       }
     } finally {
       setIsSaving(false);
@@ -193,8 +223,9 @@ export default function SSSPForm() {
         isNew={isNew}
         isLoading={isSaving}
         onCancel={handleCancel}
-        onSave={handleExit}
+        onSave={handleSaveWithFeedback}
         currentStep={currentStep}
+        saveButtonText={saveButtonText}
       />
 
       <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm space-y-6">
@@ -209,6 +240,7 @@ export default function SSSPForm() {
           formData={formData}
           onStepChange={handleStepChange}
           isValid={isValid}
+          hideMainSaveButton={true}
         />
       </div>
     </div>

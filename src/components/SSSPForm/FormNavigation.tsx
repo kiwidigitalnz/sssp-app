@@ -7,8 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   ChevronRight, 
   ChevronLeft, 
-  Save, 
-  Play, 
+  Save,
   Activity, 
   FileDown, 
   Share,
@@ -41,10 +40,11 @@ import { Badge } from "@/components/ui/badge";
 interface FormNavigationProps {
   currentStep: number;
   totalSteps: number;
-  saveForm: () => void;
+  saveForm: (showToast?: boolean) => void;
   formData: any;
   onStepChange: (step: number) => void;
   isValid?: boolean;
+  hideMainSaveButton?: boolean;
 }
 
 export const FormNavigation = ({
@@ -54,6 +54,7 @@ export const FormNavigation = ({
   formData,
   onStepChange,
   isValid = true,
+  hideMainSaveButton = false,
 }: FormNavigationProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -72,8 +73,8 @@ export const FormNavigation = ({
   const handleNext = () => {
     if (currentStep < totalSteps) {
       onStepChange(currentStep + 1);
-      // Auto-save when moving to next step
-      handleSave();
+      // Auto-save when moving to next step (no toast)
+      saveForm(false);
       // Scroll to top of the page
       scrollToTop();
     }
@@ -85,15 +86,6 @@ export const FormNavigation = ({
       // Scroll to top of the page
       scrollToTop();
     }
-  };
-
-  const handleSave = () => {
-    saveForm();
-    setLastSaved(new Date());
-    toast({
-      title: "Changes saved",
-      description: "Your SSSP has been saved successfully.",
-    });
   };
 
   const handleActivityLogOpen = async () => {
@@ -207,14 +199,16 @@ export const FormNavigation = ({
           <div className="flex items-center space-x-2">
             {/* Primary button group */}
             <div className="flex items-center space-x-2 mr-4">
-              <Button
-                variant="outline"
-                onClick={handleSave}
-                className="gap-1"
-              >
-                <Save className="h-4 w-4" />
-                Save
-              </Button>
+              {!hideMainSaveButton && (
+                <Button
+                  variant="outline"
+                  onClick={() => saveForm(true)}
+                  className="gap-1"
+                >
+                  <Save className="h-4 w-4" />
+                  Save
+                </Button>
+              )}
 
               <Button
                 variant={isLastStep ? "default" : "outline"}
