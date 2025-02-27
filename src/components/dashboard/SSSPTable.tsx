@@ -148,11 +148,35 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     }
   };
 
-  const handlePrintToPDF = (sssp: SSSP) => {
-    toast({
-      title: "Coming soon",
-      description: "PDF generation feature is under development"
-    });
+  const handlePrintToPDF = async (sssp: SSSP) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-sssp-pdf', {
+        body: { ssspId: sssp.id }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        const link = document.createElement('a');
+        link.href = data.url;
+        link.download = `${sssp.title}-SSSP.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast({
+          title: "PDF generated successfully",
+          description: "Your PDF has been generated and downloaded"
+        });
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDelete = async (sssp: SSSP) => {

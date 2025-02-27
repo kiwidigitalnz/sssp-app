@@ -23,7 +23,7 @@ export function SSSPActions({ sssp, onShare, onClone, onPrintToPDF, onDelete }: 
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onPrintToPDF(sssp)}>
           <FileText className="mr-2 h-4 w-4" />
-          Print to PDF
+          Download PDF
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
