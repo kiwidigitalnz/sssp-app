@@ -115,16 +115,14 @@ export default function SSSPForm() {
           }
 
           // Ensure required fields are present
-          // Handle company name property - could be in either format due to form structure
-          const companyName = formData.company_name || (formData as any).companyName || "Unknown Company";
-          
+          // Map companyName to company_name field for database compatibility
           const newSSSP = {
             ...formData,
             created_by: user.id,
             modified_by: user.id,
             user_id: user.id,
             title: formData.title || "Untitled SSSP",
-            company_name: companyName,
+            company_name: formData.company_name || formData.companyName || "Unknown Company",
             status: formData.status || "draft"
           };
 
@@ -164,11 +162,11 @@ export default function SSSPForm() {
         }
       } else {
         // Just save changes
-        // Check if we need to standardize the company name field
-        if ((formData as any).companyName && !formData.company_name) {
+        // Make sure to map companyName to company_name
+        if (formData.companyName && !formData.company_name) {
           setFormData({ 
             ...formData, 
-            company_name: (formData as any).companyName 
+            company_name: formData.companyName 
           });
         }
         

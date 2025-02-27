@@ -36,12 +36,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityLog } from "./ActivityLog/ActivityLog";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger 
-} from "@/components/ui/tooltip";
 
 interface FormNavigationProps {
   currentStep: number;
@@ -90,14 +84,6 @@ export const FormNavigation = ({
     if (currentStep > 0) {
       onStepChange(currentStep - 1);
       // Scroll to top of the page
-      scrollToTop();
-    }
-  };
-
-  const handleStepChange = (step: number) => {
-    // Only allow direct navigation to steps we've already visited
-    if (step <= currentStep || step < currentStep) {
-      onStepChange(step);
       scrollToTop();
     }
   };
@@ -156,211 +142,142 @@ export const FormNavigation = ({
   };
 
   return (
-    <TooltipProvider>
-      <>
-        {/* Activity Log Dialog */}
-        <Dialog open={activityLogOpen} onOpenChange={setActivityLogOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Activity Log</DialogTitle>
-              <DialogDescription>
-                View all activities and changes for this SSSP
-              </DialogDescription>
-            </DialogHeader>
-            {id && <ActivityLog sssp_id={id} />}
-            <div className="flex justify-end mt-4">
-              <Button onClick={() => setActivityLogOpen(false)}>
-                <X className="h-4 w-4 mr-2" />
-                Close
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+    <>
+      {/* Activity Log Dialog */}
+      <Dialog open={activityLogOpen} onOpenChange={setActivityLogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Activity Log</DialogTitle>
+            <DialogDescription>
+              View all activities and changes for this SSSP
+            </DialogDescription>
+          </DialogHeader>
+          {id && <ActivityLog sssp_id={id} />}
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setActivityLogOpen(false)}>
+              <X className="h-4 w-4 mr-2" />
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        {/* Main Navigation Bar */}
-        <div className="border-t pt-6 mt-8">
-          {/* Last Saved Indicator */}
-          {lastSaved && (
-            <div className="flex justify-end mb-4">
-              <Badge variant="outline" className="text-xs text-gray-500">
-                Last saved: {lastSaved.toLocaleTimeString()}
-              </Badge>
-            </div>
-          )}
+      {/* Main Navigation Bar */}
+      <div className="border-t pt-6 mt-8">
+        {/* Last Saved Indicator */}
+        {lastSaved && (
+          <div className="flex justify-end mb-4">
+            <Badge variant="outline" className="text-xs text-gray-500">
+              Last saved: {lastSaved.toLocaleTimeString()}
+            </Badge>
+          </div>
+        )}
 
-          <div className="flex items-center justify-between">
-            {/* Left side - Back button */}
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                onClick={handlePrev}
-                disabled={isFirstStep}
-                className="gap-1"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Back
-              </Button>
-            </div>
+        <div className="flex items-center justify-between">
+          {/* Left side - Back button */}
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={handlePrev}
+              disabled={isFirstStep}
+              className="gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </div>
 
-            {/* Center - Progress steps */}
-            <div className="hidden md:flex flex-1 justify-center">
-              <FormSteps
-                totalSteps={totalSteps}
-                currentStep={currentStep}
-                onStepChange={handleStepChange}
-              />
-            </div>
+          {/* Center - Progress steps */}
+          <div className="hidden md:flex flex-1 justify-center">
+            <FormSteps
+              totalSteps={totalSteps}
+              currentStep={currentStep}
+            />
+          </div>
 
-            {/* Right side - Action buttons */}
-            <div className="flex items-center space-x-2">
-              {/* Primary button group */}
-              <div className="flex items-center space-x-2 mr-4">
-                {!hideMainSaveButton && (
-                  <Button
-                    variant="outline"
-                    onClick={() => saveForm(true)}
-                    className="gap-1"
-                  >
-                    <Save className="h-4 w-4" />
-                    Save
-                  </Button>
-                )}
-
+          {/* Right side - Action buttons */}
+          <div className="flex items-center space-x-2">
+            {/* Primary button group */}
+            <div className="flex items-center space-x-2 mr-4">
+              {!hideMainSaveButton && (
                 <Button
-                  variant={isLastStep ? "default" : "outline"}
-                  onClick={handleNext}
-                  disabled={isLastStep || !isValid}
+                  variant="outline"
+                  onClick={() => saveForm(true)}
                   className="gap-1"
                 >
-                  {getNextButtonText()}
-                  {getNextButtonIcon()}
+                  <Save className="h-4 w-4" />
+                  Save
                 </Button>
-              </div>
+              )}
 
-              {/* Secondary action buttons */}
-              <div className="flex items-center space-x-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      onClick={handleActivityLogOpen}
-                      className="gap-1"
-                      size="sm"
-                    >
-                      <Activity className="h-4 w-4" />
-                      Activity
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>View activity log</TooltipContent>
-                </Tooltip>
-
-                {!isFirstStep && (
-                  <>
-                    <AlertDialog>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" className="gap-1" size="sm">
-                              <FileDown className="h-4 w-4" />
-                              Export
-                            </Button>
-                          </AlertDialogTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent>Export as PDF</TooltipContent>
-                      </Tooltip>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Export SSSP as PDF?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will generate a PDF of your SSSP. Do you want to continue?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleExportPDF}>Export</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          onClick={handleShareDocument}
-                          className="gap-1"
-                          size="sm"
-                        >
-                          <Share className="h-4 w-4" />
-                          Share
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Share SSSP</TooltipContent>
-                    </Tooltip>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile progress indicator */}
-          <div className="block md:hidden mt-4">
-            <div className="text-center text-sm text-gray-500">
-              Step {currentStep + 1} of {totalSteps + 1}
-            </div>
-          </div>
-        </div>
-
-        {/* Floating navigation buttons for mobile and scrolling */}
-        <div className="fixed bottom-4 right-4 flex flex-col md:hidden space-y-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                size="icon"
-                variant="default"
-                onClick={scrollToTop}
-                className="rounded-full shadow-lg"
-              >
-                <ChevronLeft className="h-4 w-4 rotate-90" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Scroll to top</TooltipContent>
-          </Tooltip>
-        </div>
-
-        <div className="fixed bottom-4 right-4 md:flex hidden space-x-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
               <Button
-                onClick={handlePrev}
-                disabled={isFirstStep}
-                size="icon"
-                variant="outline"
-                className="rounded-full shadow-lg"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Previous step</TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
+                variant={isLastStep ? "default" : "outline"}
                 onClick={handleNext}
                 disabled={isLastStep || !isValid}
-                size="icon"
-                variant="default"
-                className="rounded-full shadow-lg"
+                className="gap-1"
               >
-                <ChevronRight className="h-4 w-4" />
+                {getNextButtonText()}
+                {getNextButtonIcon()}
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {getNextButtonText()}
-            </TooltipContent>
-          </Tooltip>
+            </div>
+
+            {/* Secondary action buttons */}
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                onClick={handleActivityLogOpen}
+                className="gap-1"
+                size="sm"
+              >
+                <Activity className="h-4 w-4" />
+                Activity
+              </Button>
+
+              {!isFirstStep && (
+                <>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" className="gap-1" size="sm">
+                        <FileDown className="h-4 w-4" />
+                        Export
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Export SSSP as PDF?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will generate a PDF of your SSSP. Do you want to continue?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleExportPDF}>Export</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+                  <Button
+                    variant="ghost"
+                    onClick={handleShareDocument}
+                    className="gap-1"
+                    size="sm"
+                  >
+                    <Share className="h-4 w-4" />
+                    Share
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-      </>
-    </TooltipProvider>
+
+        {/* Mobile progress indicator */}
+        <div className="block md:hidden mt-4">
+          <div className="text-center text-sm text-gray-500">
+            Step {currentStep + 1} of {totalSteps + 1}
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
