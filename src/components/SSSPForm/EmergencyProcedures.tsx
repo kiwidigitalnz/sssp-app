@@ -56,6 +56,7 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
             ...formData,
             emergencyPlan: data.emergency_plan || '',
             emergencyContacts,
+            // Map from snake_case (DB) to camelCase (frontend)
             assemblyPoints: data.assembly_points || '',
             emergencyEquipment: data.emergency_equipment || '',
             incidentReporting: data.incident_reporting || ''

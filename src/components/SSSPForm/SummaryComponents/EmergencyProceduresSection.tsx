@@ -48,11 +48,12 @@ export const EmergencyProceduresSection = ({ data, setFormData }: EmergencyProce
     setTempValue("");
   };
 
+  // Map the database field names to frontend field names
   const fields = [
-    { key: "emergencyPlan", label: "Emergency Response Plan" },
-    { key: "assemblyPoints", label: "Assembly Points" },
-    { key: "emergencyEquipment", label: "Emergency Equipment" },
-    { key: "incidentReporting", label: "Incident Reporting" }
+    { key: "emergency_plan", frontendKey: "emergencyPlan", label: "Emergency Response Plan" },
+    { key: "assembly_points", frontendKey: "assemblyPoints", label: "Assembly Points" },
+    { key: "emergency_equipment", frontendKey: "emergencyEquipment", label: "Emergency Equipment" },
+    { key: "incident_reporting", frontendKey: "incidentReporting", label: "Incident Reporting" }
   ];
 
   return (
@@ -94,11 +95,11 @@ export const EmergencyProceduresSection = ({ data, setFormData }: EmergencyProce
             <EditableField
               key={field.key}
               label={field.label}
-              value={data[field.key]}
-              fieldKey={field.key}
-              isEditing={editingField === field.key}
-              tempValue={editingField === field.key ? tempValue : ""}
-              onEdit={handleEdit}
+              value={data[field.frontendKey] || data[field.key]} // Try frontend key first, then fallback to DB key
+              fieldKey={field.frontendKey}
+              isEditing={editingField === field.frontendKey}
+              tempValue={editingField === field.frontendKey ? tempValue : ""}
+              onEdit={(key, value) => handleEdit(key, value)}
               onSave={handleSave}
               onCancel={handleCancel}
               onValueChange={setTempValue}

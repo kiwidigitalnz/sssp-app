@@ -18,7 +18,7 @@ export const AssemblyPoints = ({ value, onChange }: SectionComponentProps) => {
             Specify emergency assembly points and evacuation routes
           </p>
           <QuickFillButton
-            fieldId="assemblyPoints"
+            fieldId="assembly_points"
             fieldName="Assembly Points"
             onSelect={(value) => onChange(value)}
           />

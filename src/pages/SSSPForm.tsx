@@ -1,3 +1,4 @@
+
 import { useState, useEffect, lazy, Suspense, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FormHeader } from "@/components/SSSPForm/FormHeader";
@@ -78,9 +79,47 @@ const SSSPForm = () => {
     return Component;
   }, [currentStep]);
 
+  // Function to transform camelCase fields to snake_case before saving
+  const transformFormDataForSaving = useCallback((data: SSSPFormData) => {
+    const transformedData = { ...data };
+
+    // Map camelCase fields to snake_case
+    if (data.assemblyPoints !== undefined) {
+      transformedData.assembly_points = data.assemblyPoints;
+      delete transformedData.assemblyPoints;
+    }
+    
+    if (data.emergencyPlan !== undefined) {
+      transformedData.emergency_plan = data.emergencyPlan;
+      delete transformedData.emergencyPlan;
+    }
+    
+    if (data.emergencyEquipment !== undefined) {
+      transformedData.emergency_equipment = data.emergencyEquipment;
+      delete transformedData.emergencyEquipment;
+    }
+    
+    if (data.incidentReporting !== undefined) {
+      transformedData.incident_reporting = data.incidentReporting;
+      delete transformedData.incidentReporting;
+    }
+
+    // Convert emergencyContacts array to emergency_contacts for database
+    if (data.emergencyContacts) {
+      transformedData.emergency_contacts = data.emergencyContacts;
+      delete transformedData.emergencyContacts;
+    }
+    
+    return transformedData;
+  }, []);
+
   const handleSave = useCallback(async () => {
     try {
-      await save();
+      // Transform data before saving
+      const transformedData = transformFormDataForSaving(formData);
+      
+      // Save transformed data
+      await save(transformedData);
       clearSavedData();
       navigate("/");
     } catch (error: any) {
@@ -90,7 +129,7 @@ const SSSPForm = () => {
         description: error.message || "There was an error saving your progress",
       });
     }
-  }, [save, clearSavedData, navigate, toast]);
+  }, [formData, save, clearSavedData, navigate, toast, transformFormDataForSaving]);
 
   const handleNext = useCallback(() => {
     if (currentStep < formSteps.length - 1) {
