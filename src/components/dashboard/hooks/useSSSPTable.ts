@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -296,7 +297,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         title: "Status updated",
         description: "Status has been updated successfully"
       });
-      queryClient.invalidateQueries({ queryKey: ['sssps'] });
+      onRefresh();
     },
     onError: (error) => {
       console.error('Error updating status:', error);
