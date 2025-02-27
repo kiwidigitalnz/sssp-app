@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -183,30 +182,52 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     }
   };
 
-  const handleDelete = async (sssp: SSSP) => {
-    try {
+  const deleteMutation = useMutation({
+    mutationFn: async (sssp: SSSP) => {
       const { error } = await supabase
         .from('sssps')
         .delete()
         .eq('id', sssp.id);
 
       if (error) throw error;
+      return sssp;
+    },
+    onMutate: async (sssp) => {
+      await queryClient.cancelQueries({ queryKey: ['sssps'] });
 
-      toast({
-        title: "SSSP deleted",
-        description: `Successfully deleted "${sssp.title}"`
+      const previousSssps = queryClient.getQueryData<SSSP[]>(['sssps']);
+
+      queryClient.setQueryData<SSSP[]>(['sssps'], old => {
+        return old ? old.filter(s => s.id !== sssp.id) : [];
       });
 
-      setDeleteDialogOpen(false);
-      onRefresh();
-    } catch (error) {
-      console.error('Error deleting SSSP:', error);
+      return { previousSssps };
+    },
+    onError: (err, sssp, context) => {
+      if (context?.previousSssps) {
+        queryClient.setQueryData(['sssps'], context.previousSssps);
+      }
+      console.error('Error deleting SSSP:', err);
       toast({
         title: "Error",
         description: "Failed to delete SSSP. Please try again.",
         variant: "destructive"
       });
+    },
+    onSuccess: (sssp) => {
+      toast({
+        title: "SSSP deleted",
+        description: `Successfully deleted "${sssp.title}"`
+      });
+      setDeleteDialogOpen(false);
+    },
+    onSettled: () => {
+      onRefresh();
     }
+  });
+
+  const handleDelete = async (sssp: SSSP) => {
+    deleteMutation.mutate(sssp);
   };
 
   const handleRevokeAccess = async (ssspId: string, email: string) => {
@@ -293,12 +314,10 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       return data;
     },
     onMutate: async ({ sssp, newStatus }) => {
-      // Optimistically update the UI
       const updatedSssps = sssps.map(s => 
         s.id === sssp.id ? { ...s, status: newStatus } : s
       );
       
-      // Update the UI immediately
       queryClient.setQueryData(['sssps'], updatedSssps);
     },
     onSuccess: () => {
@@ -306,7 +325,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         title: "Status updated",
         description: "Status has been updated successfully"
       });
-      // No need to refresh, our optimistic update is correct
     },
     onError: (error, { sssp, newStatus }) => {
       console.error('Error updating status:', error);
@@ -316,7 +334,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         variant: "destructive"
       });
       
-      // Revert the optimistic update on error
       onRefresh();
     }
   });
