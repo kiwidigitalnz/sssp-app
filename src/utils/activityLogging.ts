@@ -21,6 +21,11 @@ export interface ActivityLogDetails {
   metadata?: Record<string, any>;
 }
 
+// Helper function to ensure objects are JSON-serializable
+function makeJsonSerializable(obj: any): any {
+  return JSON.parse(JSON.stringify(obj));
+}
+
 export async function logActivity(
   sssp_id: string, 
   action: ActivityAction, 
@@ -32,11 +37,11 @@ export async function logActivity(
   
   try {
     // Create a details object that will be properly serialized as JSON
-    const detailsObject = {
+    const detailsObject = makeJsonSerializable({
       ...details,
       category,
       timestamp: new Date().toISOString()
-    };
+    });
 
     const { data, error } = await supabase
       .from('sssp_activity')
