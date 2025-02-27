@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,6 +24,21 @@ export const EmergencyContactSelection = ({
   onSelect,
 }: EmergencyContactSelectionProps) => {
   const [selectedContacts, setSelectedContacts] = React.useState<EmergencyContactFormData[]>([]);
+
+  // Filter to get only unique emergency contacts based on name and phone
+  const uniqueContacts = useMemo(() => {
+    const contactMap = new Map<string, EmergencyContactFormData>();
+    
+    // Use name+phone as a unique key for emergency contacts
+    previousContacts.forEach(contact => {
+      const key = `${contact.name}-${contact.phone}`;
+      if (!contactMap.has(key)) {
+        contactMap.set(key, contact);
+      }
+    });
+    
+    return Array.from(contactMap.values());
+  }, [previousContacts]);
 
   const handleSelect = (contact: EmergencyContactFormData) => {
     if (selectedContacts.includes(contact)) {
@@ -53,7 +68,7 @@ export const EmergencyContactSelection = ({
         <div className="py-4">
           <ScrollArea className="h-[300px] pr-4">
             <div className="space-y-4">
-              {previousContacts.map((contact, index) => (
+              {uniqueContacts.map((contact, index) => (
                 <Card key={index} className="p-4">
                   <div className="flex items-start space-x-3">
                     <Checkbox
