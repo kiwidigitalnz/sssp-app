@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QuickFillButton } from "@/components/QuickFill/QuickFillButton";
@@ -7,10 +8,13 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MeetingSelection } from "./MeetingSelection";
+import { PreviousMeetingSelection } from "./PreviousMeetingSelection";
 import type { CommunicationProps } from "@/types/sssp/ui";
 import type { Meeting } from "@/types/meetings";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const communicationSchema = z.object({
   communication_methods: z.string()
@@ -47,6 +51,37 @@ export const Communication = ({ formData, setFormData, isLoading = false }: Comm
     }
   });
 
+  // Fetch previous meetings from all SSSPs
+  const { data: previousMeetings = [] } = useQuery({
+    queryKey: ['previousMeetings'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sssps')
+          .select('meetings_schedule')
+          .not('meetings_schedule', 'is', null);
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Extract all meetings from all SSSPs
+        const allMeetings: Meeting[] = [];
+        data?.forEach(sssp => {
+          if (Array.isArray(sssp.meetings_schedule)) {
+            allMeetings.push(...sssp.meetings_schedule);
+          }
+        });
+        
+        return allMeetings;
+      } catch (error) {
+        console.error("Error fetching previous meetings:", error);
+        return [];
+      }
+    },
+    staleTime: 60000 // 1 minute
+  });
+
   useEffect(() => {
     setValue("communication_methods", formData.communication_methods || "");
     setValue("toolbox_meetings", formData.toolbox_meetings || "");
@@ -69,6 +104,22 @@ export const Communication = ({ formData, setFormData, isLoading = false }: Comm
 
   const handleMeetingsChange = (meetings: Meeting[]) => {
     setFormData({ ...formData, meetings_schedule: meetings });
+  };
+
+  const handleAddPreviousMeetings = (selectedMeetings: Meeting[]) => {
+    const currentMeetings = Array.isArray(formData.meetings_schedule) 
+      ? formData.meetings_schedule 
+      : [];
+    
+    setFormData({
+      ...formData,
+      meetings_schedule: [...currentMeetings, ...selectedMeetings]
+    });
+    
+    toast({
+      title: "Meetings Added",
+      description: `Added ${selectedMeetings.length} meeting${selectedMeetings.length === 1 ? '' : 's'}`
+    });
   };
 
   return (
@@ -178,7 +229,15 @@ export const Communication = ({ formData, setFormData, isLoading = false }: Comm
           </div>
 
           <div className="space-y-2">
-            <Label className="text-base font-medium">Scheduled Meetings</Label>
+            <div className="flex justify-between items-center">
+              <Label className="text-base font-medium">Scheduled Meetings</Label>
+              <div className="flex gap-2">
+                <PreviousMeetingSelection
+                  previousMeetings={previousMeetings}
+                  onSelect={handleAddPreviousMeetings}
+                />
+              </div>
+            </div>
             <MeetingSelection
               meetings={formData.meetings_schedule || []}
               onMeetingsChange={handleMeetingsChange}
