@@ -1,19 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { getActivityLogs, ActivityAction, ActivityCategory } from '@/utils/activityLogging';
+import { getActivityLogs, ActivityAction, ActivityCategory, getFieldDisplayName, formatValueForDisplay } from '@/utils/activityLogging';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/avatar';
 import { User, Clock, Search, Filter, Download, Trash, Eye, PenSquare, Share2, FilePlus2, FileText, RefreshCw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DatePicker } from '@/components/ui/date-picker';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 interface ActivityLogProps {
   sssp_id: string;
@@ -114,7 +113,13 @@ export const ActivityLog = ({ sssp_id }: ActivityLogProps) => {
         (log.details?.description && log.details.description.toLowerCase().includes(searchLower)) ||
         (log.details?.section && log.details.section.toLowerCase().includes(searchLower)) ||
         (log.details?.updated_fields && log.details.updated_fields.some((field: string) => 
-          field.toLowerCase().includes(searchLower)
+          field.toLowerCase().includes(searchLower) || 
+          getFieldDisplayName(field).toLowerCase().includes(searchLower)
+        )) ||
+        (log.details?.field_changes && log.details.field_changes.some((change: any) => 
+          change.displayName.toLowerCase().includes(searchLower) ||
+          (change.oldValue && String(change.oldValue).toLowerCase().includes(searchLower)) ||
+          (change.newValue && String(change.newValue).toLowerCase().includes(searchLower))
         ))
       );
     }
@@ -184,6 +189,15 @@ export const ActivityLog = ({ sssp_id }: ActivityLogProps) => {
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Format a date or timestamp
+  const formatDate = (dateStr: string) => {
+    try {
+      return format(new Date(dateStr), 'dd MMM yyyy HH:mm');
+    } catch (e) {
+      return dateStr;
     }
   };
 
@@ -343,14 +357,40 @@ export const ActivityLog = ({ sssp_id }: ActivityLogProps) => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {log.details?.description && (
-                            <p className="text-sm">{log.details.description}</p>
+                            <p className="text-sm font-medium">{log.details.description}</p>
                           )}
+                          
                           {log.details?.section && (
-                            <p className="text-xs text-muted-foreground">Section: {log.details.section}</p>
+                            <div className="flex items-center">
+                              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                {log.details.section}
+                              </span>
+                            </div>
                           )}
-                          {log.details?.updated_fields && log.details.updated_fields.length > 0 && (
+                          
+                          {/* Display field changes with old and new values */}
+                          {log.details?.field_changes && log.details.field_changes.length > 0 && (
+                            <div className="mt-1 space-y-1">
+                              {log.details.field_changes.map((change: any, index: number) => (
+                                <div key={index} className="text-xs border-b border-muted pb-1 last:border-0">
+                                  <span className="font-medium">{change.displayName || getFieldDisplayName(change.field)}</span>
+                                  {': '}
+                                  <span className="text-red-600 line-through">
+                                    {formatValueForDisplay(change.oldValue, change.field)}
+                                  </span>
+                                  {' → '}
+                                  <span className="text-green-600">
+                                    {formatValueForDisplay(change.newValue, change.field)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Legacy support for just listing updated fields */}
+                          {!log.details?.field_changes && log.details?.updated_fields && log.details.updated_fields.length > 0 && (
                             <div>
                               <p className="text-xs text-muted-foreground">Updated fields:</p>
                               <div className="flex flex-wrap gap-1 mt-1">
@@ -359,10 +399,20 @@ export const ActivityLog = ({ sssp_id }: ActivityLogProps) => {
                                     key={index}
                                     className="inline-flex items-center rounded-full border border-gray-200 px-2 py-0.5 text-xs"
                                   >
-                                    {field}
+                                    {getFieldDisplayName(field)}
                                   </span>
                                 ))}
                               </div>
+                            </div>
+                          )}
+                          
+                          {log.details?.metadata && Object.keys(log.details.metadata).length > 0 && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {Object.entries(log.details.metadata).map(([key, value], idx) => (
+                                <div key={idx}>
+                                  <span className="font-medium">{key.replace(/_/g, ' ')}</span>: {formatValueForDisplay(value, key)}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>
@@ -376,7 +426,7 @@ export const ActivityLog = ({ sssp_id }: ActivityLogProps) => {
                       <TableCell>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          <span>{format(new Date(log.created_at), 'dd MMM yyyy HH:mm')}</span>
+                          <span>{formatDate(log.created_at)}</span>
                         </div>
                       </TableCell>
                     </TableRow>

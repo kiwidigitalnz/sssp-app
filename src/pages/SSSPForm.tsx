@@ -20,6 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
+import type { SSSP } from "@/types/sssp";
 
 export default function SSSPForm() {
   const { id } = useParams<{ id: string }>();
@@ -81,16 +82,20 @@ export default function SSSPForm() {
           return;
         }
 
+        // Ensure required fields are present
         const newSSSP = {
           ...formData,
           created_by: user.id,
           modified_by: user.id,
-          user_id: user.id
+          user_id: user.id,
+          title: formData.title || "Untitled SSSP",
+          company_name: formData.company_name || "Unknown Company",
+          status: formData.status || "draft"
         };
 
         const { data, error } = await supabase
           .from("sssps")
-          .insert(newSSSP)
+          .insert(newSSSP as any)
           .select()
           .single();
 
@@ -130,31 +135,31 @@ export default function SSSPForm() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
-        return <ProjectDetails formData={formData} setFormData={setFormData} />;
+        return <ProjectDetails formData={formData} setFormData={setFormData as any} />;
       case 1:
-        return <CompanyInfo formData={formData} setFormData={setFormData} />;
+        return <CompanyInfo formData={formData} setFormData={setFormData as any} />;
       case 2:
-        return <ScopeOfWork formData={formData} setFormData={setFormData} />;
+        return <ScopeOfWork formData={formData} setFormData={setFormData as any} />;
       case 3:
-        return <EmergencyProcedures formData={formData} setFormData={setFormData} />;
+        return <EmergencyProcedures formData={formData} setFormData={setFormData as any} />;
       case 4:
-        return <HealthAndSafetyPolicies formData={formData} setFormData={setFormData} />;
+        return <HealthAndSafetyPolicies formData={formData} setFormData={setFormData as any} />;
       case 5:
-        return <TrainingRequirements formData={formData} setFormData={setFormData} />;
+        return <TrainingRequirements formData={formData} setFormData={setFormData as any} isLoading={isLoading} />;
       case 6:
-        return <HazardManagement formData={formData} setFormData={setFormData} />;
+        return <HazardManagement formData={formData} setFormData={setFormData as any} />;
       case 7:
-        return <SiteSafetyRules formData={formData} setFormData={setFormData} />;
+        return <SiteSafetyRules formData={formData} setFormData={setFormData as any} />;
       case 8:
-        return <Communication formData={formData} setFormData={setFormData} />;
+        return <Communication formData={formData} setFormData={setFormData as any} />;
       case 9:
-        return <MonitoringReview formData={formData} setFormData={setFormData} />;
+        return <MonitoringReview formData={formData} setFormData={setFormData as any} isLoading={isLoading} />;
       case 10:
-        return <SummaryScreen formData={formData} setFormData={setFormData} />;
+        return <SummaryScreen formData={formData} setFormData={setFormData as any} />;
       case 11:
         return <ActivityLogTab />;
       default:
-        return <ProjectDetails formData={formData} setFormData={setFormData} />;
+        return <ProjectDetails formData={formData} setFormData={setFormData as any} />;
     }
   };
 
@@ -162,7 +167,7 @@ export default function SSSPForm() {
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
       <FormHeader
         title={formData.title || "Untitled SSSP"}
-        status={formData.status}
+        status={formData.status || "draft"}
         isNew={isNew}
       />
 

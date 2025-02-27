@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
 import type { SharedUser } from "../types";
 import { useToast } from "@/hooks/use-toast";
-import { logActivity } from "@/utils/activityLogging";
+import { logActivity, FieldChange } from "@/utils/activityLogging";
 
 export type DateRange = {
   from: Date | undefined;
@@ -159,6 +159,9 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     if (!selectedSSSP) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase.functions.invoke('send-invitation', {
         body: { 
           ssspId: selectedSSSP.id,
@@ -168,6 +171,23 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       });
 
       if (error) throw error;
+
+      // Log the share activity with metadata
+      await logActivity(selectedSSSP.id, 'shared', user.id, {
+        description: `Shared SSSP with ${email}`,
+        field_changes: [{
+          field: 'sharing',
+          displayName: 'Sharing',
+          oldValue: 'private',
+          newValue: `shared with ${email} (${accessLevel})`
+        }],
+        section: 'Access Control',
+        severity: 'major',
+        metadata: {
+          shared_with: email,
+          access_level: accessLevel
+        }
+      }, 'access');
 
       toast({
         title: "Invitation sent",
@@ -220,9 +240,14 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       if (error) throw error;
 
       await logActivity(newSSSP.id, 'cloned', user.id, {
-        original_sssp_id: sssp.id,
-        original_title: sssp.title
-      });
+        description: `Cloned from SSSP "${sssp.title}"`,
+        section: 'Document Management',
+        severity: 'major',
+        metadata: {
+          original_sssp_id: sssp.id,
+          original_title: sssp.title
+        }
+      }, 'document');
 
       return transformToSSSP(newSSSP);
     },
@@ -295,6 +320,20 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
   const deleteMutation = useMutation({
     mutationFn: async (sssp: SSSP) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Log the deletion before actually deleting
+      await logActivity(sssp.id, 'deleted', user.id, {
+        description: `Deleted SSSP "${sssp.title}"`,
+        section: 'Document Management',
+        severity: 'critical',
+        metadata: {
+          sssp_title: sssp.title,
+          company_name: sssp.company_name
+        }
+      }, 'document');
+
       const { error } = await supabase
         .from('sssps')
         .delete()
@@ -343,12 +382,32 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
   const handleRevokeAccess = async (ssspId: string, email: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('sssp_invitations')
         .delete()
         .match({ sssp_id: ssspId, email });
 
       if (error) throw error;
+
+      // Log the access revocation
+      await logActivity(ssspId, 'updated', user.id, {
+        description: `Revoked access for ${email}`,
+        field_changes: [{
+          field: 'access',
+          displayName: 'User Access',
+          oldValue: `${email} had access`,
+          newValue: `${email} access revoked`
+        }],
+        section: 'Access Control',
+        severity: 'major',
+        metadata: {
+          email,
+          action: 'revoke_access'
+        }
+      }, 'access');
 
       toast({
         title: "Access revoked",
@@ -368,11 +427,25 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
   const handleResendInvite = async (ssspId: string, email: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase.functions.invoke('resend-invitation', {
         body: { ssspId, email }
       });
 
       if (error) throw error;
+
+      // Log the invitation resend
+      await logActivity(ssspId, 'shared', user.id, {
+        description: `Resent invitation to ${email}`,
+        section: 'Access Control',
+        severity: 'minor',
+        metadata: {
+          email,
+          action: 'resend_invitation'
+        }
+      }, 'access');
 
       toast({
         title: "Invitation resent",
@@ -416,11 +489,18 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       if (error) throw error;
 
+      // Log the status change with old and new values
       await logActivity(sssp.id, 'updated', user.id, {
-        field: 'status',
-        old_value: sssp.status,
-        new_value: newStatus
-      });
+        field_changes: [{
+          field: 'status',
+          displayName: 'Status',
+          oldValue: sssp.status,
+          newValue: newStatus
+        }],
+        description: `Changed status from ${sssp.status} to ${newStatus}`,
+        section: 'Document Management',
+        severity: 'major'
+      }, 'document');
 
       return data;
     },
