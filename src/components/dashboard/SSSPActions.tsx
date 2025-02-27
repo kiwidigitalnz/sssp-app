@@ -1,10 +1,17 @@
 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Copy, Share2, FileText, Trash2, MoreHorizontal } from "lucide-react";
+import { Copy, Share2, FileText, Trash2, MoreHorizontal, Loader2 } from "lucide-react";
 import type { SSSPActionsProps } from "./types";
 
-export function SSSPActions({ sssp, onShare, onClone, onPrintToPDF, onDelete }: SSSPActionsProps) {
+export function SSSPActions({ 
+  sssp, 
+  onShare, 
+  onClone, 
+  onPrintToPDF, 
+  onDelete,
+  isGeneratingPdf = false 
+}: SSSPActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -21,9 +28,22 @@ export function SSSPActions({ sssp, onShare, onClone, onPrintToPDF, onDelete }: 
           <Share2 className="mr-2 h-4 w-4" />
           Share
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onPrintToPDF(sssp)}>
-          <FileText className="mr-2 h-4 w-4" />
-          Download PDF
+        <DropdownMenuItem 
+          onClick={() => onPrintToPDF(sssp)}
+          disabled={isGeneratingPdf}
+          className={isGeneratingPdf ? "opacity-50 cursor-not-allowed" : ""}
+        >
+          {isGeneratingPdf ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Generating PDF...
+            </>
+          ) : (
+            <>
+              <FileText className="mr-2 h-4 w-4" />
+              Download PDF
+            </>
+          )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

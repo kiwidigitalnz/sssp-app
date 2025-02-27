@@ -38,6 +38,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const [shareFilter, setShareFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+  const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
 
   const { data: sharedUsers = {}, refetch: refetchSharedUsers } = useQuery({
     queryKey: ['shared-users', selectedSSSP?.id],
@@ -149,6 +150,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   };
 
   const handlePrintToPDF = async (sssp: SSSP) => {
+    setGeneratingPdfFor(sssp.id);
     try {
       const { data, error } = await supabase.functions.invoke('generate-sssp-pdf', {
         body: { ssspId: sssp.id }
@@ -176,6 +178,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         description: "Failed to generate PDF. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setGeneratingPdfFor(null);
     }
   };
 
@@ -474,6 +478,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
                     }}
                     onClone={handleClone}
                     onPrintToPDF={handlePrintToPDF}
+                    isGeneratingPdf={generatingPdfFor === sssp.id}
                     onDelete={(sssp) => {
                       setSelectedSSSP(sssp);
                       setDeleteDialogOpen(true);
