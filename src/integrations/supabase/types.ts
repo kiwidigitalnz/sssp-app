@@ -153,6 +153,7 @@ export type Database = {
           invited_by: string
           sssp_id: string
           status: string
+          token: string
         }
         Insert: {
           access_level: string
@@ -163,6 +164,7 @@ export type Database = {
           invited_by: string
           sssp_id: string
           status?: string
+          token: string
         }
         Update: {
           access_level?: string
@@ -173,6 +175,7 @@ export type Database = {
           invited_by?: string
           sssp_id?: string
           status?: string
+          token?: string
         }
         Relationships: [
           {
@@ -377,44 +380,7 @@ export type Database = {
       }
     }
     Views: {
-      sssp_invitation_details: {
-        Row: {
-          access_level: string | null
-          created_at: string | null
-          email: string | null
-          expires_at: string | null
-          id: string | null
-          sssp_id: string | null
-          status: string | null
-        }
-        Insert: {
-          access_level?: string | null
-          created_at?: string | null
-          email?: string | null
-          expires_at?: string | null
-          id?: string | null
-          sssp_id?: string | null
-          status?: string | null
-        }
-        Update: {
-          access_level?: string | null
-          created_at?: string | null
-          email?: string | null
-          expires_at?: string | null
-          id?: string | null
-          sssp_id?: string | null
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sssp_invitations_sssp_id_fkey"
-            columns: ["sssp_id"]
-            isOneToOne: false
-            referencedRelation: "sssps"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never
