@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -186,7 +185,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
             retention_period: sssp.monitoring_review.documentation?.retention_period || "",
             access_details: sssp.monitoring_review.documentation?.access_details || ""
           }
-        } : null
+        } : createEmptyMonitoringReview()
       };
 
       const { data: newSSSP, error } = await supabase
@@ -202,7 +201,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         original_title: sssp.title
       });
 
-      return newSSSP;
+      return newSSSP as SSSP;
     },
     onMutate: async (sssp) => {
       await queryClient.cancelQueries({ queryKey: ['sssps'] });
@@ -230,15 +229,15 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       };
 
       queryClient.setQueryData<SSSP[]>(['sssps'], (old) => {
-        if (!old) return [optimisticClone];
-        return [...old, optimisticClone];
+        const oldData = old || [];
+        return [...oldData, optimisticClone];
       });
 
       return { previousSssps, optimisticId: optimisticClone.id };
     },
     onError: (err, _, context) => {
       if (context?.previousSssps) {
-        queryClient.setQueryData(['sssps'], context.previousSssps);
+        queryClient.setQueryData<SSSP[]>(['sssps'], context.previousSssps);
       }
       console.error('Error cloning SSSP:', err);
       toast({
@@ -254,8 +253,8 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       });
 
       queryClient.setQueryData<SSSP[]>(['sssps'], (old) => {
-        if (!old) return [newSSSP];
-        return old.map(s => s.id.startsWith('temp-') ? newSSSP : s);
+        const oldData = old || [];
+        return oldData.map(s => s.id.startsWith('temp-') ? (newSSSP as SSSP) : s);
       });
     },
     onSettled: () => {
