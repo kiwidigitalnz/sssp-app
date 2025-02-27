@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import type { SSSPTableProps, SharedUser } from "./types";
+import { logActivity } from "@/utils/activityLogging";
 
 type SortConfig = {
   key: keyof SSSP;
