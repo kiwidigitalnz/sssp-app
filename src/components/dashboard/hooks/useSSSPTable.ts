@@ -292,20 +292,32 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       return data;
     },
+    onMutate: async ({ sssp, newStatus }) => {
+      // Optimistically update the UI
+      const updatedSssps = sssps.map(s => 
+        s.id === sssp.id ? { ...s, status: newStatus } : s
+      );
+      
+      // Update the UI immediately
+      queryClient.setQueryData(['sssps'], updatedSssps);
+    },
     onSuccess: () => {
       toast({
         title: "Status updated",
         description: "Status has been updated successfully"
       });
-      onRefresh();
+      // No need to refresh, our optimistic update is correct
     },
-    onError: (error) => {
+    onError: (error, { sssp, newStatus }) => {
       console.error('Error updating status:', error);
       toast({
         title: "Error updating status",
         description: "Failed to update status. Please try again.",
         variant: "destructive"
       });
+      
+      // Revert the optimistic update on error
+      onRefresh();
     }
   });
 
