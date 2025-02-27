@@ -70,22 +70,32 @@ export const Communication = ({ formData, setFormData, isLoading = false }: Comm
         data?.forEach(sssp => {
           if (Array.isArray(sssp.meetings_schedule)) {
             sssp.meetings_schedule.forEach(meetingData => {
-              // Validate the meeting data has required properties before adding it
+              // First convert to unknown, then to our specific type
+              const rawMeeting = meetingData as unknown;
+              
+              // Now check if it matches our Meeting interface shape
               if (
-                typeof meetingData === 'object' && 
-                meetingData !== null && 
-                'type' in meetingData && 
-                'frequency' in meetingData && 
-                'participants' in meetingData
+                rawMeeting !== null &&
+                typeof rawMeeting === 'object' &&
+                'type' in rawMeeting &&
+                'frequency' in rawMeeting &&
+                'participants' in rawMeeting
               ) {
-                // Cast to Meeting type with type assertion
-                const meeting = meetingData as Meeting;
-                allMeetings.push({
-                  type: meeting.type || "",
-                  frequency: meeting.frequency || "weekly",
-                  participants: Array.isArray(meeting.participants) ? meeting.participants : [],
-                  description: meeting.description || ""
-                });
+                // It's safe to create a Meeting from this data
+                const typedMeeting = rawMeeting as Record<string, any>;
+                
+                // Construct a properly typed Meeting object
+                const meeting: Meeting = {
+                  type: typeof typedMeeting.type === 'string' ? typedMeeting.type : "",
+                  frequency: typeof typedMeeting.frequency === 'string' ? 
+                    (typedMeeting.frequency as any) : "weekly",
+                  participants: Array.isArray(typedMeeting.participants) ? 
+                    typedMeeting.participants.filter(p => typeof p === 'string') : [],
+                  description: typeof typedMeeting.description === 'string' ? 
+                    typedMeeting.description : ""
+                };
+                
+                allMeetings.push(meeting);
               }
             });
           }
