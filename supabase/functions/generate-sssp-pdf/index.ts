@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
+import { autoTable } from 'https://esm.sh/jspdf-autotable@3.5.28'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -49,96 +50,207 @@ serve(async (req) => {
     console.log('Creating PDF document');
     const doc = new jsPDF();
     let y = 20;
-    const lineHeight = 7;
     const margin = 20;
     const pageWidth = doc.internal.pageSize.width;
     const maxWidth = pageWidth - 2 * margin;
 
-    const addText = (text: string, fontSize: number = 12, isBold: boolean = false) => {
-      doc.setFontSize(fontSize);
-      if (isBold) {
-        doc.setFont('helvetica', 'bold');
-      } else {
-        doc.setFont('helvetica', 'normal');
-      }
-      
-      const lines = doc.splitTextToSize(text, maxWidth);
-      
+    const addHeader = (text: string) => {
       // Check if we need a new page
-      if (y + (lines.length * lineHeight) > doc.internal.pageSize.height - margin) {
+      if (y > doc.internal.pageSize.height - 40) {
         doc.addPage();
-        y = margin;
+        y = 20;
       }
-      
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, y - 5, maxWidth, 10, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text(text, margin, y);
+      y += 15;
+    };
+
+    const addContent = (text: string | null | undefined) => {
+      if (!text) return;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      const lines = doc.splitTextToSize(text, maxWidth);
+      if (y + (lines.length * 7) > doc.internal.pageSize.height - margin) {
+        doc.addPage();
+        y = 20;
+      }
       doc.text(lines, margin, y);
-      y += lines.length * lineHeight;
-      y += 5; // Add some padding after each section
+      y += lines.length * 7 + 10;
     };
 
-    const addSection = (title: string, content: string | null | undefined) => {
-      if (content) {
-        addText(title, 14, true);
-        addText(content);
+    const addTable = (headers: string[], data: any[][]) => {
+      if (y > doc.internal.pageSize.height - 40) {
+        doc.addPage();
+        y = 20;
       }
+      autoTable(doc, {
+        startY: y,
+        head: [headers],
+        body: data,
+        margin: { left: margin, right: margin },
+        headStyles: { fillColor: [70, 70, 70] },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
     };
 
-    // Title
-    addText('SITE SPECIFIC SAFETY PLAN (SSSP)', 24, true);
+    // Title Page
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(24);
+    doc.text('SITE SPECIFIC', pageWidth / 2, 100, { align: 'center' });
+    doc.text('SAFETY PLAN', pageWidth / 2, 120, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text(sssp.title, pageWidth / 2, 140, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text(sssp.company_name, pageWidth / 2, 160, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Version ${sssp.version}`, pageWidth / 2, 180, { align: 'center' });
+    doc.addPage();
+    y = 20;
 
     // Document Information
-    addText('\nDocument Information', 16, true);
-    addText(`Title: ${sssp.title}`);
-    addText(`Company: ${sssp.company_name}`);
-    addText(`Status: ${sssp.status}`);
-    addText(`Version: ${sssp.version}`);
-    addText(`Created: ${formatDate(sssp.created_at)}`);
-    addText(`Last Updated: ${formatDate(sssp.updated_at)}`);
-    addText(`Valid From: ${formatDate(sssp.start_date)} to ${formatDate(sssp.end_date)}`);
+    addHeader('Document Information');
+    const docInfo = [
+      ['Status:', sssp.status],
+      ['Created:', formatDate(sssp.created_at)],
+      ['Last Updated:', formatDate(sssp.updated_at)],
+      ['Valid From:', formatDate(sssp.start_date)],
+      ['Valid To:', formatDate(sssp.end_date)]
+    ];
+    addTable(['Field', 'Value'], docInfo);
 
     // Company Information
-    addSection('Company Information', 
-      `Address: ${sssp.company_address || 'Not specified'}
-Contact Person: ${sssp.company_contact_name || 'Not specified'}
-Contact Email: ${sssp.company_contact_email || 'Not specified'}
-Contact Phone: ${sssp.company_contact_phone || 'Not specified'}`
-    );
+    addHeader('Company Information');
+    const companyInfo = [
+      ['Company Name:', sssp.company_name],
+      ['Address:', sssp.company_address || 'Not specified'],
+      ['Contact Person:', sssp.company_contact_name || 'Not specified'],
+      ['Contact Email:', sssp.company_contact_email || 'Not specified'],
+      ['Contact Phone:', sssp.company_contact_phone || 'Not specified']
+    ];
+    addTable(['Field', 'Value'], companyInfo);
 
     // Project Overview
-    addSection('Project Overview', sssp.description);
-    addSection('Scope of Work', sssp.services);
-    addSection('Key Locations and Routes', sssp.locations);
-    addSection('Special Considerations', sssp.considerations);
+    addHeader('Project Overview');
+    addContent(sssp.description);
+
+    // Scope of Work
+    addHeader('Scope of Work');
+    addContent(sssp.services);
+    addContent(sssp.locations);
+    addContent(sssp.considerations);
 
     // Roles and Responsibilities
-    addSection('PCBU Duties', sssp.pcbu_duties);
-    addSection('Site Supervisor Duties', sssp.site_supervisor_duties);
-    addSection('Worker Duties', sssp.worker_duties);
-    addSection('Contractor Duties', sssp.contractor_duties);
+    addHeader('Roles and Responsibilities');
+    addContent(`PCBU Duties:\n${sssp.pcbu_duties}`);
+    addContent(`Site Supervisor Duties:\n${sssp.site_supervisor_duties}`);
+    addContent(`Worker Duties:\n${sssp.worker_duties}`);
+    addContent(`Contractor Duties:\n${sssp.contractor_duties}`);
 
     // Emergency Procedures
-    addSection('Emergency Response Plan', sssp.emergency_plan);
-    addSection('Assembly Points', sssp.assembly_points);
-    addSection('Emergency Equipment', sssp.emergency_equipment);
-    addSection('Incident Reporting', sssp.incident_reporting);
+    addHeader('Emergency Procedures');
+    addContent(`Emergency Response Plan:\n${sssp.emergency_plan}`);
+    addContent(`Assembly Points:\n${sssp.assembly_points}`);
+    addContent(`Emergency Equipment:\n${sssp.emergency_equipment}`);
+    addContent(`Incident Reporting:\n${sssp.incident_reporting}`);
 
-    // Health and Safety
-    addSection('Drug and Alcohol Policy', sssp.drug_and_alcohol);
-    addSection('Fatigue Management', sssp.fatigue_management);
-    addSection('PPE Requirements', sssp.ppe);
-    addSection('Mobile Phone Usage', sssp.mobile_phone);
+    // Emergency Contacts
+    if (sssp.emergency_contacts && sssp.emergency_contacts.length > 0) {
+      addHeader('Emergency Contacts');
+      const contactsData = sssp.emergency_contacts.map(contact => [
+        contact.name || '',
+        contact.role || '',
+        contact.phone || '',
+        contact.email || ''
+      ]);
+      addTable(['Name', 'Role', 'Phone', 'Email'], contactsData);
+    }
 
-    // Site Rules
-    addSection('Entry/Exit Procedures', sssp.entry_exit_procedures);
-    addSection('Speed Limits', sssp.speed_limits);
-    addSection('Parking Rules', sssp.parking_rules);
-    addSection('Site-Specific PPE', sssp.site_specific_ppe);
+    // Training Requirements
+    addHeader('Training and Competency');
+    addContent(`Competency Requirements:\n${sssp.competency_requirements}`);
+    addContent(`Training Records:\n${sssp.training_records}`);
+
+    if (sssp.required_training && sssp.required_training.length > 0) {
+      const trainingData = sssp.required_training.map(training => [
+        training.requirement || '',
+        training.description || '',
+        training.frequency || ''
+      ]);
+      addTable(['Requirement', 'Description', 'Frequency'], trainingData);
+    }
+
+    // Health and Safety Policies
+    addHeader('Health and Safety Policies');
+    addContent(`Drug and Alcohol Policy:\n${sssp.drug_and_alcohol}`);
+    addContent(`Fatigue Management:\n${sssp.fatigue_management}`);
+    addContent(`PPE Requirements:\n${sssp.ppe}`);
+    addContent(`Mobile Phone Usage:\n${sssp.mobile_phone}`);
+
+    // Site Safety Rules
+    addHeader('Site Safety Rules');
+    addContent(`Entry/Exit Procedures:\n${sssp.entry_exit_procedures}`);
+    addContent(`Speed Limits:\n${sssp.speed_limits}`);
+    addContent(`Parking Rules:\n${sssp.parking_rules}`);
+    addContent(`Site-Specific PPE:\n${sssp.site_specific_ppe}`);
+
+    // Hazards
+    if (sssp.hazards && sssp.hazards.length > 0) {
+      addHeader('Hazard Management');
+      const hazardsData = sssp.hazards.map(hazard => [
+        hazard.hazard || '',
+        hazard.risk || '',
+        hazard.riskLevel || '',
+        hazard.controlMeasures || ''
+      ]);
+      addTable(['Hazard', 'Risk', 'Risk Level', 'Control Measures'], hazardsData);
+    }
 
     // Communication
-    addSection('Communication Methods', sssp.communication_methods);
-    addSection('Toolbox Meetings', sssp.toolbox_meetings);
-    addSection('Reporting Procedures', sssp.reporting_procedures);
-    addSection('Communication Protocols', sssp.communication_protocols);
-    addSection('Visitor Rules', sssp.visitor_rules);
+    addHeader('Communication');
+    addContent(`Communication Methods:\n${sssp.communication_methods}`);
+    addContent(`Toolbox Meetings:\n${sssp.toolbox_meetings}`);
+    addContent(`Reporting Procedures:\n${sssp.reporting_procedures}`);
+    addContent(`Communication Protocols:\n${sssp.communication_protocols}`);
+    addContent(`Visitor Rules:\n${sssp.visitor_rules}`);
+
+    // Monitoring and Review
+    if (sssp.monitoring_review) {
+      addHeader('Monitoring and Review');
+      const reviewInfo = [
+        ['Review Frequency:', sssp.monitoring_review.review_schedule?.frequency || 'Not specified'],
+        ['Last Review:', formatDate(sssp.monitoring_review.review_schedule?.last_review)],
+        ['Next Review:', formatDate(sssp.monitoring_review.review_schedule?.next_review)],
+        ['Responsible Person:', sssp.monitoring_review.review_schedule?.responsible_person || 'Not specified']
+      ];
+      addTable(['Field', 'Value'], reviewInfo);
+
+      // Worker Consultation
+      if (sssp.monitoring_review.worker_consultation) {
+        addHeader('Worker Consultation');
+        const consultationInfo = [
+          ['Method:', sssp.monitoring_review.worker_consultation.method || 'Not specified'],
+          ['Frequency:', sssp.monitoring_review.worker_consultation.frequency || 'Not specified'],
+          ['Last Consultation:', formatDate(sssp.monitoring_review.worker_consultation.last_consultation)]
+        ];
+        addTable(['Field', 'Value'], consultationInfo);
+      }
+
+      // Documentation
+      if (sssp.monitoring_review.documentation) {
+        addHeader('Documentation');
+        const docInfo = [
+          ['Storage Location:', sssp.monitoring_review.documentation.storage_location || 'Not specified'],
+          ['Retention Period:', sssp.monitoring_review.documentation.retention_period || 'Not specified'],
+          ['Access Details:', sssp.monitoring_review.documentation.access_details || 'Not specified']
+        ];
+        addTable(['Field', 'Value'], docInfo);
+      }
+    }
 
     console.log('Saving PDF');
     const pdfBytes = doc.output('arraybuffer');
