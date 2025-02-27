@@ -33,14 +33,9 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     queryFn: async () => {
       if (!selectedSSSP) return {};
 
-      console.log('Fetching shared users for SSSP:', selectedSSSP.id);
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      console.log('Current user:', user.id);
-
-      // Get all invitations for this SSSP first
       const { data: invitations, error: invitationsError } = await supabase
         .from('sssp_invitations')
         .select('email, access_level, status')
@@ -51,9 +46,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         return { [selectedSSSP.id]: [] };
       }
 
-      console.log('Fetched invitations:', invitations);
-
-      // Then get the creator's profile
       const { data: creatorProfile, error: creatorError } = await supabase
         .from('profiles')
         .select('email')
@@ -64,11 +56,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         console.error('Error fetching creator profile:', creatorError);
       }
 
-      console.log('Creator profile:', creatorProfile);
-
       const users: SharedUser[] = [];
       
-      // Add creator if found
       if (creatorProfile) {
         users.push({
           email: creatorProfile.email,
@@ -78,7 +67,6 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         });
       }
 
-      // Add all invitations
       if (invitations) {
         users.push(...invitations.map(inv => ({
           email: inv.email,
@@ -88,12 +76,146 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         })));
       }
 
-      console.log('Final users list:', users);
-
       return { [selectedSSSP.id]: users };
     },
     enabled: !!selectedSSSP && shareDialogOpen
   });
+
+  const handleShare = async (email: string, accessLevel: 'view' | 'edit') => {
+    if (!selectedSSSP) return;
+
+    try {
+      const { error } = await supabase.functions.invoke('send-invitation', {
+        body: { 
+          ssspId: selectedSSSP.id,
+          recipientEmail: email,
+          accessLevel
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Invitation sent",
+        description: `An invitation has been sent to ${email}`
+      });
+
+      await refetchSharedUsers();
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send invitation. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleClone = async (sssp: SSSP) => {
+    try {
+      const { data: newSSSP, error } = await supabase
+        .from('sssps')
+        .insert([{ ...sssp, title: `${sssp.title} (Copy)` }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "SSSP cloned",
+        description: `Successfully created a copy of "${sssp.title}"`
+      });
+
+      onRefresh();
+    } catch (error) {
+      console.error('Error cloning SSSP:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clone SSSP. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handlePrintToPDF = (sssp: SSSP) => {
+    toast({
+      title: "Coming soon",
+      description: "PDF generation feature is under development"
+    });
+  };
+
+  const handleDelete = async (sssp: SSSP) => {
+    try {
+      const { error } = await supabase
+        .from('sssps')
+        .delete()
+        .eq('id', sssp.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "SSSP deleted",
+        description: `Successfully deleted "${sssp.title}"`
+      });
+
+      setDeleteDialogOpen(false);
+      onRefresh();
+    } catch (error) {
+      console.error('Error deleting SSSP:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete SSSP. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRevokeAccess = async (ssspId: string, email: string) => {
+    try {
+      const { error } = await supabase
+        .from('sssp_invitations')
+        .delete()
+        .match({ sssp_id: ssspId, email });
+
+      if (error) throw error;
+
+      toast({
+        title: "Access revoked",
+        description: `Successfully revoked access for ${email}`
+      });
+
+      await refetchSharedUsers();
+    } catch (error) {
+      console.error('Error revoking access:', error);
+      toast({
+        title: "Error",
+        description: "Failed to revoke access. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleResendInvite = async (ssspId: string, email: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('resend-invitation', {
+        body: { ssspId, email }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Invitation resent",
+        description: `Successfully resent invitation to ${email}`
+      });
+    } catch (error) {
+      console.error('Error resending invitation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to resend invitation. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleSort = (key: keyof SSSP) => {
     setSortConfig((currentSort) => {
