@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
@@ -8,6 +9,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Max-Age': '86400',
   'Vary': 'Origin'
+};
+
+// Colors for the PDF
+const colors = {
+  primary: [41, 63, 82], // Dark blue
+  secondary: [245, 247, 250], // Light gray-blue
+  text: [51, 51, 51], // Dark gray
+  subtext: [102, 102, 102], // Medium gray
+  accent: [70, 123, 163], // Muted blue
+  subtle: [249, 250, 251], // Very light gray
 };
 
 const formatDate = (date: string | null | undefined): string => {
@@ -77,6 +88,7 @@ serve(async (req) => {
     const pageWidth = doc.internal.pageSize.width;
     const maxWidth = pageWidth - 2 * margin;
 
+    // Enhanced styling functions with new typography system
     const addHeader = (text: string, level = 1) => {
       if (y > doc.internal.pageSize.height - 40) {
         doc.addPage();
@@ -84,43 +96,45 @@ serve(async (req) => {
       }
 
       if (level === 1) {
-        doc.setFillColor(50, 50, 50);
-        doc.rect(margin, y - 5, maxWidth, 12, 'F');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(16);
-        doc.setTextColor(255, 255, 255);
-        doc.text(text.toUpperCase(), margin + 4, y + 2);
-        y += 20;
-      } else {
-        doc.setFillColor(240, 240, 240);
-        doc.rect(margin, y - 5, maxWidth, 10, 'F');
+        // H1 Style
+        doc.setFillColor(...colors.primary);
+        doc.rect(margin, y - 4, maxWidth, 10, 'F');
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(255, 255, 255);
+        doc.text(text.toUpperCase(), margin + 3, y + 2);
+        y += 16;
+      } else {
+        // H2 Style
+        doc.setFillColor(...colors.secondary);
+        doc.rect(margin, y - 3, maxWidth, 8, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(...colors.primary);
         doc.text(text, margin + 2, y + 2);
-        y += 15;
+        y += 14;
       }
     };
 
     const addContent = (text: string | null | undefined, indent = 0) => {
       if (!text) return;
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
-      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setTextColor(...colors.text);
       const lines = doc.splitTextToSize(text, maxWidth - (indent * 10));
       
-      if (y + (lines.length * 7) > doc.internal.pageSize.height - margin) {
+      if (y + (lines.length * 6) > doc.internal.pageSize.height - margin) {
         doc.addPage();
         y = 20;
       }
       
       doc.text(lines, margin + (indent * 10), y);
-      y += lines.length * 7 + 10;
+      y += lines.length * 6 + 8;
     };
 
     const addSimpleTable = (data: Array<[string, string]>, shaded = true) => {
-      const rowHeight = 8;
-      const cellPadding = 3;
+      const rowHeight = 7;
+      const cellPadding = 2;
       
       data.forEach((row, index) => {
         if (y + rowHeight > doc.internal.pageSize.height - margin) {
@@ -129,52 +143,57 @@ serve(async (req) => {
         }
 
         if (shaded && index % 2 === 0) {
-          doc.setFillColor(245, 245, 245);
-          doc.rect(margin, y - 5, maxWidth, rowHeight + 6, 'F');
+          doc.setFillColor(...colors.subtle);
+          doc.rect(margin, y - 4, maxWidth, rowHeight + 5, 'F');
         }
 
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
+        doc.setFontSize(10);
+        doc.setTextColor(...colors.text);
         doc.text(row[0], margin + cellPadding, y);
         
         doc.setFont('helvetica', 'normal');
-        const valueLines = doc.splitTextToSize(row[1], maxWidth - 80);
-        doc.text(valueLines, margin + 80, y);
+        doc.setTextColor(...colors.subtext);
+        const valueLines = doc.splitTextToSize(row[1], maxWidth - 70);
+        doc.text(valueLines, margin + 70, y);
         
-        y += Math.max(valueLines.length * 7, rowHeight) + 3;
+        y += Math.max(valueLines.length * 6, rowHeight) + 2;
       });
-      y += 5;
+      y += 4;
     };
 
-    doc.addFileToVFS('Helvetica-Bold', 'Helvetica-Bold');
+    // Title page with refined styling
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(28);
-    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(24);
+    doc.setTextColor(...colors.primary);
     doc.text('SITE SPECIFIC', pageWidth / 2, 80, { align: 'center' });
     doc.text('SAFETY PLAN', pageWidth / 2, 100, { align: 'center' });
     
-    doc.setDrawColor(50, 50, 50);
-    doc.setLineWidth(1);
+    // Decorative elements
+    doc.setDrawColor(...colors.accent);
+    doc.setLineWidth(0.5);
     doc.line(margin, 120, pageWidth - margin, 120);
     
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.text(sssp.title, pageWidth / 2, 140, { align: 'center' });
     
-    doc.setFontSize(16);
+    doc.setFontSize(14);
+    doc.setTextColor(...colors.subtext);
     doc.text(sssp.company_name, pageWidth / 2, 160, { align: 'center' });
     
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.text(`Version ${sssp.version}`, pageWidth / 2, 180, { align: 'center' });
     doc.text(formatDate(sssp.created_at), pageWidth / 2, 190, { align: 'center' });
 
+    // Footer with page numbers
     const addPageNumbers = () => {
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         if (i > 1) {
           doc.setFont('helvetica', 'normal');
-          doc.setFontSize(10);
-          doc.setTextColor(100, 100, 100);
+          doc.setFontSize(9);
+          doc.setTextColor(...colors.subtext);
           doc.text(
             `Page ${i} of ${pageCount}`,
             pageWidth - margin,
@@ -185,9 +204,11 @@ serve(async (req) => {
       }
     };
 
+    // Content pages
     doc.addPage();
     y = 20;
 
+    // Document Information
     addHeader('Document Information', 1);
     addSimpleTable([
       ['Status:', sssp.status || 'Not specified'],
@@ -197,7 +218,8 @@ serve(async (req) => {
       ['Valid To:', formatDate(sssp.end_date)]
     ]);
 
-    addHeader('Company Information');
+    // Company Information
+    addHeader('Company Information', 1);
     addSimpleTable([
       ['Company:', sssp.company_name],
       ['Address:', sssp.company_address || 'Not specified'],
@@ -206,30 +228,45 @@ serve(async (req) => {
       ['Phone:', sssp.company_contact_phone || 'Not specified']
     ]);
 
-    addHeader('Project Overview');
+    // Project Overview
+    addHeader('Project Overview', 1);
     addContent(sssp.description);
 
-    addHeader('Scope of Work');
+    // Scope of Work
+    addHeader('Scope of Work', 1);
     addContent(sssp.services);
-    addContent(`Locations: ${sssp.locations}`);
-    addContent(`Considerations: ${sssp.considerations}`);
+    addHeader('Locations', 2);
+    addContent(sssp.locations);
+    addHeader('Considerations', 2);
+    addContent(sssp.considerations);
 
-    addHeader('Roles and Responsibilities');
-    addContent(`PCBU Duties:\n${sssp.pcbu_duties}`);
-    addContent(`Site Supervisor Duties:\n${sssp.site_supervisor_duties}`);
-    addContent(`Worker Duties:\n${sssp.worker_duties}`);
-    addContent(`Contractor Duties:\n${sssp.contractor_duties}`);
+    // Roles and Responsibilities
+    addHeader('Roles and Responsibilities', 1);
+    addHeader('PCBU Duties', 2);
+    addContent(sssp.pcbu_duties);
+    addHeader('Site Supervisor Duties', 2);
+    addContent(sssp.site_supervisor_duties);
+    addHeader('Worker Duties', 2);
+    addContent(sssp.worker_duties);
+    addHeader('Contractor Duties', 2);
+    addContent(sssp.contractor_duties);
 
-    addHeader('Emergency Procedures');
-    addContent(`Emergency Plan:\n${sssp.emergency_plan}`);
-    addContent(`Assembly Points:\n${sssp.assembly_points}`);
-    addContent(`Emergency Equipment:\n${sssp.emergency_equipment}`);
-    addContent(`Incident Reporting:\n${sssp.incident_reporting}`);
+    // Emergency Procedures
+    addHeader('Emergency Procedures', 1);
+    addHeader('Emergency Plan', 2);
+    addContent(sssp.emergency_plan);
+    addHeader('Assembly Points', 2);
+    addContent(sssp.assembly_points);
+    addHeader('Emergency Equipment', 2);
+    addContent(sssp.emergency_equipment);
+    addHeader('Incident Reporting', 2);
+    addContent(sssp.incident_reporting);
 
+    // Emergency Contacts
     if (sssp.emergency_contacts?.length) {
-      addHeader('Emergency Contacts');
+      addHeader('Emergency Contacts', 1);
       sssp.emergency_contacts.forEach((contact: any, index: number) => {
-        addContent(`Contact ${index + 1}:`);
+        addHeader(`Contact ${index + 1}`, 2);
         addSimpleTable([
           ['Name:', contact.name || ''],
           ['Role:', contact.role || ''],
@@ -239,22 +276,33 @@ serve(async (req) => {
       });
     }
 
-    addHeader('Health and Safety');
-    addContent(`Drug and Alcohol Policy:\n${sssp.drug_and_alcohol}`);
-    addContent(`Fatigue Management:\n${sssp.fatigue_management}`);
-    addContent(`PPE Requirements:\n${sssp.ppe}`);
-    addContent(`Mobile Phone Usage:\n${sssp.mobile_phone}`);
+    // Health and Safety
+    addHeader('Health and Safety', 1);
+    addHeader('Drug and Alcohol Policy', 2);
+    addContent(sssp.drug_and_alcohol);
+    addHeader('Fatigue Management', 2);
+    addContent(sssp.fatigue_management);
+    addHeader('PPE Requirements', 2);
+    addContent(sssp.ppe);
+    addHeader('Mobile Phone Usage', 2);
+    addContent(sssp.mobile_phone);
 
-    addHeader('Site Safety Rules');
-    addContent(`Entry/Exit Procedures:\n${sssp.entry_exit_procedures}`);
-    addContent(`Speed Limits:\n${sssp.speed_limits}`);
-    addContent(`Parking Rules:\n${sssp.parking_rules}`);
-    addContent(`Site-Specific PPE:\n${sssp.site_specific_ppe}`);
+    // Site Safety Rules
+    addHeader('Site Safety Rules', 1);
+    addHeader('Entry/Exit Procedures', 2);
+    addContent(sssp.entry_exit_procedures);
+    addHeader('Speed Limits', 2);
+    addContent(sssp.speed_limits);
+    addHeader('Parking Rules', 2);
+    addContent(sssp.parking_rules);
+    addHeader('Site-Specific PPE', 2);
+    addContent(sssp.site_specific_ppe);
 
+    // Hazards
     if (sssp.hazards?.length) {
-      addHeader('Hazard Management');
+      addHeader('Hazard Management', 1);
       sssp.hazards.forEach((hazard: any, index: number) => {
-        addContent(`Hazard ${index + 1}:`);
+        addHeader(`Hazard ${index + 1}`, 2);
         addSimpleTable([
           ['Hazard:', hazard.hazard || ''],
           ['Risk:', hazard.risk || ''],
@@ -264,15 +312,22 @@ serve(async (req) => {
       });
     }
 
-    addHeader('Communication');
-    addContent(`Methods:\n${sssp.communication_methods}`);
-    addContent(`Toolbox Meetings:\n${sssp.toolbox_meetings}`);
-    addContent(`Reporting Procedures:\n${sssp.reporting_procedures}`);
-    addContent(`Protocols:\n${sssp.communication_protocols}`);
-    addContent(`Visitor Rules:\n${sssp.visitor_rules}`);
+    // Communication
+    addHeader('Communication', 1);
+    addHeader('Methods', 2);
+    addContent(sssp.communication_methods);
+    addHeader('Toolbox Meetings', 2);
+    addContent(sssp.toolbox_meetings);
+    addHeader('Reporting Procedures', 2);
+    addContent(sssp.reporting_procedures);
+    addHeader('Communication Protocols', 2);
+    addContent(sssp.communication_protocols);
+    addHeader('Visitor Rules', 2);
+    addContent(sssp.visitor_rules);
 
+    // Monitoring and Review
     if (sssp.monitoring_review) {
-      addHeader('Monitoring and Review');
+      addHeader('Monitoring and Review', 1);
       if (sssp.monitoring_review.review_schedule) {
         addSimpleTable([
           ['Frequency:', sssp.monitoring_review.review_schedule.frequency || ''],
