@@ -165,17 +165,33 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       console.log('Response from edge function:', data);
 
       if (data?.url) {
-        const link = document.createElement('a');
-        link.href = data.url;
-        link.download = `${sssp.title}-SSSP.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+          const response = await fetch(data.url);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const blob = await response.blob();
+          
+          const objectUrl = window.URL.createObjectURL(blob);
+          
+          const link = document.createElement('a');
+          link.href = objectUrl;
+          link.download = `${sssp.title}-SSSP.pdf`.replace(/[^a-z0-9\.]/gi, '_');
+          document.body.appendChild(link);
+          link.click();
+          
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(objectUrl);
 
-        toast({
-          title: "PDF generated successfully",
-          description: "Your PDF has been generated and downloaded"
-        });
+          toast({
+            title: "PDF generated successfully",
+            description: "Your PDF has been generated and downloaded"
+          });
+        } catch (downloadError) {
+          console.error('Error downloading file:', downloadError);
+          throw new Error('Failed to download the generated file');
+        }
       } else {
         throw new Error('No URL returned from PDF generation');
       }
