@@ -24,10 +24,27 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     queryFn: async () => {
       if (!selectedSSSP) return {};
 
+      console.log('Fetching shared users for SSSP:', selectedSSSP.id);
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // First, get the creator's profile
+      console.log('Current user:', user.id);
+
+      // Get all invitations for this SSSP first
+      const { data: invitations, error: invitationsError } = await supabase
+        .from('sssp_invitations')
+        .select('email, access_level, status')
+        .eq('sssp_id', selectedSSSP.id);
+
+      if (invitationsError) {
+        console.error('Error fetching invitations:', invitationsError);
+        return { [selectedSSSP.id]: [] };
+      }
+
+      console.log('Fetched invitations:', invitations);
+
+      // Then get the creator's profile
       const { data: creatorProfile, error: creatorError } = await supabase
         .from('profiles')
         .select('email')
@@ -38,20 +55,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         console.error('Error fetching creator profile:', creatorError);
       }
 
-      // Then, get all invitations for this SSSP
-      const { data: invitations, error: invitationsError } = await supabase
-        .from('sssp_invitations')
-        .select(`
-          email,
-          access_level,
-          status
-        `)
-        .eq('sssp_id', selectedSSSP.id);
-
-      if (invitationsError) {
-        console.error('Error fetching invitations:', invitationsError);
-        throw invitationsError;
-      }
+      console.log('Creator profile:', creatorProfile);
 
       const users: SharedUser[] = [];
       
@@ -74,6 +78,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
           is_creator: false
         })));
       }
+
+      console.log('Final users list:', users);
 
       return { [selectedSSSP.id]: users };
     },
