@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Pencil, Trash2 } from "lucide-react";
@@ -129,19 +130,19 @@ export const RequiredTrainingSection = ({ formData, setFormData }: RequiredTrain
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between border-b pb-2">
+      <div className="flex items-center justify-between border-b pb-3">
         <div className="flex items-center gap-2">
           <BookOpen className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-semibold">Required Training</h3>
         </div>
         <p className="text-sm text-muted-foreground">
-          Add or select training requirements
+          Add or select training requirements for your team
         </p>
       </div>
       <Card className="border-dashed">
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-4 h-9">
+            <div className="flex items-center gap-4">
               <AddTrainingDialog
                 newTraining={editingTraining?.training || newTraining}
                 setNewTraining={training => 

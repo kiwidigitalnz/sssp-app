@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Dialog,
@@ -50,7 +51,7 @@ export const TrainingSelection = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="mt-4">
+        <Button variant="outline" size="sm" className="h-9">
           <Plus className="mr-2 h-4 w-4" />
           Add Multiple Training Requirements
         </Button>

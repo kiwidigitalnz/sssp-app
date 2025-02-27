@@ -39,7 +39,8 @@ export const AddTrainingDialog = ({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="gap-2 bg-background hover:bg-muted px-4"
+          size="sm"
+          className="h-9 gap-2 bg-background hover:bg-muted"
         >
           {isEditing ? (
             <>

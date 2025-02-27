@@ -29,7 +29,7 @@ export const TrainingRequirements: React.FC<TrainingRequirementsProps> = ({
             Training and Competency Requirements
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8">
           <RequiredTrainingSection formData={formData} setFormData={setFormData} />
           <CompetencySection formData={formData} onFieldChange={handleFieldChange} />
           <TrainingRecordsSection formData={formData} onFieldChange={handleFieldChange} />
