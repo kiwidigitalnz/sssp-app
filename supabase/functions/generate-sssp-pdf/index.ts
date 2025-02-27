@@ -1,12 +1,14 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  'Access-Control-Max-Age': '86400',
+  'Vary': 'Origin'
+};
 
 const formatDate = (date: string | null | undefined): string => {
   if (!date) return 'Not specified';
@@ -18,16 +20,40 @@ const formatDate = (date: string | null | undefined): string => {
 }
 
 serve(async (req) => {
+  console.log('Received request:', req.method);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    console.log('Handling CORS preflight request');
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
   }
 
   try {
+    if (req.method !== 'POST') {
+      console.error('Invalid request method:', req.method);
+      return new Response(
+        JSON.stringify({ error: 'Method not allowed' }),
+        { 
+          status: 405,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     console.log('Starting PDF generation');
     const { ssspId } = await req.json();
 
     if (!ssspId) {
-      throw new Error('No SSSP ID provided');
+      console.error('No SSSP ID provided');
+      return new Response(
+        JSON.stringify({ error: 'No SSSP ID provided' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const supabase = createClient(
@@ -251,7 +277,10 @@ serve(async (req) => {
     console.log('PDF generation complete');
     return new Response(
       JSON.stringify({ url: publicUrl }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
 
   } catch (error) {
@@ -259,8 +288,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
