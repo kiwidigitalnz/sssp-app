@@ -83,7 +83,28 @@ const SSSPForm = () => {
   const transformFormDataForSaving = useCallback((data: SSSPFormData) => {
     const transformedData = { ...data };
 
-    // Map camelCase fields to snake_case
+    // Map company field camelCase to snake_case
+    if (data.companyName !== undefined) {
+      transformedData.company_name = data.companyName;
+      delete transformedData.companyName;
+    }
+    
+    if (data.contactPerson !== undefined) {
+      transformedData.company_contact_name = data.contactPerson;
+      delete transformedData.contactPerson;
+    }
+    
+    if (data.contactEmail !== undefined) {
+      transformedData.company_contact_email = data.contactEmail;
+      delete transformedData.contactEmail;
+    }
+    
+    if (data.contactPhone !== undefined) {
+      transformedData.company_contact_phone = data.contactPhone;
+      delete transformedData.contactPhone;
+    }
+    
+    // Map emergency field camelCase to snake_case
     if (data.assemblyPoints !== undefined) {
       transformedData.assembly_points = data.assemblyPoints;
       delete transformedData.assemblyPoints;
@@ -109,6 +130,10 @@ const SSSPForm = () => {
       transformedData.emergency_contacts = data.emergencyContacts;
       delete transformedData.emergencyContacts;
     }
+    
+    // Log data transformation for debugging
+    console.log('Original data:', data);
+    console.log('Transformed data:', transformedData);
     
     return transformedData;
   }, []);
