@@ -65,11 +65,29 @@ export const Communication = ({ formData, setFormData, isLoading = false }: Comm
           throw error;
         }
         
-        // Extract all meetings from all SSSPs
+        // Extract all meetings from all SSSPs and ensure they match the Meeting interface
         const allMeetings: Meeting[] = [];
         data?.forEach(sssp => {
           if (Array.isArray(sssp.meetings_schedule)) {
-            allMeetings.push(...sssp.meetings_schedule);
+            sssp.meetings_schedule.forEach(meetingData => {
+              // Validate the meeting data has required properties before adding it
+              if (
+                typeof meetingData === 'object' && 
+                meetingData !== null && 
+                'type' in meetingData && 
+                'frequency' in meetingData && 
+                'participants' in meetingData
+              ) {
+                // Cast to Meeting type with type assertion
+                const meeting = meetingData as Meeting;
+                allMeetings.push({
+                  type: meeting.type || "",
+                  frequency: meeting.frequency || "weekly",
+                  participants: Array.isArray(meeting.participants) ? meeting.participants : [],
+                  description: meeting.description || ""
+                });
+              }
+            });
           }
         });
         
