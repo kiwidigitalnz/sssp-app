@@ -1,4 +1,3 @@
-
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Users } from "lucide-react";
 import { useState } from "react";
@@ -27,16 +26,24 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: creatorProfile } = await supabase
+      const { data: creatorProfile, error: creatorError } = await supabase
         .from('profiles')
         .select('email')
         .eq('id', selectedSSSP.created_by)
         .single();
 
-      const { data: invitations } = await supabase
+      if (creatorError) {
+        console.error('Error fetching creator profile:', creatorError);
+      }
+
+      const { data: invitations, error: invitationsError } = await supabase
         .from('sssp_invitations')
         .select('email, access_level, status')
         .eq('sssp_id', selectedSSSP.id);
+
+      if (invitationsError) {
+        console.error('Error fetching invitations:', invitationsError);
+      }
 
       const users = [];
       
@@ -64,11 +71,15 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { data: userProfile } = await supabase
+    const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
       .select('email')
       .eq('id', user.id)
       .single();
+
+    if (profileError) {
+      throw new Error('Failed to fetch user profile');
+    }
 
     if (userProfile?.email === email) {
       throw new Error('Cannot invite yourself');
