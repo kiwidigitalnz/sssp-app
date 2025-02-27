@@ -1,3 +1,4 @@
+
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Users } from "lucide-react";
 import { useState } from "react";
@@ -5,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { SSSPActions } from "./SSSPActions";
 import { ShareDialog } from "./ShareDialog";
 import { DeleteDialog } from "./DeleteDialog";
@@ -26,6 +27,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // First, get the creator's profile
       const { data: creatorProfile, error: creatorError } = await supabase
         .from('profiles')
         .select('email')
@@ -36,17 +38,24 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         console.error('Error fetching creator profile:', creatorError);
       }
 
+      // Then, get all invitations for this SSSP
       const { data: invitations, error: invitationsError } = await supabase
         .from('sssp_invitations')
-        .select('email, access_level, status')
+        .select(`
+          email,
+          access_level,
+          status
+        `)
         .eq('sssp_id', selectedSSSP.id);
 
       if (invitationsError) {
         console.error('Error fetching invitations:', invitationsError);
+        throw invitationsError;
       }
 
-      const users = [];
+      const users: SharedUser[] = [];
       
+      // Add creator if found
       if (creatorProfile) {
         users.push({
           email: creatorProfile.email,
@@ -56,8 +65,14 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
         });
       }
 
+      // Add all invitations
       if (invitations) {
-        users.push(...invitations);
+        users.push(...invitations.map(inv => ({
+          email: inv.email,
+          access_level: inv.access_level,
+          status: inv.status,
+          is_creator: false
+        })));
       }
 
       return { [selectedSSSP.id]: users };
