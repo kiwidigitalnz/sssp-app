@@ -21,6 +21,8 @@ serve(async (req) => {
       throw new Error('No SSSP ID provided');
     }
 
+    console.log('Generating PDF for SSSP:', ssspId);
+
     // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -35,29 +37,41 @@ serve(async (req) => {
       .single();
 
     if (ssspError) {
+      console.error('Error fetching SSSP:', ssspError);
       throw ssspError;
     }
 
-    // For now, generate a simple text file as placeholder
-    // This should be replaced with actual PDF generation logic
+    // Generate PDF content (for now, just a text representation)
     const pdfContent = `SSSP Details:\n${JSON.stringify(sssp, null, 2)}`;
-    const filename = `${sssp.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${Date.now()}.txt`;
+    
+    // Create a safe filename
+    const safeTitle = sssp.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const timestamp = Date.now();
+    const filename = `${safeTitle}-${timestamp}.txt`;
+
+    // Convert content to Blob
+    const blob = new Blob([pdfContent], { type: 'text/plain' });
 
     // Upload to storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('sssp-pdfs')
-      .upload(filename, new Blob([pdfContent], { type: 'text/plain' }));
+      .from('sssp_pdfs')
+      .upload(filename, blob, {
+        contentType: 'text/plain',
+        upsert: false
+      });
 
     if (uploadError) {
+      console.error('Error uploading file:', uploadError);
       throw uploadError;
     }
 
-    // Get temporary URL for the uploaded file
+    // Get public URL for the uploaded file
     const { data: { publicUrl }, error: urlError } = await supabase.storage
-      .from('sssp-pdfs')
+      .from('sssp_pdfs')
       .getPublicUrl(filename);
 
     if (urlError) {
+      console.error('Error getting public URL:', urlError);
       throw urlError;
     }
 
