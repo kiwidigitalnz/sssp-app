@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,35 +31,26 @@ export function ShareSSSP({ ssspId, onShare, children }: ShareSSSPProps) {
   const [email, setEmail] = useState("");
   const [accessLevel, setAccessLevel] = useState("view");
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleShare = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      setIsLoading(true);
       
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const { error } = await supabase
-        .from('sssp_invitations')
-        .insert({
-          sssp_id: ssspId,
-          email: email,
-          access_level: accessLevel,
-          invited_by: user.id,
-        });
+      const { error } = await supabase.functions.invoke('send-invitation', {
+        body: {
+          ssspId,
+          recipientEmail: email,
+          accessLevel
+        }
+      });
 
       if (error) throw error;
 
-      await logActivity(ssspId, 'shared', user.id, {
-        shared_with: email,
-        access_level: accessLevel
-      });
-
       toast({
-        title: "Invitation sent",
-        description: `An invitation has been sent to ${email}`,
+        title: "Success",
+        description: `Invitation sent to ${email}`,
       });
 
       setEmail("");
@@ -71,6 +63,8 @@ export function ShareSSSP({ ssspId, onShare, children }: ShareSSSPProps) {
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to send invitation",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -91,11 +85,13 @@ export function ShareSSSP({ ssspId, onShare, children }: ShareSSSPProps) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             <Select
               value={accessLevel}
               onValueChange={setAccessLevel}
+              disabled={isLoading}
             >
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
@@ -105,7 +101,7 @@ export function ShareSSSP({ ssspId, onShare, children }: ShareSSSPProps) {
                 <SelectItem value="edit">Edit</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={handleShare} disabled={!email}>
+            <Button onClick={handleShare} disabled={!email || isLoading}>
               <UserPlus className="mr-2 h-4 w-4" />
               Invite
             </Button>
