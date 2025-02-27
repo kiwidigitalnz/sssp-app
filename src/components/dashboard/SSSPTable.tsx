@@ -152,11 +152,17 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const handlePrintToPDF = async (sssp: SSSP) => {
     setGeneratingPdfFor(sssp.id);
     try {
+      console.log('Generating PDF for SSSP:', sssp.id);
       const { data, error } = await supabase.functions.invoke('generate-sssp-pdf', {
         body: { ssspId: sssp.id }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error from edge function:', error);
+        throw error;
+      }
+
+      console.log('Response from edge function:', data);
 
       if (data?.url) {
         const link = document.createElement('a');
@@ -170,6 +176,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
           title: "PDF generated successfully",
           description: "Your PDF has been generated and downloaded"
         });
+      } else {
+        throw new Error('No URL returned from PDF generation');
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
