@@ -67,6 +67,13 @@ export default function SSSPForm() {
     }
   }, [error, toast]);
 
+  // Handle step change and scroll to top
+  const handleStepChange = (step: number) => {
+    setCurrentStep(step);
+    // Scroll to top when the step changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Handle cancel button click
   const handleCancel = () => {
     navigate('/');
@@ -200,7 +207,7 @@ export default function SSSPForm() {
           totalSteps={totalSteps}
           saveForm={handleSave}
           formData={formData}
-          onStepChange={setCurrentStep}
+          onStepChange={handleStepChange}
           isValid={isValid}
         />
       </div>

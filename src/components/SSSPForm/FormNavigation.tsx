@@ -61,17 +61,29 @@ export const FormNavigation = ({
   const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+  // Scroll to top of the page
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   const handleNext = () => {
     if (currentStep < totalSteps) {
       onStepChange(currentStep + 1);
       // Auto-save when moving to next step
       handleSave();
+      // Scroll to top of the page
+      scrollToTop();
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 0) {
       onStepChange(currentStep - 1);
+      // Scroll to top of the page
+      scrollToTop();
     }
   };
 
