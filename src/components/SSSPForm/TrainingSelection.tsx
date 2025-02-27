@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,20 @@ export const TrainingSelection = ({
 }: TrainingSelectionProps) => {
   const [selected, setSelected] = React.useState<Set<number>>(new Set());
 
+  // Filter to get only unique training requirements
+  const uniqueTrainings = useMemo(() => {
+    const trainingMap = new Map<string, Training>();
+    
+    // Use requirement as the unique key
+    previousTrainings.forEach(training => {
+      if (!trainingMap.has(training.requirement)) {
+        trainingMap.set(training.requirement, training);
+      }
+    });
+    
+    return Array.from(trainingMap.values());
+  }, [previousTrainings]);
+
   const handleToggle = (index: number) => {
     const newSelected = new Set(selected);
     if (selected.has(index)) {
@@ -42,7 +56,7 @@ export const TrainingSelection = ({
 
   const handleAdd = () => {
     const selectedItems = Array.from(selected).map(
-      (index) => previousTrainings[index]
+      (index) => uniqueTrainings[index]
     );
     onSelect(selectedItems);
     setSelected(new Set());
@@ -62,7 +76,7 @@ export const TrainingSelection = ({
         </DialogHeader>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-4">
-            {previousTrainings.map((training, index) => (
+            {uniqueTrainings.map((training, index) => (
               <div
                 key={index}
                 className="flex items-start space-x-3 border p-4 rounded-lg"

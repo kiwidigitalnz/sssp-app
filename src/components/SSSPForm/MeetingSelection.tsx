@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +42,18 @@ export const MeetingSelection = ({
     description: "",
   });
 
+  const uniqueMeetings = useMemo(() => {
+    const meetingMap = new Map<string, Meeting>();
+    
+    meetings.forEach(meeting => {
+      if (!meetingMap.has(meeting.type)) {
+        meetingMap.set(meeting.type, meeting);
+      }
+    });
+    
+    return Array.from(meetingMap.values());
+  }, [meetings]);
+
   const handleAddMeeting = () => {
     if (!newMeeting.type || !newMeeting.participants?.length) {
       toast({
@@ -54,14 +65,14 @@ export const MeetingSelection = ({
     }
 
     if (editingIndex > -1) {
-      const updatedMeetings = [...meetings];
+      const updatedMeetings = [...uniqueMeetings];
       updatedMeetings[editingIndex] = {
         ...newMeeting,
         participants: newMeeting.participants || []
       };
       onMeetingsChange(updatedMeetings);
     } else {
-      onMeetingsChange([...meetings, {
+      onMeetingsChange([...uniqueMeetings, {
         ...newMeeting,
         participants: newMeeting.participants || []
       }]);
@@ -87,7 +98,7 @@ export const MeetingSelection = ({
   };
 
   const handleDeleteMeeting = (index: number) => {
-    const updatedMeetings = meetings.filter((_, i) => i !== index);
+    const updatedMeetings = uniqueMeetings.filter((_, i) => i !== index);
     onMeetingsChange(updatedMeetings);
   };
 
@@ -191,7 +202,7 @@ export const MeetingSelection = ({
 
       <ScrollArea className="h-[300px] rounded-md border">
         <div className="p-4 space-y-4">
-          {(meetings || []).map((meeting, index) => (
+          {uniqueMeetings.map((meeting, index) => (
             <div
               key={index}
               className="flex items-start justify-between p-4 rounded-lg border bg-card"
@@ -228,7 +239,7 @@ export const MeetingSelection = ({
               </div>
             </div>
           ))}
-          {!meetings?.length && (
+          {!uniqueMeetings.length && (
             <div className="text-center py-8 text-muted-foreground">
               No meetings scheduled. Click "Add Meeting" to create one.
             </div>
@@ -238,4 +249,3 @@ export const MeetingSelection = ({
     </div>
   );
 };
-
