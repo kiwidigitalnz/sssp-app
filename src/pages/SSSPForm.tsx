@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
 import { FormNavigation } from "@/components/SSSPForm/FormNavigation";
@@ -18,8 +18,11 @@ import { SummaryScreen } from "@/components/SSSPForm/SummaryScreen";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { logActivity, FieldChange } from "@/utils/activityLogging";
+import { logActivity } from "@/utils/activityLogging";
 import type { SSSP } from "@/types/sssp";
+
+// Add a debounce delay for save operations to prevent rapid successive saves
+const SAVE_DEBOUNCE_MS = 2000;
 
 export default function SSSPForm() {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +33,7 @@ export default function SSSPForm() {
   const [isNew, setIsNew] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveButtonText, setSaveButtonText] = useState("Save");
+  const [lastSaveTime, setLastSaveTime] = useState(0);
 
   // Total number of steps in the form (0-indexed, so 10 means 11 steps)
   const totalSteps = 10;
@@ -85,7 +89,15 @@ export default function SSSPForm() {
     navigate('/');
   };
 
-  const handleSaveWithFeedback = async (showToast = false) => {
+  // Debounced save function to prevent multiple rapid saves
+  const debouncedSave = useCallback(async (showToast = false) => {
+    const now = Date.now();
+    // Only save if it's been more than SAVE_DEBOUNCE_MS since the last save
+    if (now - lastSaveTime < SAVE_DEBOUNCE_MS) {
+      return;
+    }
+    
+    setLastSaveTime(now);
     setSaveButtonText("Saving...");
     await handleSave(showToast);
     setSaveButtonText("Saved!");
@@ -94,6 +106,10 @@ export default function SSSPForm() {
     setTimeout(() => {
       setSaveButtonText("Save");
     }, 2000);
+  }, [lastSaveTime]);
+
+  const handleSaveWithFeedback = async (showToast = false) => {
+    await debouncedSave(showToast);
   };
 
   const handleSave = async (showToast = false) => {
@@ -174,8 +190,8 @@ export default function SSSPForm() {
     }
   };
 
-  // Render the appropriate step content based on the current step
-  const renderStepContent = () => {
+  // Memorize component rendering to prevent unnecessary re-renders
+  const renderStepContent = useCallback(() => {
     switch (currentStep) {
       case 0:
         return <ProjectDetails formData={formData} setFormData={setFormData as any} />;
@@ -202,7 +218,7 @@ export default function SSSPForm() {
       default:
         return <ProjectDetails formData={formData} setFormData={setFormData as any} />;
     }
-  };
+  }, [currentStep, formData, setFormData, isLoading]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">

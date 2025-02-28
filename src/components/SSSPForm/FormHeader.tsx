@@ -1,33 +1,9 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import { FormSteps } from "./FormSteps";
 import { Button } from "@/components/ui/button";
-import { 
-  Home,
-  ChevronLeft, 
-  Save, 
-  X, 
-  CheckCircle2
-} from "lucide-react";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle, 
-  AlertDialogTrigger 
-} from "@/components/ui/alert-dialog";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage
-} from "@/components/ui/breadcrumb";
+import { StatusBadge } from "@/components/SSSPForm/StatusBadge";
+import { FormBreadcrumb } from "./FormBreadcrumb";
 
 interface FormHeaderProps {
   id?: string;
@@ -36,12 +12,12 @@ interface FormHeaderProps {
   isNew: boolean;
   isLoading: boolean;
   onCancel: () => void;
-  onSave: (showToast?: boolean) => void;
+  onSave: (showToast?: boolean) => Promise<void>;
   currentStep: number;
-  saveButtonText?: string;
+  saveButtonText: string;
 }
 
-export const FormHeader: React.FC<FormHeaderProps> = ({
+export function FormHeader({
   id,
   title,
   status,
@@ -51,118 +27,46 @@ export const FormHeader: React.FC<FormHeaderProps> = ({
   onSave,
   currentStep,
   saveButtonText = "Save",
-}) => {
-  const navigate = useNavigate();
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-
-  // Handle back button click (navigate to dashboard)
-  const handleBack = () => {
-    navigate('/');
-  };
-
-  // Get status badge color
-  const getStatusColor = () => {
-    switch (status) {
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'submitted':
-        return 'bg-blue-100 text-blue-800';
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Format title for display
-  const formattedTitle = title || (isNew ? "New SSSP" : "Untitled SSSP");
-
+}: FormHeaderProps) {
   return (
-    <>
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Discard changes?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes that will be lost if you exit now. Do you want to continue?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onCancel}>
-              Discard Changes
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Breadcrumb Navigation */}
-      <Breadcrumb className="mb-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/" className="flex items-center gap-1">
-              <Home className="h-4 w-4" />
-              <span>Dashboard</span>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink onClick={handleBack} className="cursor-pointer flex items-center gap-1">
-              <span>SSSPs</span>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{formattedTitle}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:space-y-0">
-        <div className="flex flex-col space-y-1">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold tracking-tight">{formattedTitle}</h1>
-            {status && (
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor()}`}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </span>
-            )}
+    <div className="space-y-4">
+      <div className="flex flex-col space-y-2">
+        <FormBreadcrumb title={title} id={id} />
+        
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex-1">
+            <h1 className="text-2xl font-semibold text-gray-900 truncate max-w-2xl">
+              {title}
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+              <StatusBadge status={status} />
+              {!isNew && (
+                <span className="text-sm text-gray-500">ID: {id}</span>
+              )}
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {isNew ? "Create a new" : "Edit your"} Site Specific Safety Plan
-          </p>
-        </div>
-
-        <div className="flex flex-row space-x-2 items-center">
-          {!isNew && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setShowCancelDialog(true)}
-              className="gap-1"
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
             >
-              <X className="h-4 w-4" />
               Cancel
             </Button>
-          )}
-          
-          <Button
-            onClick={() => onSave(true)}
-            disabled={isLoading}
-            size="sm"
-            className="gap-1"
-          >
-            {saveButtonText === "Saved!" ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {saveButtonText}
-          </Button>
+            <Button
+              onClick={() => onSave(true)}
+              disabled={isLoading}
+            >
+              {saveButtonText}
+            </Button>
+          </div>
         </div>
       </div>
-    </>
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <FormSteps currentStep={currentStep} totalSteps={11} />
+      </div>
+    </div>
   );
-};
+}

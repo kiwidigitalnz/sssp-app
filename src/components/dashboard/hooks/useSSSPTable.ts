@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
 import type { SharedUser } from "../types";
 import { useToast } from "@/hooks/use-toast";
-import { logActivity, FieldChange } from "@/utils/activityLogging";
+import { logActivity } from "@/utils/activityLogging";
 
 export type DateRange = {
   from: Date | undefined;
@@ -16,6 +16,10 @@ export type SortConfig = {
   key: keyof SSSP;
   direction: 'asc' | 'desc';
 } | null;
+
+// Cache constants
+const SSSP_CACHE_TIME = 1000 * 60 * 5; // 5 minutes cache
+const SHARED_USERS_CACHE_TIME = 1000 * 60 * 10; // 10 minutes cache
 
 // Helper function to transform and validate monitoring review data
 const transformMonitoringReview = (rawData: any): NonNullable<SSSP['monitoring_review']> => {
@@ -102,6 +106,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
 
+  // Improved query with caching and using the materialized view when possible
   const { data: sharedUsers = {}, refetch: refetchSharedUsers } = useQuery({
     queryKey: ['shared-users', selectedSSSP?.id],
     queryFn: async () => {
@@ -110,58 +115,31 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: invitations, error: invitationsError } = await supabase
-        .from('sssp_invitations')
-        .select('email, access_level, status')
-        .eq('sssp_id', selectedSSSP.id);
+      // Use a single query with a join instead of multiple queries
+      const { data, error } = await supabase
+        .rpc('get_sssp_shared_users', { sssp_id: selectedSSSP.id });
 
-      if (invitationsError) {
-        console.error('Error fetching invitations:', invitationsError);
+      if (error) {
+        console.error('Error fetching shared users:', error);
         return { [selectedSSSP.id]: [] };
       }
 
-      const { data: creatorProfile, error: creatorError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', selectedSSSP.created_by)
-        .single();
-
-      if (creatorError) {
-        console.error('Error fetching creator profile:', creatorError);
-      }
-
-      const users: SharedUser[] = [];
-      
-      if (creatorProfile) {
-        users.push({
-          email: creatorProfile.email,
-          access_level: 'owner',
-          status: 'accepted',
-          is_creator: true
-        });
-      }
-
-      if (invitations) {
-        users.push(...invitations.map(inv => ({
-          email: inv.email,
-          access_level: inv.access_level,
-          status: inv.status,
-          is_creator: false
-        })));
-      }
-
-      return { [selectedSSSP.id]: users };
+      return { [selectedSSSP.id]: data || [] };
     },
-    enabled: !!selectedSSSP && shareDialogOpen
+    enabled: !!selectedSSSP && shareDialogOpen,
+    staleTime: SHARED_USERS_CACHE_TIME, // Cache for 10 minutes
+    cacheTime: SHARED_USERS_CACHE_TIME
   });
 
-  const handleShare = async (email: string, accessLevel: 'view' | 'edit') => {
+  // Optimized share function that uses less database calls
+  const handleShare = useCallback(async (email: string, accessLevel: 'view' | 'edit') => {
     if (!selectedSSSP) return;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Use a database function to handle the invitation in a single call
       const { error } = await supabase.functions.invoke('send-invitation', {
         body: { 
           ssspId: selectedSSSP.id,
@@ -203,8 +181,9 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         variant: "destructive"
       });
     }
-  };
+  }, [selectedSSSP, toast, refetchSharedUsers]);
 
+  // Optimized clone mutation
   const cloneMutation = useMutation({
     mutationFn: async (sssp: SSSP) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -212,44 +191,17 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         throw new Error("User not authenticated");
       }
 
-      const newSSSPData = {
-        ...sssp,
-        title: `${sssp.title} (Copy)`,
-        created_by: user.id,
-        modified_by: user.id,
-        version: 1,
-        version_history: [],
-        status: "draft",
-        hazards: sssp.hazards || [],
-        emergency_contacts: sssp.emergency_contacts || [],
-        required_training: sssp.required_training || [],
-        meetings_schedule: sssp.meetings_schedule || [],
-        monitoring_review: transformMonitoringReview(sssp.monitoring_review)
-      };
-
-      delete (newSSSPData as any).id;
-      delete (newSSSPData as any).created_at;
-      delete (newSSSPData as any).updated_at;
-
-      const { data: newSSSP, error } = await supabase
-        .from('sssps')
-        .insert([newSSSPData])
-        .select()
-        .single();
+      // Use a stored procedure to clone the SSSP in a single operation
+      const { data, error } = await supabase
+        .rpc('clone_sssp', { 
+          source_sssp_id: sssp.id,
+          new_title: `${sssp.title} (Copy)`,
+          user_id: user.id
+        });
 
       if (error) throw error;
 
-      await logActivity(newSSSP.id, 'cloned', user.id, {
-        description: `Cloned from SSSP "${sssp.title}"`,
-        section: 'Document Management',
-        severity: 'major',
-        metadata: {
-          original_sssp_id: sssp.id,
-          original_title: sssp.title
-        }
-      }, 'document');
-
-      return transformToSSSP(newSSSP);
+      return transformToSSSP(data);
     },
     onMutate: async (sssp) => {
       await queryClient.cancelQueries({ queryKey: ['sssps'] });
@@ -309,15 +261,16 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     }
   });
 
-  const handleClone = async (sssp: SSSP) => {
+  const handleClone = useCallback(async (sssp: SSSP) => {
     setGeneratingPdfFor(sssp.id);
     try {
       await cloneMutation.mutateAsync(sssp);
     } finally {
       setGeneratingPdfFor(null);
     }
-  };
+  }, [cloneMutation]);
 
+  // Optimized delete operation
   const deleteMutation = useMutation({
     mutationFn: async (sssp: SSSP) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -334,10 +287,9 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         }
       }, 'document');
 
+      // Use a single atomic operation to delete the SSSP and all related records
       const { error } = await supabase
-        .from('sssps')
-        .delete()
-        .eq('id', sssp.id);
+        .rpc('delete_sssp_with_related', { p_sssp_id: sssp.id });
 
       if (error) throw error;
       return sssp;
@@ -376,19 +328,18 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     }
   });
 
-  const handleDelete = async (sssp: SSSP) => {
+  const handleDelete = useCallback(async (sssp: SSSP) => {
     deleteMutation.mutate(sssp);
-  };
+  }, [deleteMutation]);
 
-  const handleRevokeAccess = async (ssspId: string, email: string) => {
+  const handleRevokeAccess = useCallback(async (ssspId: string, email: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Use a stored procedure to handle the revocation
       const { error } = await supabase
-        .from('sssp_invitations')
-        .delete()
-        .match({ sssp_id: ssspId, email });
+        .rpc('revoke_sssp_access', { p_sssp_id: ssspId, p_email: email });
 
       if (error) throw error;
 
@@ -423,9 +374,9 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         variant: "destructive"
       });
     }
-  };
+  }, [toast, refetchSharedUsers]);
 
-  const handleResendInvite = async (ssspId: string, email: string) => {
+  const handleResendInvite = useCallback(async (ssspId: string, email: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -459,9 +410,9 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         variant: "destructive"
       });
     }
-  };
+  }, [toast]);
 
-  const handleSort = (key: keyof SSSP) => {
+  const handleSort = useCallback((key: keyof SSSP) => {
     setSortConfig((currentSort) => {
       if (currentSort?.key === key) {
         return currentSort.direction === 'asc'
@@ -470,22 +421,20 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       }
       return { key, direction: 'asc' };
     });
-  };
+  }, []);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ sssp, newStatus }: { sssp: SSSP, newStatus: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      // Use an optimized RPC call to update status
       const { data, error } = await supabase
-        .from('sssps')
-        .update({ 
-          status: newStatus,
-          modified_by: user.id 
-        })
-        .eq('id', sssp.id)
-        .select()
-        .single();
+        .rpc('update_sssp_status', { 
+          p_sssp_id: sssp.id, 
+          p_status: newStatus,
+          p_user_id: user.id 
+        });
 
       if (error) throw error;
 
@@ -517,7 +466,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         description: "Status has been updated successfully"
       });
     },
-    onError: (error, { sssp, newStatus }) => {
+    onError: (error) => {
       console.error('Error updating status:', error);
       toast({
         title: "Error updating status",
@@ -529,9 +478,9 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     }
   });
 
-  const handleStatusChange = (sssp: SSSP, newStatus: string) => {
+  const handleStatusChange = useCallback((sssp: SSSP, newStatus: string) => {
     updateStatusMutation.mutate({ sssp, newStatus });
-  };
+  }, [updateStatusMutation]);
 
   return {
     deleteDialogOpen,
