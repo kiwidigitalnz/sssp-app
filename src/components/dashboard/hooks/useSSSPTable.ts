@@ -1,11 +1,12 @@
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import type { SSSP } from "@/types/sssp";
 import type { SharedUser } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
+import { asUUID, hasLength } from "@/utils/supabaseHelpers";
 
 export type DateRange = {
   from: Date | undefined;
@@ -16,81 +17,6 @@ export type SortConfig = {
   key: keyof SSSP;
   direction: 'asc' | 'desc';
 } | null;
-
-// Cache constants
-const SSSP_CACHE_TIME = 1000 * 60 * 5; // 5 minutes cache
-const SHARED_USERS_CACHE_TIME = 1000 * 60 * 10; // 10 minutes cache
-
-// Helper function to transform and validate monitoring review data
-const transformMonitoringReview = (rawData: any): NonNullable<SSSP['monitoring_review']> => {
-  if (!rawData) return createEmptyMonitoringReview();
-  
-  return {
-    review_schedule: {
-      frequency: rawData.review_schedule?.frequency || "",
-      last_review: rawData.review_schedule?.last_review || null,
-      next_review: rawData.review_schedule?.next_review || null,
-      responsible_person: rawData.review_schedule?.responsible_person || null
-    },
-    kpis: Array.isArray(rawData.kpis) ? rawData.kpis : [],
-    corrective_actions: {
-      process: rawData.corrective_actions?.process || "",
-      tracking_method: rawData.corrective_actions?.tracking_method || "",
-      responsible_person: rawData.corrective_actions?.responsible_person || null
-    },
-    audits: Array.isArray(rawData.audits) ? rawData.audits : [],
-    worker_consultation: {
-      method: rawData.worker_consultation?.method || "",
-      frequency: rawData.worker_consultation?.frequency || "",
-      last_consultation: rawData.worker_consultation?.last_consultation || null
-    },
-    review_triggers: Array.isArray(rawData.review_triggers) ? rawData.review_triggers : [],
-    documentation: {
-      storage_location: rawData.documentation?.storage_location || "",
-      retention_period: rawData.documentation?.retention_period || "",
-      access_details: rawData.documentation?.access_details || ""
-    }
-  };
-};
-
-// Helper function to create a properly typed monitoring review object
-const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> => ({
-  review_schedule: {
-    frequency: "",
-    last_review: null,
-    next_review: null,
-    responsible_person: null
-  },
-  kpis: [],
-  corrective_actions: {
-    process: "",
-    tracking_method: "",
-    responsible_person: null
-  },
-  audits: [],
-  worker_consultation: {
-    method: "",
-    frequency: "",
-    last_consultation: null
-  },
-  review_triggers: [],
-  documentation: {
-    storage_location: "",
-    retention_period: "",
-    access_details: ""
-  }
-});
-
-// Helper function to transform Supabase response to SSSP type
-const transformToSSSP = (data: any): SSSP => ({
-  ...data,
-  hazards: Array.isArray(data.hazards) ? data.hazards : [],
-  emergency_contacts: Array.isArray(data.emergency_contacts) ? data.emergency_contacts : [],
-  required_training: Array.isArray(data.required_training) ? data.required_training : [],
-  meetings_schedule: Array.isArray(data.meetings_schedule) ? data.meetings_schedule : [],
-  monitoring_review: transformMonitoringReview(data.monitoring_review),
-  version_history: Array.isArray(data.version_history) ? data.version_history : []
-});
 
 export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
   const { toast } = useToast();
@@ -116,6 +42,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       if (!user) throw new Error('Not authenticated');
 
       // Use a single query with a join instead of multiple queries
+      // Convert function response to array if it's not already
       const { data, error } = await supabase
         .rpc('get_sssp_shared_users', { sssp_id: selectedSSSP.id });
 
@@ -124,11 +51,14 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         return { [selectedSSSP.id]: [] };
       }
 
-      return { [selectedSSSP.id]: data || [] };
+      // Ensure we always return an array
+      const sharedUsersArray = Array.isArray(data) ? data : [];
+      
+      return { [selectedSSSP.id]: sharedUsersArray };
     },
     enabled: !!selectedSSSP && shareDialogOpen,
-    staleTime: SHARED_USERS_CACHE_TIME, // Cache for 10 minutes
-    cacheTime: SHARED_USERS_CACHE_TIME
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    gcTime: 1000 * 60 * 10 // 10 minutes (formerly cacheTime)
   });
 
   // Optimized share function that uses less database calls
@@ -151,7 +81,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       if (error) throw error;
 
       // Log the share activity with metadata
-      await logActivity(selectedSSSP.id, 'shared', user.id, {
+      await logActivity(selectedSSSP.id, 'shared' as any, user.id, {
         description: `Shared SSSP with ${email}`,
         field_changes: [{
           field: 'sharing',
@@ -201,7 +131,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       if (error) throw error;
 
-      return transformToSSSP(data);
+      return data as SSSP;
     },
     onMutate: async (sssp) => {
       await queryClient.cancelQueries({ queryKey: ['sssps'] });
@@ -219,13 +149,8 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         version_history: [],
         created_by: sssp.created_by,
         modified_by: sssp.modified_by,
-        company_name: sssp.company_name,
-        monitoring_review: createEmptyMonitoringReview(),
-        hazards: [],
-        emergency_contacts: [],
-        required_training: [],
-        meetings_schedule: []
-      };
+        company_name: sssp.company_name
+      } as SSSP;
 
       queryClient.setQueryData<SSSP[]>(['sssps'], old => {
         const oldData = old || [];
@@ -277,7 +202,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       if (!user) throw new Error('Not authenticated');
 
       // Log the deletion before actually deleting
-      await logActivity(sssp.id, 'deleted', user.id, {
+      await logActivity(sssp.id, 'deleted' as any, user.id, {
         description: `Deleted SSSP "${sssp.title}"`,
         section: 'Document Management',
         severity: 'critical',
@@ -344,7 +269,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       if (error) throw error;
 
       // Log the access revocation
-      await logActivity(ssspId, 'updated', user.id, {
+      await logActivity(ssspId, 'updated' as any, user.id, {
         description: `Revoked access for ${email}`,
         field_changes: [{
           field: 'access',
@@ -388,7 +313,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       if (error) throw error;
 
       // Log the invitation resend
-      await logActivity(ssspId, 'shared', user.id, {
+      await logActivity(ssspId, 'shared' as any, user.id, {
         description: `Resent invitation to ${email}`,
         section: 'Access Control',
         severity: 'minor',
@@ -439,7 +364,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       if (error) throw error;
 
       // Log the status change with old and new values
-      await logActivity(sssp.id, 'updated', user.id, {
+      await logActivity(sssp.id, 'updated' as any, user.id, {
         field_changes: [{
           field: 'status',
           displayName: 'Status',
@@ -501,7 +426,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     setSortConfig,
     generatingPdfFor,
     setGeneratingPdfFor,
-    sharedUsers,
+    sharedUsers: sharedUsers as Record<string, SharedUser[]>,
     handleShare,
     handleClone,
     handleDelete,

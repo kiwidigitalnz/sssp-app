@@ -6,6 +6,35 @@ import { DashboardStats } from "./DashboardStats";
 import { WelcomeHeader } from "./WelcomeHeader";
 import type { SSSP } from "@/types/sssp";
 import type { Database } from "@/integrations/supabase/types";
+import { asUUID, safelyExtractData } from "@/utils/supabaseHelpers";
+
+// Helper function to create an empty monitoring review object
+const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> => ({
+  review_schedule: {
+    frequency: '',
+    last_review: null,
+    next_review: null,
+    responsible_person: null
+  },
+  kpis: [],
+  corrective_actions: {
+    process: '',
+    tracking_method: '',
+    responsible_person: null
+  },
+  audits: [],
+  worker_consultation: {
+    method: '',
+    frequency: '',
+    last_consultation: null
+  },
+  review_triggers: [],
+  documentation: {
+    storage_location: '',
+    retention_period: '',
+    access_details: ''
+  }
+});
 
 export function DashboardContent() {
   const { data: sssps = [], refetch, isLoading } = useQuery({
@@ -15,21 +44,19 @@ export function DashboardContent() {
       if (!user) throw new Error("Not authenticated");
 
       // Use the materialized view for faster query performance
-      // This avoids full table scans on the main sssps table
-      const { data, error } = await supabase
+      const { data: viewData, error: viewError } = await supabase
         .from('mv_active_sssps')
         .select('id');
 
-      if (error) throw error;
+      if (viewError) throw viewError;
       
       // Get the IDs of all SSSPs from the materialized view
-      const sssp_ids = data.map((item: any) => item.id);
+      const sssp_ids = (viewData || []).map((item: any) => item.id);
       
       // If no SSSPs found, return an empty array
       if (sssp_ids.length === 0) return [];
       
       // Query the full SSSP data in a single batch 
-      // instead of individual queries for better performance
       const { data: sssp_data, error: sssp_error } = await supabase
         .from('sssps')
         .select('*')
@@ -38,45 +65,45 @@ export function DashboardContent() {
       
       if (sssp_error) throw sssp_error;
 
-      // Transform the data to match the SSSP type
-      const formattedSssps: SSSP[] = sssp_data.map(sssp => ({
-        ...sssp,
-        monitoring_review: sssp.monitoring_review ? 
-          // Type assertion since we know the structure from the database
-          {
+      // Transform the data to match the SSSP type with null checks
+      const formattedSssps: SSSP[] = (sssp_data || []).map(sssp => {
+        const monitoringReview = sssp.monitoring_review || null;
+        return {
+          ...sssp,
+          monitoring_review: monitoringReview ? {
             review_schedule: {
-              frequency: (sssp.monitoring_review as any).review_schedule?.frequency || '',
-              last_review: (sssp.monitoring_review as any).review_schedule?.last_review || null,
-              next_review: (sssp.monitoring_review as any).review_schedule?.next_review || null,
-              responsible_person: (sssp.monitoring_review as any).review_schedule?.responsible_person || null
+              frequency: monitoringReview.review_schedule?.frequency || '',
+              last_review: monitoringReview.review_schedule?.last_review || null,
+              next_review: monitoringReview.review_schedule?.next_review || null,
+              responsible_person: monitoringReview.review_schedule?.responsible_person || null
             },
-            kpis: (sssp.monitoring_review as any).kpis || [],
+            kpis: monitoringReview.kpis || [],
             corrective_actions: {
-              process: (sssp.monitoring_review as any).corrective_actions?.process || '',
-              tracking_method: (sssp.monitoring_review as any).corrective_actions?.tracking_method || '',
-              responsible_person: (sssp.monitoring_review as any).corrective_actions?.responsible_person || null
+              process: monitoringReview.corrective_actions?.process || '',
+              tracking_method: monitoringReview.corrective_actions?.tracking_method || '',
+              responsible_person: monitoringReview.corrective_actions?.responsible_person || null
             },
-            audits: (sssp.monitoring_review as any).audits || [],
+            audits: monitoringReview.audits || [],
             worker_consultation: {
-              method: (sssp.monitoring_review as any).worker_consultation?.method || '',
-              frequency: (sssp.monitoring_review as any).worker_consultation?.frequency || '',
-              last_consultation: (sssp.monitoring_review as any).worker_consultation?.last_consultation || null
+              method: monitoringReview.worker_consultation?.method || '',
+              frequency: monitoringReview.worker_consultation?.frequency || '',
+              last_consultation: monitoringReview.worker_consultation?.last_consultation || null
             },
-            review_triggers: (sssp.monitoring_review as any).review_triggers || [],
+            review_triggers: monitoringReview.review_triggers || [],
             documentation: {
-              storage_location: (sssp.monitoring_review as any).documentation?.storage_location || '',
-              retention_period: (sssp.monitoring_review as any).documentation?.retention_period || '',
-              access_details: (sssp.monitoring_review as any).documentation?.access_details || ''
+              storage_location: monitoringReview.documentation?.storage_location || '',
+              retention_period: monitoringReview.documentation?.retention_period || '',
+              access_details: monitoringReview.documentation?.access_details || ''
             }
-          }
-        : null
-      }));
+          } : createEmptyMonitoringReview()
+        };
+      });
 
       return formattedSssps;
     },
-    // Add caching to reduce redundant data fetching
+    // Update to use gcTime (previously cacheTime) for React Query v4+
     staleTime: 60 * 1000, // Cache for 1 minute
-    cacheTime: 3 * 60 * 1000, // Keep in cache for 3 minutes
+    gcTime: 3 * 60 * 1000, // Keep in cache for 3 minutes
   });
 
   return (

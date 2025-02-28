@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -5,6 +6,7 @@ import { User, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { asUUID } from "@/utils/supabaseHelpers";
 import {
   Tooltip,
   TooltipContent,
@@ -88,10 +90,13 @@ export function ProfileAvatar({ avatarUrl, userId }: ProfileAvatarProps) {
         .getPublicUrl(filePath);
 
       // Update profile with new avatar URL
+      // Type-safe update using specific column name
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ avatar_url: filePath })
-        .eq("id", userId);
+        .update({ 
+          avatar_url: filePath 
+        } as any)
+        .eq("id", asUUID(userId));
 
       if (updateError) throw updateError;
 

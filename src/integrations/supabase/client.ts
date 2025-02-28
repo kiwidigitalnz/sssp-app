@@ -12,7 +12,7 @@ if (!SUPABASE_PUBLISHABLE_KEY) throw new Error('Missing SUPABASE_PUBLISHABLE_KEY
 // Connection pooling options
 const connectionOptions = {
   db: {
-    schema: 'public'
+    schema: 'public' as const  // Type assertion to make TypeScript happy
   },
   auth: {
     persistSession: true,
@@ -101,4 +101,14 @@ export const batchQuery = async <T>(
   }
   
   return results;
+};
+
+// Helper to safely extract data from Supabase responses with proper type checking
+export const extractDataFromResponse = <T>(response: any, defaultValue: T): T => {
+  // Check if response is a SelectQueryError
+  if (response && response.error === true) {
+    return defaultValue;
+  }
+  
+  return response as T;
 };
