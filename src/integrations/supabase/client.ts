@@ -9,19 +9,96 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 if (!SUPABASE_URL) throw new Error('Missing SUPABASE_URL');
 if (!SUPABASE_PUBLISHABLE_KEY) throw new Error('Missing SUPABASE_PUBLISHABLE_KEY');
 
+// Connection pooling options
+const connectionOptions = {
+  db: {
+    schema: 'public'
+  },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: { 'x-application-name': 'sssp-manager' }
+  },
+  realtime: {
+    // Disable realtime subscriptions when not used
+    enabled: false
+  }
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(
+  SUPABASE_URL, 
+  SUPABASE_PUBLISHABLE_KEY,
+  connectionOptions
+);
 
-// Add a simple connection test function
+// Add connection retry mechanism
+let connectionAttempts = 0;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
+// Enhanced connection test with retry logic
 export const testConnection = async () => {
+  connectionAttempts = 0;
+  return retry(async () => {
+    try {
+      // Use the materialized view for faster access
+      const { data, error } = await supabase
+        .from('mv_active_sssps')
+        .select('count')
+        .limit(1);
+      
+      if (error) throw error;
+      console.log('Supabase connection test successful:', { data });
+      return true;
+    } catch (error) {
+      console.error('Supabase connection test failed:', error);
+      return false;
+    }
+  });
+};
+
+// Generic retry function for Supabase operations
+export const retry = async <T>(
+  operation: () => Promise<T>,
+  retries = MAX_RETRIES,
+  delay = RETRY_DELAY_MS
+): Promise<T> => {
   try {
-    const { data, error } = await supabase.from('profiles').select('count').limit(1);
-    if (error) throw error;
-    console.log('Supabase connection test successful:', { data });
-    return true;
+    return await operation();
   } catch (error) {
-    console.error('Supabase connection test failed:', error);
-    return false;
+    if (connectionAttempts >= retries) {
+      console.error(`Operation failed after ${retries} attempts:`, error);
+      throw error;
+    }
+    
+    connectionAttempts++;
+    console.log(`Retrying operation (attempt ${connectionAttempts}/${retries})...`);
+    
+    // Wait before retrying
+    await new Promise(resolve => setTimeout(resolve, delay * connectionAttempts));
+    return retry(operation, retries, delay);
   }
+};
+
+// Add helper for batched operations to reduce individual calls
+export const batchQuery = async <T>(
+  ids: string[],
+  batchSize = 100,
+  queryFn: (batchIds: string[]) => Promise<T[]>
+): Promise<T[]> => {
+  const results: T[] = [];
+  
+  // Process in batches to avoid query size limitations
+  for (let i = 0; i < ids.length; i += batchSize) {
+    const batchIds = ids.slice(i, i + batchSize);
+    const batchResults = await queryFn(batchIds);
+    results.push(...batchResults);
+  }
+  
+  return results;
 };

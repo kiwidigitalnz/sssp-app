@@ -8,21 +8,38 @@ import type { SSSP } from "@/types/sssp";
 import type { Database } from "@/integrations/supabase/types";
 
 export function DashboardContent() {
-  const { data: sssps = [], refetch } = useQuery({
+  const { data: sssps = [], refetch, isLoading } = useQuery({
     queryKey: ['sssps'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Use the materialized view for faster query performance
+      // This avoids full table scans on the main sssps table
       const { data, error } = await supabase
-        .from('sssps')
-        .select('*')
-        .order('updated_at', { ascending: false });
+        .from('mv_active_sssps')
+        .select('id');
 
       if (error) throw error;
+      
+      // Get the IDs of all SSSPs from the materialized view
+      const sssp_ids = data.map((item: any) => item.id);
+      
+      // If no SSSPs found, return an empty array
+      if (sssp_ids.length === 0) return [];
+      
+      // Query the full SSSP data in a single batch 
+      // instead of individual queries for better performance
+      const { data: sssp_data, error: sssp_error } = await supabase
+        .from('sssps')
+        .select('*')
+        .in('id', sssp_ids)
+        .order('updated_at', { ascending: false });
+      
+      if (sssp_error) throw sssp_error;
 
       // Transform the data to match the SSSP type
-      const formattedSssps: SSSP[] = data.map(sssp => ({
+      const formattedSssps: SSSP[] = sssp_data.map(sssp => ({
         ...sssp,
         monitoring_review: sssp.monitoring_review ? 
           // Type assertion since we know the structure from the database
@@ -56,7 +73,10 @@ export function DashboardContent() {
       }));
 
       return formattedSssps;
-    }
+    },
+    // Add caching to reduce redundant data fetching
+    staleTime: 60 * 1000, // Cache for 1 minute
+    cacheTime: 3 * 60 * 1000, // Keep in cache for 3 minutes
   });
 
   return (

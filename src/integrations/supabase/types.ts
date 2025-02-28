@@ -96,6 +96,13 @@ export type Database = {
             foreignKeyName: "sssp_access_sssp_id_fkey"
             columns: ["sssp_id"]
             isOneToOne: false
+            referencedRelation: "mv_active_sssps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sssp_access_sssp_id_fkey"
+            columns: ["sssp_id"]
+            isOneToOne: false
             referencedRelation: "sssps"
             referencedColumns: ["id"]
           },
@@ -127,6 +134,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sssp_activity_sssp_id_fkey"
+            columns: ["sssp_id"]
+            isOneToOne: false
+            referencedRelation: "mv_active_sssps"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sssp_activity_sssp_id_fkey"
             columns: ["sssp_id"]
@@ -182,6 +196,13 @@ export type Database = {
             foreignKeyName: "sssp_invitations_sssp_id_fkey"
             columns: ["sssp_id"]
             isOneToOne: false
+            referencedRelation: "mv_active_sssps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sssp_invitations_sssp_id_fkey"
+            columns: ["sssp_id"]
+            isOneToOne: false
             referencedRelation: "sssps"
             referencedColumns: ["id"]
           },
@@ -213,6 +234,13 @@ export type Database = {
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "sssp_versions_sssp_id_fkey"
+            columns: ["sssp_id"]
+            isOneToOne: false
+            referencedRelation: "mv_active_sssps"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sssp_versions_sssp_id_fkey"
             columns: ["sssp_id"]
@@ -383,10 +411,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      mv_active_sssps: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string | null
+          owner_email: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      manage_idle_connections: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      refresh_materialized_views: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      transfer_company_ownership: {
+        Args: {
+          new_owner_id: string
+          current_owner_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       company_role: "owner" | "admin" | "editor" | "viewer"

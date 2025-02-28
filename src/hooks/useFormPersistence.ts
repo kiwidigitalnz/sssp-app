@@ -1,95 +1,105 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, retry } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { SSSP } from '@/types/sssp';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { logActivity, getFieldDisplayName, FieldChange } from "@/utils/activityLogging";
+
+// Add debounce time constants
+const SAVE_DEBOUNCE_TIME = 2000; // 2 seconds
+const MINIMUM_SAVE_INTERVAL = 5000; // 5 seconds
 
 export interface FormPersistenceOptions {
   key: string;
   initialData?: any;
 }
 
+// Helper function to create an empty monitoring review object for type safety
+const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> => ({
+  review_schedule: {
+    frequency: '',
+    last_review: null,
+    next_review: null,
+    responsible_person: null
+  },
+  kpis: [],
+  corrective_actions: {
+    process: '',
+    tracking_method: '',
+    responsible_person: null
+  },
+  audits: [],
+  worker_consultation: {
+    method: '',
+    frequency: '',
+    last_consultation: null
+  },
+  review_triggers: [],
+  documentation: {
+    storage_location: '',
+    retention_period: '',
+    access_details: ''
+  }
+});
+
 async function fetchSSSP(id: string) {
-  const { data, error } = await supabase
-    .from('sssps')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
+  // Use the retry utility for better resilience
+  return retry(async () => {
+    const { data, error } = await supabase
+      .from('sssps')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
 
-  if (error) {
-    console.error('Error fetching SSSP:', error);
-    throw error;
-  }
-  
-  if (!data) {
-    console.warn('No SSSP found with id:', id);
-    return null;
-  }
+    if (error) {
+      console.error('Error fetching SSSP:', error);
+      throw error;
+    }
+    
+    if (!data) {
+      console.warn('No SSSP found with id:', id);
+      return null;
+    }
 
-  const transformedData = {
-    ...data,
-    hazards: Array.isArray(data.hazards) ? data.hazards : [],
-    emergency_contacts: Array.isArray(data.emergency_contacts) ? data.emergency_contacts : [],
-    required_training: Array.isArray(data.required_training) ? data.required_training : [],
-    meetings_schedule: Array.isArray(data.meetings_schedule) ? data.meetings_schedule : [],
-    monitoring_review: data.monitoring_review || {
-      review_schedule: {
-        frequency: '',
-        last_review: null,
-        next_review: null,
-        responsible_person: null
-      },
-      kpis: [],
-      corrective_actions: {
-        process: '',
-        tracking_method: '',
-        responsible_person: null
-      },
-      audits: [],
-      worker_consultation: {
-        method: '',
-        frequency: '',
-        last_consultation: null
-      },
-      review_triggers: [],
-      documentation: {
-        storage_location: '',
-        retention_period: '',
-        access_details: ''
-      }
-    },
-    site_address: data.site_address || '', // Added site_address with empty default
-    services: data.services || '',
-    locations: data.locations || '',
-    considerations: data.considerations || '',
-    pcbu_duties: data.pcbu_duties || '',
-    site_supervisor_duties: data.site_supervisor_duties || '',
-    worker_duties: data.worker_duties || '',
-    contractor_duties: data.contractor_duties || '',
-    emergency_plan: data.emergency_plan || '',
-    assembly_points: data.assembly_points || '',
-    emergency_equipment: data.emergency_equipment || '',
-    incident_reporting: data.incident_reporting || '',
-    competency_requirements: data.competency_requirements || '',
-    training_records: data.training_records || '',
-    drug_and_alcohol: data.drug_and_alcohol || '',
-    fatigue_management: data.fatigue_management || '',
-    ppe: data.ppe || '',
-    mobile_phone: data.mobile_phone || '',
-    entry_exit_procedures: data.entry_exit_procedures || '',
-    speed_limits: data.speed_limits || '',
-    parking_rules: data.parking_rules || '',
-    site_specific_ppe: data.site_specific_ppe || '',
-    communication_methods: data.communication_methods || '',
-    toolbox_meetings: data.toolbox_meetings || '',
-    reporting_procedures: data.reporting_procedures || '',
-    communication_protocols: data.communication_protocols || '',
-    visitor_rules: data.visitor_rules || ''
-  };
+    const transformedData = {
+      ...data,
+      hazards: Array.isArray(data.hazards) ? data.hazards : [],
+      emergency_contacts: Array.isArray(data.emergency_contacts) ? data.emergency_contacts : [],
+      required_training: Array.isArray(data.required_training) ? data.required_training : [],
+      meetings_schedule: Array.isArray(data.meetings_schedule) ? data.meetings_schedule : [],
+      monitoring_review: data.monitoring_review || createEmptyMonitoringReview(),
+      site_address: data.site_address || '', 
+      services: data.services || '',
+      locations: data.locations || '',
+      considerations: data.considerations || '',
+      pcbu_duties: data.pcbu_duties || '',
+      site_supervisor_duties: data.site_supervisor_duties || '',
+      worker_duties: data.worker_duties || '',
+      contractor_duties: data.contractor_duties || '',
+      emergency_plan: data.emergency_plan || '',
+      assembly_points: data.assembly_points || '',
+      emergency_equipment: data.emergency_equipment || '',
+      incident_reporting: data.incident_reporting || '',
+      competency_requirements: data.competency_requirements || '',
+      training_records: data.training_records || '',
+      drug_and_alcohol: data.drug_and_alcohol || '',
+      fatigue_management: data.fatigue_management || '',
+      ppe: data.ppe || '',
+      mobile_phone: data.mobile_phone || '',
+      entry_exit_procedures: data.entry_exit_procedures || '',
+      speed_limits: data.speed_limits || '',
+      parking_rules: data.parking_rules || '',
+      site_specific_ppe: data.site_specific_ppe || '',
+      communication_methods: data.communication_methods || '',
+      toolbox_meetings: data.toolbox_meetings || '',
+      reporting_procedures: data.reporting_procedures || '',
+      communication_protocols: data.communication_protocols || '',
+      visitor_rules: data.visitor_rules || ''
+    };
 
-  return transformedData;
+    return transformedData;
+  });
 }
 
 export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersistenceOptions) {
@@ -98,6 +108,8 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
   const lastSavedRef = useRef<string | null>(null);
   const storageRetryCount = useRef(0);
   const previousDataRef = useRef<T | null>(null);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSaveTimeRef = useRef<number>(0);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['sssp', options.key],
@@ -271,6 +283,52 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     return 'General';
   };
 
+  // Debounced save implementation to reduce database calls
+  const debouncedSave = useCallback((dataToSave: T) => {
+    // Clear any existing timer
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    // Check if it's too soon to save again
+    const now = Date.now();
+    const timeSinceLastSave = now - lastSaveTimeRef.current;
+    
+    if (timeSinceLastSave < MINIMUM_SAVE_INTERVAL) {
+      // Schedule a save for later
+      const delayTime = MINIMUM_SAVE_INTERVAL - timeSinceLastSave;
+      saveTimerRef.current = setTimeout(() => {
+        mutation.mutate(dataToSave);
+        lastSaveTimeRef.current = Date.now();
+      }, delayTime);
+      return;
+    }
+    
+    // Schedule the debounced save
+    saveTimerRef.current = setTimeout(() => {
+      mutation.mutate(dataToSave);
+      lastSaveTimeRef.current = Date.now();
+    }, SAVE_DEBOUNCE_TIME);
+  }, []);
+
+  // Enhanced form data setter with debounced saving
+  const setFormDataWithSave = useCallback((updater: ((prev: T) => T) | T) => {
+    setFormData(prev => {
+      // Get the new state
+      const newState = typeof updater === 'function' 
+        ? (updater as (prev: T) => T)(prev) 
+        : updater;
+      
+      // If we have a valid ID, debounce the save operation
+      if (options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
+        debouncedSave(newState);
+      }
+      
+      return newState;
+    });
+  }, [options.key, debouncedSave]);
+
   const mutation = useMutation({
     mutationFn: async (dataToSave: T = formData) => {
       if (options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
@@ -326,10 +384,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     },
     onSuccess: (newData) => {
       queryClient.setQueryData(['sssp', options.key], newData);
-      toast({
-        title: "Success",
-        description: "Your changes have been saved",
-      });
+      // Don't show toast for debounced saves to avoid too many notifications
     },
     onError: (error: Error) => {
       console.error('Error saving form data:', error);
@@ -351,12 +406,27 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     }
   }, [options.key]);
 
+  // Immediate save function for user-triggered saves (with feedback)
+  const immediateSave = useCallback((dataToSave?: T) => {
+    // Clear any pending debounced save
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    
+    // Update the last save timestamp
+    lastSaveTimeRef.current = Date.now();
+    
+    // Execute the save
+    return mutation.mutateAsync(dataToSave || formData);
+  }, [formData, mutation]);
+
   return {
     formData,
-    setFormData,
+    setFormData: setFormDataWithSave,
     clearSavedData,
     isLoading,
-    save: (dataToSave?: T) => mutation.mutate(dataToSave || formData),
+    save: immediateSave,
     error
   };
 }
