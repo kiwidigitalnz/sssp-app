@@ -12,7 +12,7 @@ if (!SUPABASE_PUBLISHABLE_KEY) throw new Error('Missing SUPABASE_PUBLISHABLE_KEY
 // Connection pooling options
 const connectionOptions = {
   db: {
-    schema: 'public' as const  // Type assertion to make TypeScript happy
+    schema: 'public'
   },
   auth: {
     persistSession: true,
@@ -22,10 +22,8 @@ const connectionOptions = {
   global: {
     headers: { 'x-application-name': 'sssp-manager' }
   },
-  realtime: {
-    // Disable realtime subscriptions when not used
-    enabled: false
-  }
+  // Fix for realtime options
+  realtime: undefined
 };
 
 // Import the supabase client like this:
@@ -33,7 +31,7 @@ const connectionOptions = {
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
   SUPABASE_PUBLISHABLE_KEY,
-  connectionOptions
+  connectionOptions as any
 );
 
 // Add connection retry mechanism
@@ -103,12 +101,12 @@ export const batchQuery = async <T>(
   return results;
 };
 
-// Helper to safely extract data from Supabase responses with proper type checking
+// Updated helper to safely extract data from Supabase responses with proper type checking
 export const extractDataFromResponse = <T>(response: any, defaultValue: T): T => {
-  // Check if response is a SelectQueryError
-  if (response && response.error === true) {
+  // Use the enhanced error detection
+  if (isSupabaseError(response)) {
     return defaultValue;
   }
   
-  return response as T;
+  return response?.data as T || defaultValue;
 };

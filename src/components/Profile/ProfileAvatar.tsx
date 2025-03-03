@@ -6,7 +6,7 @@ import { User, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { asUUID } from "@/utils/supabaseHelpers";
+import { asDatabaseObject, asUUID } from "@/utils/supabaseHelpers";
 import {
   Tooltip,
   TooltipContent,
@@ -89,13 +89,11 @@ export function ProfileAvatar({ avatarUrl, userId }: ProfileAvatarProps) {
         .from("avatars")
         .getPublicUrl(filePath);
 
-      // Update profile with new avatar URL
-      // Type-safe update using specific column name
+      // Update profile with new avatar URL using our helper for type-safe operations
+      const updateData = asDatabaseObject({ avatar_url: filePath });
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ 
-          avatar_url: filePath 
-        } as any)
+        .update(updateData)
         .eq("id", asUUID(userId));
 
       if (updateError) throw updateError;

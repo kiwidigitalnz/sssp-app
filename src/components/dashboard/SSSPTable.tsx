@@ -49,7 +49,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       
       const matchesStatus = statusFilter === "all" || sssp.status === statusFilter;
 
-      // Safely check shared user counts
+      // Safely check shared user counts using the hasLength helper
       const sharedUsersForSSSP = sharedUsers[sssp.id] || [];
       const sharedUserCount = hasLength(sharedUsersForSSSP) ? sharedUsersForSSSP.length : 0;
       
@@ -150,7 +150,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
           </TableHeader>
           <TableBody>
             {filteredAndSortedSSSPs.map((sssp) => {
-              // Safely get shared users count
+              // Safely get shared users count using hasLength helper
               const sharedUsersForSSSP = sharedUsers[sssp.id] || [];
               const sharedUserCount = hasLength(sharedUsersForSSSP) ? sharedUsersForSSSP.length : 0;
               

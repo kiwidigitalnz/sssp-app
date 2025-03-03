@@ -6,7 +6,7 @@ import { DashboardStats } from "./DashboardStats";
 import { WelcomeHeader } from "./WelcomeHeader";
 import type { SSSP } from "@/types/sssp";
 import type { Database } from "@/integrations/supabase/types";
-import { asUUID, safelyExtractData } from "@/utils/supabaseHelpers";
+import { asUUID, safelyExtractData, safelyGetProperty, isSupabaseError } from "@/utils/supabaseHelpers";
 
 // Helper function to create an empty monitoring review object
 const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> => ({
@@ -67,41 +67,43 @@ export function DashboardContent() {
 
       // Transform the data to match the SSSP type with null checks
       const formattedSssps: SSSP[] = (sssp_data || []).map(sssp => {
-        const monitoringReview = sssp.monitoring_review || null;
+        // Safely extract monitoring_review or create an empty one if it doesn't exist
+        const monitoringReview = sssp.monitoring_review || createEmptyMonitoringReview();
+        
         return {
           ...sssp,
-          monitoring_review: monitoringReview ? {
+          monitoring_review: {
             review_schedule: {
-              frequency: monitoringReview.review_schedule?.frequency || '',
-              last_review: monitoringReview.review_schedule?.last_review || null,
-              next_review: monitoringReview.review_schedule?.next_review || null,
-              responsible_person: monitoringReview.review_schedule?.responsible_person || null
+              frequency: safelyGetProperty(monitoringReview, 'review_schedule.frequency', '') || '',
+              last_review: safelyGetProperty(monitoringReview, 'review_schedule.last_review', null),
+              next_review: safelyGetProperty(monitoringReview, 'review_schedule.next_review', null),
+              responsible_person: safelyGetProperty(monitoringReview, 'review_schedule.responsible_person', null)
             },
-            kpis: monitoringReview.kpis || [],
+            kpis: safelyGetProperty(monitoringReview, 'kpis', []) || [],
             corrective_actions: {
-              process: monitoringReview.corrective_actions?.process || '',
-              tracking_method: monitoringReview.corrective_actions?.tracking_method || '',
-              responsible_person: monitoringReview.corrective_actions?.responsible_person || null
+              process: safelyGetProperty(monitoringReview, 'corrective_actions.process', '') || '',
+              tracking_method: safelyGetProperty(monitoringReview, 'corrective_actions.tracking_method', '') || '',
+              responsible_person: safelyGetProperty(monitoringReview, 'corrective_actions.responsible_person', null)
             },
-            audits: monitoringReview.audits || [],
+            audits: safelyGetProperty(monitoringReview, 'audits', []) || [],
             worker_consultation: {
-              method: monitoringReview.worker_consultation?.method || '',
-              frequency: monitoringReview.worker_consultation?.frequency || '',
-              last_consultation: monitoringReview.worker_consultation?.last_consultation || null
+              method: safelyGetProperty(monitoringReview, 'worker_consultation.method', '') || '',
+              frequency: safelyGetProperty(monitoringReview, 'worker_consultation.frequency', '') || '',
+              last_consultation: safelyGetProperty(monitoringReview, 'worker_consultation.last_consultation', null)
             },
-            review_triggers: monitoringReview.review_triggers || [],
+            review_triggers: safelyGetProperty(monitoringReview, 'review_triggers', []) || [],
             documentation: {
-              storage_location: monitoringReview.documentation?.storage_location || '',
-              retention_period: monitoringReview.documentation?.retention_period || '',
-              access_details: monitoringReview.documentation?.access_details || ''
+              storage_location: safelyGetProperty(monitoringReview, 'documentation.storage_location', '') || '',
+              retention_period: safelyGetProperty(monitoringReview, 'documentation.retention_period', '') || '',
+              access_details: safelyGetProperty(monitoringReview, 'documentation.access_details', '') || ''
             }
-          } : createEmptyMonitoringReview()
+          }
         };
       });
 
       return formattedSssps;
     },
-    // Update to use gcTime (previously cacheTime) for React Query v4+
+    // Update from cacheTime to gcTime for React Query v4+
     staleTime: 60 * 1000, // Cache for 1 minute
     gcTime: 3 * 60 * 1000, // Keep in cache for 3 minutes
   });

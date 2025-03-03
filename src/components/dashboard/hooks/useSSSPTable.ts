@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +5,7 @@ import type { SSSP } from "@/types/sssp";
 import type { SharedUser } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
-import { asUUID, hasLength } from "@/utils/supabaseHelpers";
+import { asUUID, hasLength, safelyExtractData } from "@/utils/supabaseHelpers";
 
 export type DateRange = {
   from: Date | undefined;
@@ -32,7 +31,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
 
-  // Improved query with caching and using the materialized view when possible
   const { data: sharedUsers = {}, refetch: refetchSharedUsers } = useQuery({
     queryKey: ['shared-users', selectedSSSP?.id],
     queryFn: async () => {
@@ -41,8 +39,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Use a single query with a join instead of multiple queries
-      // Convert function response to array if it's not already
       const { data, error } = await supabase
         .rpc('get_sssp_shared_users', { sssp_id: selectedSSSP.id });
 
@@ -51,17 +47,15 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         return { [selectedSSSP.id]: [] };
       }
 
-      // Ensure we always return an array
       const sharedUsersArray = Array.isArray(data) ? data : [];
       
       return { [selectedSSSP.id]: sharedUsersArray };
     },
     enabled: !!selectedSSSP && shareDialogOpen,
-    staleTime: 1000 * 60 * 10, // 10 minutes
-    gcTime: 1000 * 60 * 10 // 10 minutes (formerly cacheTime)
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 10
   });
 
-  // Optimized share function that uses less database calls
   const handleShare = useCallback(async (email: string, accessLevel: 'view' | 'edit') => {
     if (!selectedSSSP) return;
 
@@ -69,7 +63,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Use a database function to handle the invitation in a single call
       const { error } = await supabase.functions.invoke('send-invitation', {
         body: { 
           ssspId: selectedSSSP.id,
@@ -80,7 +73,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       if (error) throw error;
 
-      // Log the share activity with metadata
       await logActivity(selectedSSSP.id, 'shared' as any, user.id, {
         description: `Shared SSSP with ${email}`,
         field_changes: [{
@@ -113,7 +105,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     }
   }, [selectedSSSP, toast, refetchSharedUsers]);
 
-  // Optimized clone mutation
   const cloneMutation = useMutation({
     mutationFn: async (sssp: SSSP) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -121,7 +112,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         throw new Error("User not authenticated");
       }
 
-      // Use a stored procedure to clone the SSSP in a single operation
       const { data, error } = await supabase
         .rpc('clone_sssp', { 
           source_sssp_id: sssp.id,
@@ -195,13 +185,11 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     }
   }, [cloneMutation]);
 
-  // Optimized delete operation
   const deleteMutation = useMutation({
     mutationFn: async (sssp: SSSP) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Log the deletion before actually deleting
       await logActivity(sssp.id, 'deleted' as any, user.id, {
         description: `Deleted SSSP "${sssp.title}"`,
         section: 'Document Management',
@@ -212,7 +200,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         }
       }, 'document');
 
-      // Use a single atomic operation to delete the SSSP and all related records
       const { error } = await supabase
         .rpc('delete_sssp_with_related', { p_sssp_id: sssp.id });
 
@@ -262,13 +249,11 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Use a stored procedure to handle the revocation
       const { error } = await supabase
         .rpc('revoke_sssp_access', { p_sssp_id: ssspId, p_email: email });
 
       if (error) throw error;
 
-      // Log the access revocation
       await logActivity(ssspId, 'updated' as any, user.id, {
         description: `Revoked access for ${email}`,
         field_changes: [{
@@ -312,7 +297,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       if (error) throw error;
 
-      // Log the invitation resend
       await logActivity(ssspId, 'shared' as any, user.id, {
         description: `Resent invitation to ${email}`,
         section: 'Access Control',
@@ -353,7 +337,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Use an optimized RPC call to update status
       const { data, error } = await supabase
         .rpc('update_sssp_status', { 
           p_sssp_id: sssp.id, 
@@ -363,7 +346,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       if (error) throw error;
 
-      // Log the status change with old and new values
       await logActivity(sssp.id, 'updated' as any, user.id, {
         field_changes: [{
           field: 'status',
