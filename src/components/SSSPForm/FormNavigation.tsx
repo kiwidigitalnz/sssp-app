@@ -97,18 +97,18 @@ export const FormNavigation = ({
   return (
     <TooltipProvider>
       <>
-        {/* Main Navigation Bar - Now sticky */}
-        <div className="sticky bottom-0 left-0 right-0 border-t pt-4 pb-4 bg-white z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        {/* Main Navigation Bar */}
+        <div className="border-t pt-6 mt-8">
           {/* Last Saved Indicator */}
           {lastSaved && (
-            <div className="flex justify-end mb-2 px-4">
+            <div className="flex justify-end mb-4">
               <Badge variant="outline" className="text-xs text-gray-500">
                 Last saved: {lastSaved.toLocaleTimeString()}
               </Badge>
             </div>
           )}
 
-          <div className="flex items-center justify-between px-4">
+          <div className="flex items-center justify-between">
             {/* Left side - Back button */}
             <div className="flex items-center space-x-2">
               <Button
@@ -134,7 +134,7 @@ export const FormNavigation = ({
             {/* Right side - Action buttons */}
             <div className="flex items-center space-x-2">
               {/* Primary button group */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 mr-4">
                 {!hideMainSaveButton && (
                   <Button
                     variant="outline"
@@ -164,7 +164,7 @@ export const FormNavigation = ({
           </div>
 
           {/* Mobile progress indicator */}
-          <div className="block md:hidden mt-4 px-4">
+          <div className="block md:hidden mt-4">
             <div className="text-center text-sm text-gray-500">
               Step {currentStep + 1} of {totalSteps + 1}
             </div>
@@ -172,7 +172,7 @@ export const FormNavigation = ({
         </div>
 
         {/* Floating navigation buttons for mobile and scrolling */}
-        <div className="fixed bottom-16 right-4 flex flex-col space-y-2 z-50">
+        <div className="fixed bottom-4 right-4 flex flex-col space-y-2 z-50">
           <div className="flex space-x-2">
             {!isFirstStep && (
               <Tooltip>

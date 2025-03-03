@@ -274,7 +274,7 @@ export default function SSSPForm() {
   }, [currentStep, formData, setFormData, isLoading]);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8 mb-20">
+    <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
       <div className="flex justify-between items-center">
         <FormHeader
           id={id}
@@ -407,8 +407,8 @@ export default function SSSPForm() {
         </DialogContent>
       </Dialog>
 
-      <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm">
-        <ScrollArea className="h-[calc(100vh-350px)] pr-4">
+      <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm space-y-6">
+        <ScrollArea className="h-[calc(100vh-300px)] pr-4">
           {renderStepContent()}
         </ScrollArea>
 

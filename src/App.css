@@ -1,10 +1,8 @@
-
 /* Remove unnecessary constraints */
 #root {
   width: 100%;
   margin: 0;
   padding: 0;
-  padding-bottom: 60px; /* Add padding for fixed navigation */
 }
 
 /* Keep only necessary utility classes */
