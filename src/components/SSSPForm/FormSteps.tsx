@@ -39,7 +39,7 @@ export const FormSteps = ({ totalSteps, currentStep, onStepChange }: FormStepsPr
     <TooltipProvider>
       <div className="flex justify-center items-center w-full py-4">
         <nav aria-label="Progress" className="relative">
-          <ol className="flex space-x-4">
+          <ol className="flex items-center space-x-6">
             {visibleSteps.map((step) => {
               // Define the status: upcoming, current, or completed
               const status =
@@ -60,9 +60,9 @@ export const FormSteps = ({ totalSteps, currentStep, onStepChange }: FormStepsPr
                       >
                         {status === "completed" ? (
                           <div className="flex items-center">
-                            <div className="relative flex h-6 w-6 items-center justify-center rounded-full bg-primary cursor-pointer hover:bg-primary/80 transition-colors">
+                            <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 cursor-pointer hover:from-primary/90 hover:to-primary/70 transition-all duration-300 shadow-md">
                               <svg
-                                className="h-3.5 w-3.5 text-white"
+                                className="h-4 w-4 text-white"
                                 viewBox="0 0 12 12"
                                 fill="currentColor"
                               >
@@ -72,17 +72,17 @@ export const FormSteps = ({ totalSteps, currentStep, onStepChange }: FormStepsPr
                           </div>
                         ) : status === "current" ? (
                           <div
-                            className="relative flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary cursor-pointer"
+                            className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-white cursor-pointer shadow-sm transition-all duration-300 animate-pulse"
                             aria-current="step"
                           >
                             <span
-                              className="h-3 w-3 rounded-full bg-primary"
+                              className="h-4 w-4 rounded-full bg-primary"
                               aria-hidden="true"
                             />
                           </div>
                         ) : (
                           <div className="flex items-center">
-                            <div className="relative flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-300 cursor-pointer hover:border-gray-400 transition-colors">
+                            <div className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-300 bg-white cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-all duration-300">
                               <span
                                 className="h-3 w-3 rounded-full bg-transparent"
                                 aria-hidden="true"
@@ -92,10 +92,21 @@ export const FormSteps = ({ totalSteps, currentStep, onStepChange }: FormStepsPr
                         )}
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="bg-gray-800 text-white px-3 py-1.5 rounded shadow-lg">
+                    <TooltipContent side="top" className="bg-gray-800 text-white px-3 py-2 rounded shadow-lg text-center">
                       <p className="text-sm font-medium">{step.name}</p>
+                      <p className="text-xs text-gray-300 mt-1">Step {step.number + 1} of {visibleSteps.length}</p>
                     </TooltipContent>
                   </Tooltip>
+
+                  {/* Add connecting line between steps */}
+                  {step.number < visibleSteps.length - 1 && (
+                    <div 
+                      className={cn(
+                        "absolute top-[15px] left-[32px] h-0.5 w-6", 
+                        step.number < currentStep ? "bg-primary" : "bg-gray-300"
+                      )}
+                    />
+                  )}
                 </li>
               );
             })}

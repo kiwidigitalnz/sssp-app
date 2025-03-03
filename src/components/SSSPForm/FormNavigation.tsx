@@ -169,6 +169,18 @@ export const FormNavigation = ({
           </DialogContent>
         </Dialog>
 
+        {/* Activity Button - Moved to top */}
+        <div className="flex justify-end mb-6">
+          <Button
+            variant="outline"
+            onClick={handleActivityLogOpen}
+            className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 text-primary hover:bg-primary/20 transition-all duration-300"
+          >
+            <Activity className="h-4 w-4 mr-2" />
+            Activity Log
+          </Button>
+        </div>
+
         {/* Main Navigation Bar */}
         <div className="border-t pt-6 mt-8">
           {/* Last Saved Indicator */}
@@ -229,31 +241,20 @@ export const FormNavigation = ({
                 </Button>
               </div>
 
-              {/* Secondary action buttons */}
+              {/* Secondary action buttons with improved styling */}
               <div className="flex items-center space-x-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      onClick={handleActivityLogOpen}
-                      className="gap-1"
-                      size="sm"
-                    >
-                      <Activity className="h-4 w-4" />
-                      Activity
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>View activity log</TooltipContent>
-                </Tooltip>
-
                 {!isFirstStep && (
                   <>
                     <AlertDialog>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" className="gap-1" size="sm">
-                              <FileDown className="h-4 w-4" />
+                            <Button 
+                              variant="ghost" 
+                              className="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors" 
+                              size="sm"
+                            >
+                              <FileDown className="h-4 w-4 mr-1" />
                               Export
                             </Button>
                           </AlertDialogTrigger>
@@ -279,10 +280,10 @@ export const FormNavigation = ({
                         <Button
                           variant="ghost"
                           onClick={handleShareDocument}
-                          className="gap-1"
+                          className="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition-colors"
                           size="sm"
                         >
-                          <Share className="h-4 w-4" />
+                          <Share className="h-4 w-4 mr-1" />
                           Share
                         </Button>
                       </TooltipTrigger>
