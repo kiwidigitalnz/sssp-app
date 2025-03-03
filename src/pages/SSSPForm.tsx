@@ -19,7 +19,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
-import type { SSSP } from "@/types/sssp";
 import { Button } from "@/components/ui/button";
 import { Activity, FileDown, Share, MoreHorizontal, Save, X } from "lucide-react";
 import {
@@ -275,104 +274,103 @@ export default function SSSPForm() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
-      <div className="flex justify-between items-center">
-        <FormHeader
-          id={id}
-          title={formData.title || "Untitled SSSP"}
-          status={formData.status || "draft"}
-          isNew={isNew}
-          isLoading={isSaving}
-          onCancel={null} // Remove cancel handler from header
-          onSave={null} // Remove save handler from header
-          currentStep={currentStep}
-          saveButtonText={saveButtonText}
-        />
+      <div className="sticky top-0 z-10 bg-gray-50 pt-2 pb-4">
+        <div className="flex justify-between items-center">
+          <FormHeader
+            id={id}
+            title={formData.title || "Untitled SSSP"}
+            status={formData.status || "draft"}
+            isNew={isNew}
+            isLoading={isSaving}
+            currentStep={currentStep}
+          />
 
-        <div className="flex items-center space-x-2">
-          {/* Cancel Button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleCancel}
-            className="gap-1"
-          >
-            <X className="h-4 w-4" />
-            Cancel
-          </Button>
-          
-          {/* Save Button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handleSaveWithFeedback(true)}
-            disabled={isSaving}
-            className="gap-1"
-          >
-            <Save className="h-4 w-4" />
-            {saveButtonText}
-          </Button>
-          
-          {/* Actions Button */}
-          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
-                <MoreHorizontal className="h-4 w-4" />
-                Actions
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleActivityLogOpen();
-                }} 
-                className="cursor-pointer"
-              >
-                <Activity className="h-4 w-4 mr-2" />
-                Activity Log
-              </DropdownMenuItem>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem 
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      setIsDropdownOpen(false);
-                    }} 
-                    className="cursor-pointer"
-                  >
-                    <FileDown className="h-4 w-4 mr-2" />
-                    Export as PDF
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Export SSSP as PDF?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will generate a PDF of your SSSP. Do you want to continue?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleExportPDF}>Export</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleShareDocument();
-                }} 
-                className="cursor-pointer"
-              >
-                <Share className="h-4 w-4 mr-2" />
-                Share SSSP
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center space-x-2">
+            {/* Cancel Button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleCancel}
+              className="gap-1"
+            >
+              <X className="h-4 w-4" />
+              Cancel
+            </Button>
+            
+            {/* Save Button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => handleSaveWithFeedback(true)}
+              disabled={isSaving}
+              className="gap-1"
+            >
+              <Save className="h-4 w-4" />
+              {saveButtonText}
+            </Button>
+            
+            {/* Actions Button */}
+            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1">
+                  <MoreHorizontal className="h-4 w-4" />
+                  Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleActivityLogOpen();
+                  }} 
+                  className="cursor-pointer"
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Activity Log
+                </DropdownMenuItem>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem 
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setIsDropdownOpen(false);
+                      }} 
+                      className="cursor-pointer"
+                    >
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Export as PDF
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Export SSSP as PDF?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will generate a PDF of your SSSP. Do you want to continue?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleExportPDF}>Export</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleShareDocument();
+                  }} 
+                  className="cursor-pointer"
+                >
+                  <Share className="h-4 w-4 mr-2" />
+                  Share SSSP
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -396,8 +394,7 @@ export default function SSSPForm() {
           {id && <ActivityLog sssp_id={id} />}
           <div className="flex justify-end mt-4">
             <Button 
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 handleActivityLogClose();
               }}
             >
@@ -407,21 +404,25 @@ export default function SSSPForm() {
         </DialogContent>
       </Dialog>
 
-      <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm space-y-6">
+      <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm space-y-6 mb-16">
         <ScrollArea className="h-[calc(100vh-300px)] pr-4">
           {renderStepContent()}
         </ScrollArea>
+      </div>
 
-        <FormNavigation
-          currentStep={currentStep}
-          totalSteps={10}
-          saveForm={handleSave}
-          formData={formData}
-          onStepChange={handleStepChange}
-          isValid={isValid}
-          hideMainSaveButton={true}
-          onActivityLogOpen={handleActivityLogOpen}
-        />
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t z-10">
+        <div className="container mx-auto max-w-6xl px-4">
+          <FormNavigation
+            currentStep={currentStep}
+            totalSteps={10}
+            saveForm={handleSave}
+            formData={formData}
+            onStepChange={handleStepChange}
+            isValid={isValid}
+            hideMainSaveButton={true}
+            onActivityLogOpen={handleActivityLogOpen}
+          />
+        </div>
       </div>
     </div>
   );

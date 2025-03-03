@@ -1,3 +1,4 @@
+
 /* Remove unnecessary constraints */
 #root {
   width: 100%;
@@ -46,6 +47,12 @@ body, #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Add safe area padding for mobile devices */
+.fixed-navigation {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Add focus styles for accessibility */
@@ -66,4 +73,26 @@ body, #root {
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Additional layout helpers */
+.content-area {
+  padding-bottom: 70px; /* Ensure content doesn't get hidden behind the fixed navigation */
+}
+
+/* Sticky elements */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background-color: hsl(var(--background));
+  border-top: 1px solid hsl(var(--border));
 }
