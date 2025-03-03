@@ -105,7 +105,11 @@ export function safelyGetProperty<T, K extends string>(
 }
 
 // Type-safe casting for Supabase update/insert operations
-export function asDatabaseObject<T extends object>(obj: T): any {
+export function asDatabaseObject<T>(obj: T): any {
   return obj as any;
 }
 
+// Safely convert Supabase responses to specific types
+export function asTypedData<T>(data: any): T {
+  return data as unknown as T;
+}

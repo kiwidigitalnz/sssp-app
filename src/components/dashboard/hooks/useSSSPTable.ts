@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -59,7 +58,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         return { [selectedSSSP.id]: [] };
       }
 
-      // Transform the data to match the SharedUser type
+      // Transform the data to match the SharedUser type with safe property access
       const sharedUsersArray = Array.isArray(data) ? data.map(item => ({
         email: item.profiles?.email || '',
         access_level: item.access_level,
@@ -150,7 +149,8 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       if (error) throw error;
 
-      return data as SSSP;
+      // Fix type compatibility issue by using type assertion
+      return data as unknown as SSSP;
     },
     onMutate: async (sssp) => {
       await queryClient.cancelQueries({ queryKey: ['sssps'] });
