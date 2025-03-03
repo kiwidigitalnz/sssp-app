@@ -12,7 +12,8 @@ import {
   FileDown, 
   Share,
   X,
-  Check
+  Check,
+  MoreHorizontal
 } from "lucide-react";
 import { 
   AlertDialog, 
@@ -33,6 +34,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityLog } from "./ActivityLog/ActivityLog";
 import { Badge } from "@/components/ui/badge";
@@ -147,6 +154,8 @@ export const FormNavigation = ({
     return <ChevronRight className="h-4 w-4" />;
   };
 
+  // We don't need to render the ActivityLog button here anymore as it's moved to the header
+  // The Activity Log dialog is still needed
   return (
     <TooltipProvider>
       <>
@@ -168,18 +177,6 @@ export const FormNavigation = ({
             </div>
           </DialogContent>
         </Dialog>
-
-        {/* Activity Button - Moved to top */}
-        <div className="flex justify-end mb-6">
-          <Button
-            variant="outline"
-            onClick={handleActivityLogOpen}
-            className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 text-primary hover:bg-primary/20 transition-all duration-300"
-          >
-            <Activity className="h-4 w-4 mr-2" />
-            Activity Log
-          </Button>
-        </div>
 
         {/* Main Navigation Bar */}
         <div className="border-t pt-6 mt-8">
@@ -239,58 +236,6 @@ export const FormNavigation = ({
                   {getNextButtonText()}
                   {getNextButtonIcon()}
                 </Button>
-              </div>
-
-              {/* Secondary action buttons with improved styling */}
-              <div className="flex items-center space-x-2">
-                {!isFirstStep && (
-                  <>
-                    <AlertDialog>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              className="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors" 
-                              size="sm"
-                            >
-                              <FileDown className="h-4 w-4 mr-1" />
-                              Export
-                            </Button>
-                          </AlertDialogTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent>Export as PDF</TooltipContent>
-                      </Tooltip>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Export SSSP as PDF?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will generate a PDF of your SSSP. Do you want to continue?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleExportPDF}>Export</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          onClick={handleShareDocument}
-                          className="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition-colors"
-                          size="sm"
-                        >
-                          <Share className="h-4 w-4 mr-1" />
-                          Share
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Share SSSP</TooltipContent>
-                    </Tooltip>
-                  </>
-                )}
               </div>
             </div>
           </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
@@ -20,8 +19,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
 import type { SSSP } from "@/types/sssp";
+import { Button } from "@/components/ui/button";
+import { Activity, FileDown, Share, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ActivityLog } from "@/components/SSSPForm/ActivityLog/ActivityLog";
 
-// Add a debounce delay for save operations to prevent rapid successive saves
 const SAVE_DEBOUNCE_MS = 2000;
 
 export default function SSSPForm() {
@@ -34,9 +59,7 @@ export default function SSSPForm() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveButtonText, setSaveButtonText] = useState("Save");
   const [lastSaveTime, setLastSaveTime] = useState(0);
-
-  // Total number of steps in the form (0-indexed, so 10 means 11 steps)
-  const totalSteps = 10;
+  const [activityLogOpen, setActivityLogOpen] = useState(false);
 
   const {
     formData,
@@ -56,7 +79,6 @@ export default function SSSPForm() {
   });
 
   useEffect(() => {
-    // Check if this is a new SSSP or editing an existing one
     if (id) {
       setIsNew(false);
     }
@@ -72,27 +94,21 @@ export default function SSSPForm() {
     }
   }, [error, toast]);
 
-  // Handle step change and scroll to top
   const handleStepChange = (step: number) => {
     setCurrentStep(step);
-    // Scroll to top when the step changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handle cancel button click
   const handleCancel = () => {
     navigate('/');
   };
 
-  // Handle exit button click - navigate back to dashboard
   const handleExit = () => {
     navigate('/');
   };
 
-  // Debounced save function to prevent multiple rapid saves
   const debouncedSave = useCallback(async (showToast = false) => {
     const now = Date.now();
-    // Only save if it's been more than SAVE_DEBOUNCE_MS since the last save
     if (now - lastSaveTime < SAVE_DEBOUNCE_MS) {
       return;
     }
@@ -102,7 +118,6 @@ export default function SSSPForm() {
     await handleSave(showToast);
     setSaveButtonText("Saved!");
     
-    // Reset the button text after a delay
     setTimeout(() => {
       setSaveButtonText("Save");
     }, 2000);
@@ -116,7 +131,6 @@ export default function SSSPForm() {
     setIsSaving(true);
     
     try {
-      // If new SSSP, need to create it first
       if (isNew) {
         try {
           const { data: { user } } = await supabase.auth.getUser();
@@ -130,7 +144,6 @@ export default function SSSPForm() {
             return;
           }
 
-          // Ensure required fields are present
           const newSSSP = {
             ...formData,
             created_by: user.id,
@@ -151,7 +164,6 @@ export default function SSSPForm() {
             throw error;
           }
 
-          // Log the creation activity
           await logActivity(data.id, 'created', user.id, {
             description: 'Created new SSSP',
             severity: 'major'
@@ -164,7 +176,6 @@ export default function SSSPForm() {
             });
           }
 
-          // Navigate to the new SSSP edit page
           navigate(`/sssp/${data.id}`);
           setIsNew(false);
         } catch (error) {
@@ -190,7 +201,37 @@ export default function SSSPForm() {
     }
   };
 
-  // Memorize component rendering to prevent unnecessary re-renders
+  const handleActivityLogOpen = async () => {
+    if (!id) {
+      toast({
+        title: "SSSP not saved",
+        description: "Please save your SSSP first to view the activity log.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setActivityLogOpen(true);
+  };
+
+  const handleExportPDF = async () => {
+    toast({
+      title: "Export PDF",
+      description: "PDF export functionality will be available soon.",
+    });
+  };
+
+  const handleShareDocument = () => {
+    if (!id) {
+      toast({
+        title: "SSSP not saved",
+        description: "Please save your SSSP first to share it.",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigate(`/share/${id}`);
+  };
+
   const renderStepContent = useCallback(() => {
     switch (currentStep) {
       case 0:
@@ -222,17 +263,79 @@ export default function SSSPForm() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
-      <FormHeader
-        id={id}
-        title={formData.title || "Untitled SSSP"}
-        status={formData.status || "draft"}
-        isNew={isNew}
-        isLoading={isSaving}
-        onCancel={handleCancel}
-        onSave={handleSaveWithFeedback}
-        currentStep={currentStep}
-        saveButtonText={saveButtonText}
-      />
+      <div className="flex justify-between items-center">
+        <FormHeader
+          id={id}
+          title={formData.title || "Untitled SSSP"}
+          status={formData.status || "draft"}
+          isNew={isNew}
+          isLoading={isSaving}
+          onCancel={handleCancel}
+          onSave={handleSaveWithFeedback}
+          currentStep={currentStep}
+          saveButtonText={saveButtonText}
+        />
+
+        <div className="flex items-center space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1">
+                <MoreHorizontal className="h-4 w-4" />
+                Actions
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={handleActivityLogOpen} className="cursor-pointer">
+                <Activity className="h-4 w-4 mr-2" />
+                Activity Log
+              </DropdownMenuItem>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+                    <FileDown className="h-4 w-4 mr-2" />
+                    Export as PDF
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Export SSSP as PDF?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will generate a PDF of your SSSP. Do you want to continue?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleExportPDF}>Export</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              
+              <DropdownMenuItem onClick={handleShareDocument} className="cursor-pointer">
+                <Share className="h-4 w-4 mr-2" />
+                Share SSSP
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <Dialog open={activityLogOpen} onOpenChange={setActivityLogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Activity Log</DialogTitle>
+            <DialogDescription>
+              View all activities and changes for this SSSP
+            </DialogDescription>
+          </DialogHeader>
+          {id && <ActivityLog sssp_id={id} />}
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setActivityLogOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm space-y-6">
         <ScrollArea className="h-[calc(100vh-300px)] pr-4">
@@ -241,7 +344,7 @@ export default function SSSPForm() {
 
         <FormNavigation
           currentStep={currentStep}
-          totalSteps={totalSteps}
+          totalSteps={10}
           saveForm={handleSave}
           formData={formData}
           onStepChange={handleStepChange}

@@ -72,7 +72,7 @@ export const FormSteps = ({ totalSteps, currentStep, onStepChange }: FormStepsPr
                           </div>
                         ) : status === "current" ? (
                           <div
-                            className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-white cursor-pointer shadow-sm transition-all duration-300 animate-pulse"
+                            className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-white cursor-pointer shadow-sm transition-all duration-300"
                             aria-current="step"
                           >
                             <span
