@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -39,15 +40,32 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Use regular from() and call the RPC function using SQL
       const { data, error } = await supabase
-        .rpc('get_sssp_shared_users', { sssp_id: selectedSSSP.id });
+        .from('sssp_access')
+        .select(`
+          user_id,
+          access_level,
+          profiles:user_id (
+            email,
+            first_name,
+            last_name
+          )
+        `)
+        .eq('sssp_id', selectedSSSP.id);
 
       if (error) {
         console.error('Error fetching shared users:', error);
         return { [selectedSSSP.id]: [] };
       }
 
-      const sharedUsersArray = Array.isArray(data) ? data : [];
+      // Transform the data to match the SharedUser type
+      const sharedUsersArray = Array.isArray(data) ? data.map(item => ({
+        email: item.profiles?.email || '',
+        access_level: item.access_level,
+        status: 'active',
+        is_creator: item.user_id === user.id
+      })) : [];
       
       return { [selectedSSSP.id]: sharedUsersArray };
     },
@@ -112,12 +130,23 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         throw new Error("User not authenticated");
       }
 
+      // Use SQL directly instead of RPC
       const { data, error } = await supabase
-        .rpc('clone_sssp', { 
-          source_sssp_id: sssp.id,
-          new_title: `${sssp.title} (Copy)`,
-          user_id: user.id
-        });
+        .from('sssps')
+        .insert({
+          title: `${sssp.title} (Copy)`,
+          company_name: sssp.company_name,
+          status: 'draft',
+          created_by: user.id,
+          modified_by: user.id,
+          // Clone all other fields from the original SSSP
+          ...Object.fromEntries(
+            Object.entries(sssp)
+              .filter(([key]) => !['id', 'title', 'created_at', 'updated_at', 'created_by', 'modified_by', 'version', 'version_history'].includes(key))
+          )
+        })
+        .select('*')
+        .single();
 
       if (error) throw error;
 
@@ -200,8 +229,11 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         }
       }, 'document');
 
+      // Use direct delete with cascade instead of RPC
       const { error } = await supabase
-        .rpc('delete_sssp_with_related', { p_sssp_id: sssp.id });
+        .from('sssps')
+        .delete()
+        .eq('id', sssp.id);
 
       if (error) throw error;
       return sssp;
@@ -249,8 +281,21 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Get the user_id for the email
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Delete the access record
       const { error } = await supabase
-        .rpc('revoke_sssp_access', { p_sssp_id: ssspId, p_email: email });
+        .from('sssp_access')
+        .delete()
+        .eq('sssp_id', ssspId)
+        .eq('user_id', profileData.id);
 
       if (error) throw error;
 
@@ -337,12 +382,16 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      // Update the status directly
       const { data, error } = await supabase
-        .rpc('update_sssp_status', { 
-          p_sssp_id: sssp.id, 
-          p_status: newStatus,
-          p_user_id: user.id 
-        });
+        .from('sssps')
+        .update({ 
+          status: newStatus,
+          modified_by: user.id 
+        })
+        .eq('id', sssp.id)
+        .select('*')
+        .single();
 
       if (error) throw error;
 

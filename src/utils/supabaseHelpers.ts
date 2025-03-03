@@ -26,7 +26,7 @@ export function isSupabaseError(response: any): boolean {
 }
 
 // Type guard to check if an object has a specific property
-export function hasProperty<T extends object, K extends string>(obj: T, prop: K): obj is T & Record<K, unknown> {
+export function hasProperty<T, K extends string>(obj: T, prop: K): obj is T & Record<K, unknown> {
   return obj !== null && 
          obj !== undefined && 
          typeof obj === "object" && 
@@ -34,7 +34,7 @@ export function hasProperty<T extends object, K extends string>(obj: T, prop: K)
 }
 
 // Safely get a property from a Supabase response which might be an error
-export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K, defaultValue: T[K]): T[K] {
+export function safeGet<T extends object, K extends keyof T>(obj: T | null | undefined, key: K, defaultValue: T[K]): T[K] {
   if (!obj || isSupabaseError(obj)) {
     return defaultValue;
   }
@@ -108,3 +108,4 @@ export function safelyGetProperty<T, K extends string>(
 export function asDatabaseObject<T extends object>(obj: T): any {
   return obj as any;
 }
+
