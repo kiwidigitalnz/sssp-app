@@ -1,6 +1,5 @@
 
 import React from "react";
-import { FormSteps } from "./FormSteps";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/SSSPForm/StatusBadge";
 import { FormBreadcrumb } from "./FormBreadcrumb";
@@ -25,7 +24,6 @@ export function FormHeader({
   isLoading,
   onCancel,
   onSave,
-  currentStep,
   saveButtonText = "Save",
 }: FormHeaderProps) {
   return (
@@ -40,9 +38,6 @@ export function FormHeader({
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <StatusBadge status={status} />
-              {!isNew && (
-                <span className="text-sm text-gray-500">ID: {id}</span>
-              )}
             </div>
           </div>
           
@@ -62,10 +57,6 @@ export function FormHeader({
             </Button>
           </div>
         </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-        <FormSteps currentStep={currentStep} totalSteps={11} />
       </div>
     </div>
   );
