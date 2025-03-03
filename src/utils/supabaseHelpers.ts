@@ -113,3 +113,22 @@ export function asDatabaseObject<T>(obj: T): any {
 export function asTypedData<T>(data: any): T {
   return data as unknown as T;
 }
+
+// Safe access to nested properties with fallback to default value
+export function safelyGetNestedProperty<T = any>(
+  obj: any, 
+  path: string[], 
+  defaultValue: T
+): T {
+  if (!obj) return defaultValue;
+  
+  let current = obj;
+  for (const key of path) {
+    if (current === null || current === undefined || typeof current !== 'object' || !(key in current)) {
+      return defaultValue;
+    }
+    current = current[key];
+  }
+  
+  return current as T;
+}

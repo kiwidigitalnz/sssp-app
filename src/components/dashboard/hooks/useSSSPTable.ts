@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,7 @@ import type { SSSP } from "@/types/sssp";
 import type { SharedUser } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
-import { asUUID, hasLength, safelyExtractData } from "@/utils/supabaseHelpers";
+import { asUUID, hasLength, safelyExtractData, safelyGetNestedProperty } from "@/utils/supabaseHelpers";
 
 export type DateRange = {
   from: Date | undefined;
@@ -60,7 +61,8 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       // Transform the data to match the SharedUser type with safe property access
       const sharedUsersArray = Array.isArray(data) ? data.map(item => ({
-        email: item.profiles?.email || '',
+        // Use safelyGetNestedProperty to safely extract the email with a fallback
+        email: safelyGetNestedProperty(item?.profiles, ['email'], ''), 
         access_level: item.access_level,
         status: 'active',
         is_creator: item.user_id === user.id
