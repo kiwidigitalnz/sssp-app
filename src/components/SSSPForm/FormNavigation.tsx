@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FormSteps } from "./FormSteps";
@@ -8,47 +8,16 @@ import {
   ChevronRight, 
   ChevronLeft, 
   Save, 
-  Activity, 
-  FileDown, 
-  Share,
   X,
   Check,
-  MoreHorizontal
 } from "lucide-react";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle, 
-  AlertDialogTrigger 
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
-import { ActivityLog } from "./ActivityLog/ActivityLog";
-import { Badge } from "@/components/ui/badge";
 import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger 
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface FormNavigationProps {
   currentStep: number;
@@ -58,6 +27,7 @@ interface FormNavigationProps {
   onStepChange: (step: number) => void;
   isValid?: boolean;
   hideMainSaveButton?: boolean;
+  onActivityLogOpen?: () => void;
 }
 
 export const FormNavigation = ({
@@ -68,11 +38,11 @@ export const FormNavigation = ({
   onStepChange,
   isValid = true,
   hideMainSaveButton = false,
+  onActivityLogOpen,
 }: FormNavigationProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { id } = useParams();
-  const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Scroll to top of the page
@@ -83,7 +53,10 @@ export const FormNavigation = ({
     });
   };
 
-  const handleNext = () => {
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (currentStep < totalSteps) {
       onStepChange(currentStep + 1);
       // Auto-save when moving to next step (no toast)
@@ -93,48 +66,15 @@ export const FormNavigation = ({
     }
   };
 
-  const handlePrev = () => {
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (currentStep > 0) {
       onStepChange(currentStep - 1);
       // Scroll to top of the page
       scrollToTop();
     }
-  };
-
-  const handleActivityLogOpen = async () => {
-    if (!id) {
-      toast({
-        title: "SSSP not saved",
-        description: "Please save your SSSP first to view the activity log.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Don't log viewing activity log anymore
-    setActivityLogOpen(true);
-  };
-
-  const handleExportPDF = async () => {
-    // Handle PDF export (future functionality)
-    toast({
-      title: "Export PDF",
-      description: "PDF export functionality will be available soon.",
-    });
-  };
-
-  const handleShareDocument = () => {
-    // Handle document sharing (future functionality)
-    if (!id) {
-      toast({
-        title: "SSSP not saved",
-        description: "Please save your SSSP first to share it.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    navigate(`/share/${id}`);
   };
 
   const isFirstStep = currentStep === 0;
@@ -154,30 +94,9 @@ export const FormNavigation = ({
     return <ChevronRight className="h-4 w-4" />;
   };
 
-  // We don't need to render the ActivityLog button here anymore as it's moved to the header
-  // The Activity Log dialog is still needed
   return (
     <TooltipProvider>
       <>
-        {/* Activity Log Dialog */}
-        <Dialog open={activityLogOpen} onOpenChange={setActivityLogOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Activity Log</DialogTitle>
-              <DialogDescription>
-                View all activities and changes for this SSSP
-              </DialogDescription>
-            </DialogHeader>
-            {id && <ActivityLog sssp_id={id} />}
-            <div className="flex justify-end mt-4">
-              <Button onClick={() => setActivityLogOpen(false)}>
-                <X className="h-4 w-4 mr-2" />
-                Close
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         {/* Main Navigation Bar */}
         <div className="border-t pt-6 mt-8">
           {/* Last Saved Indicator */}
@@ -219,7 +138,11 @@ export const FormNavigation = ({
                 {!hideMainSaveButton && (
                   <Button
                     variant="outline"
-                    onClick={() => saveForm(true)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      saveForm(true);
+                    }}
                     className="gap-1"
                   >
                     <Save className="h-4 w-4" />

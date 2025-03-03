@@ -61,6 +61,7 @@ export default function SSSPForm() {
   const [saveButtonText, setSaveButtonText] = useState("Save");
   const [lastSaveTime, setLastSaveTime] = useState(0);
   const [activityLogOpen, setActivityLogOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const {
     formData,
@@ -202,7 +203,7 @@ export default function SSSPForm() {
     }
   };
 
-  const handleActivityLogOpen = async () => {
+  const handleActivityLogOpen = () => {
     if (!id) {
       toast({
         title: "SSSP not saved",
@@ -212,13 +213,21 @@ export default function SSSPForm() {
       return;
     }
     setActivityLogOpen(true);
+    // Close the dropdown menu if it's open
+    setIsDropdownOpen(false);
   };
 
-  const handleExportPDF = async () => {
+  const handleActivityLogClose = () => {
+    setActivityLogOpen(false);
+  };
+
+  const handleExportPDF = () => {
     toast({
       title: "Export PDF",
       description: "PDF export functionality will be available soon.",
     });
+    // Close the dropdown menu
+    setIsDropdownOpen(false);
   };
 
   const handleShareDocument = () => {
@@ -230,6 +239,8 @@ export default function SSSPForm() {
       });
       return;
     }
+    // Close the dropdown menu
+    setIsDropdownOpen(false);
     navigate(`/share/${id}`);
   };
 
@@ -302,7 +313,7 @@ export default function SSSPForm() {
           </Button>
           
           {/* Actions Button */}
-          <DropdownMenu>
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1">
                 <MoreHorizontal className="h-4 w-4" />
@@ -310,14 +321,27 @@ export default function SSSPForm() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={handleActivityLogOpen} className="cursor-pointer">
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleActivityLogOpen();
+                }} 
+                className="cursor-pointer"
+              >
                 <Activity className="h-4 w-4 mr-2" />
                 Activity Log
               </DropdownMenuItem>
               
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+                  <DropdownMenuItem 
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setIsDropdownOpen(false);
+                    }} 
+                    className="cursor-pointer"
+                  >
                     <FileDown className="h-4 w-4 mr-2" />
                     Export as PDF
                   </DropdownMenuItem>
@@ -336,7 +360,14 @@ export default function SSSPForm() {
                 </AlertDialogContent>
               </AlertDialog>
               
-              <DropdownMenuItem onClick={handleShareDocument} className="cursor-pointer">
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleShareDocument();
+                }} 
+                className="cursor-pointer"
+              >
                 <Share className="h-4 w-4 mr-2" />
                 Share SSSP
               </DropdownMenuItem>
@@ -345,7 +376,16 @@ export default function SSSPForm() {
         </div>
       </div>
 
-      <Dialog open={activityLogOpen} onOpenChange={setActivityLogOpen}>
+      {/* Activity Log Dialog - Fixed to prevent propagation issues */}
+      <Dialog 
+        open={activityLogOpen} 
+        onOpenChange={(open) => {
+          // Only handle the close event here, open is handled by handleActivityLogOpen
+          if (!open) {
+            handleActivityLogClose();
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Activity Log</DialogTitle>
@@ -355,7 +395,12 @@ export default function SSSPForm() {
           </DialogHeader>
           {id && <ActivityLog sssp_id={id} />}
           <div className="flex justify-end mt-4">
-            <Button onClick={() => setActivityLogOpen(false)}>
+            <Button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleActivityLogClose();
+              }}
+            >
               Close
             </Button>
           </div>
@@ -375,6 +420,7 @@ export default function SSSPForm() {
           onStepChange={handleStepChange}
           isValid={isValid}
           hideMainSaveButton={true}
+          onActivityLogOpen={handleActivityLogOpen}
         />
       </div>
     </div>

@@ -29,7 +29,10 @@ export const FormSteps = ({ totalSteps, currentStep, onStepChange }: FormStepsPr
   // We only want to display steps up to the total number specified
   const visibleSteps = steps.slice(0, totalSteps + 1);
 
-  const handleStepClick = (stepNumber: number) => {
+  const handleStepClick = (stepNumber: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (onStepChange) {
       onStepChange(stepNumber);
     }
@@ -54,9 +57,10 @@ export const FormSteps = ({ totalSteps, currentStep, onStepChange }: FormStepsPr
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button 
-                        onClick={() => handleStepClick(step.number)}
+                        onClick={(e) => handleStepClick(step.number, e)}
                         className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full"
                         aria-label={`Go to ${step.name}`}
+                        type="button"
                       >
                         {status === "completed" ? (
                           <div className="flex items-center">
