@@ -14,7 +14,7 @@ import { AddressSection } from "./CompanyComponents/AddressSection";
 import { ContactDetails } from "./CompanyComponents/ContactDetails";
 
 const companyInfoSchema = z.object({
-  companyName: z.string().min(1, "Company name is required"),
+  company_name: z.string().min(1, "Company name is required"),
   address: z.string().min(1, "Address is required"),
   contactPerson: z.string().min(1, "Contact person is required"),
   contactEmail: z.string().email("Invalid email address"),
@@ -53,32 +53,32 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
   } = useForm<CompanyInfoFormData>({
     resolver: zodResolver(companyInfoSchema),
     defaultValues: {
-      companyName: formData.companyName || "",
-      address: formData.company_address || "", // Using company_address here
-      contactPerson: formData.contactPerson || "",
-      contactEmail: formData.contactEmail || "",
-      contactPhone: formData.contactPhone || ""
+      company_name: formData.company_name || "",
+      address: formData.company_address || "",
+      contactPerson: formData.company_contact_name || "",
+      contactEmail: formData.company_contact_email || "",
+      contactPhone: formData.company_contact_phone || ""
     }
   });
 
   useEffect(() => {
     if (sssp) {
-      setValue("companyName", sssp.company_name || "");
-      setValue("address", sssp.company_address || ""); // Using company_address here
+      setValue("company_name", sssp.company_name || "");
+      setValue("address", sssp.company_address || "");
       setValue("contactPerson", sssp.company_contact_name || "");
       setValue("contactEmail", sssp.company_contact_email || "");
       setValue("contactPhone", sssp.company_contact_phone || "");
 
       setFormData({
         ...formData,
-        companyName: sssp.company_name,
-        company_address: sssp.company_address, // Using company_address here
-        contactPerson: sssp.company_contact_name,
-        contactEmail: sssp.company_contact_email,
-        contactPhone: sssp.company_contact_phone
+        company_name: sssp.company_name,
+        company_address: sssp.company_address,
+        company_contact_name: sssp.company_contact_name,
+        company_contact_email: sssp.company_contact_email,
+        company_contact_phone: sssp.company_contact_phone
       });
     }
-  }, [sssp, setValue, setFormData]);
+  }, [sssp, setValue, setFormData, formData]);
 
   const handleFieldChange = async (field: keyof CompanyInfoFormData, value: string) => {
     // Create a copy of formData to update
@@ -86,13 +86,12 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
     
     // Map form fields to database fields
     switch (field) {
-      case "companyName":
-        updatedFormData.companyName = value;
+      case "company_name":
         updatedFormData.company_name = value;
         break;
       case "address":
         updatedFormData.address = value;
-        updatedFormData.company_address = value; // Updating company_address here
+        updatedFormData.company_address = value;
         break;
       case "contactPerson":
         updatedFormData.contactPerson = value;
@@ -140,21 +139,21 @@ export const CompanyInfo = ({ formData, setFormData }: any) => {
       </CardHeader>
       <CardContent className="space-y-6">
         <CompanyNameSection
-          value={formData.companyName || ""}
-          onChange={(value) => handleFieldChange("companyName", value)}
-          error={errors.companyName?.message}
+          value={formData.company_name || ""}
+          onChange={(value) => handleFieldChange("company_name", value)}
+          error={errors.company_name?.message}
         />
 
         <AddressSection
-          value={formData.company_address || ""} // Using company_address here
+          value={formData.company_address || ""}
           onChange={(value) => handleFieldChange("address", value)}
           error={errors.address?.message}
         />
 
         <ContactDetails
-          contactPerson={formData.contactPerson || ""}
-          contactEmail={formData.contactEmail || ""}
-          contactPhone={formData.contactPhone || ""}
+          contactPerson={formData.company_contact_name || ""}
+          contactEmail={formData.company_contact_email || ""}
+          contactPhone={formData.company_contact_phone || ""}
           onUpdate={handleFieldChange}
           errors={{
             contactPerson: errors.contactPerson?.message,

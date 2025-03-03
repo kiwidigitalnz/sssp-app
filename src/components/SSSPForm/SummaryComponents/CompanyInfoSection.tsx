@@ -14,7 +14,7 @@ export const CompanyInfoSection = ({ data, setFormData }: CompanyInfoSectionProp
 
   const fields = [
     { key: "company_name", label: "Company Name" },
-    { key: "company_address", label: "Company Address" }, // This correctly uses company_address
+    { key: "company_address", label: "Company Address" },
     { key: "company_contact_name", label: "Contact Person" },
     { key: "company_contact_email", label: "Contact Email" },
     { key: "company_contact_phone", label: "Contact Phone" }
