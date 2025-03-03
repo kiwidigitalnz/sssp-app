@@ -43,6 +43,31 @@ const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> =
   }
 });
 
+// Function to standardize field names for DB operations
+const standardizeFieldNames = (data: any) => {
+  const fieldMappings = {
+    // Frontend camelCase to DB snake_case
+    'emergencyPlan': 'emergency_plan',
+    'assemblyPoints': 'assembly_points',
+    'emergencyEquipment': 'emergency_equipment',
+    'incidentReporting': 'incident_reporting',
+    'emergencyContacts': 'emergency_contacts',
+  };
+
+  // Create a new object with standardized field names
+  const result = { ...data };
+  
+  // Convert camelCase to snake_case fields if they exist
+  Object.entries(fieldMappings).forEach(([frontendKey, dbKey]) => {
+    if (frontendKey in result && !(dbKey in result)) {
+      result[dbKey] = result[frontendKey];
+      delete result[frontendKey];
+    }
+  });
+  
+  return result;
+};
+
 async function fetchSSSP(id: string) {
   // Use the retry utility for better resilience
   return retry(async () => {
@@ -95,7 +120,13 @@ async function fetchSSSP(id: string) {
       toolbox_meetings: data.toolbox_meetings || '',
       reporting_procedures: data.reporting_procedures || '',
       communication_protocols: data.communication_protocols || '',
-      visitor_rules: data.visitor_rules || ''
+      visitor_rules: data.visitor_rules || '',
+      // Add camelCase aliases for frontend consumption
+      emergencyPlan: data.emergency_plan || '',
+      assemblyPoints: data.assembly_points || '',
+      emergencyEquipment: data.emergency_equipment || '',
+      incidentReporting: data.incident_reporting || '',
+      emergencyContacts: Array.isArray(data.emergency_contacts) ? data.emergency_contacts : [],
     };
 
     return transformedData;
@@ -335,10 +366,13 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("User not authenticated");
 
+        // Apply field name standardization before saving to the database
+        const standardizedData = standardizeFieldNames(dataToSave);
+
         const { error } = await supabase
           .from('sssps')
           .update({
-            ...dataToSave,
+            ...standardizedData,
             modified_by: user.id
           })
           .eq('id', options.key);

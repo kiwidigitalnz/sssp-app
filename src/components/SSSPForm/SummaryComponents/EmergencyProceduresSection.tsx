@@ -35,9 +35,12 @@ export const EmergencyProceduresSection = ({ data, setFormData }: EmergencyProce
   };
 
   const handleSave = (key: string) => {
+    // Always save to the database field name format
+    const dbKey = key === "assemblyPoints" ? "assembly_points" : key;
+    
     setFormData({
       ...data,
-      [key]: tempValue
+      [dbKey]: tempValue
     });
     setEditingField(null);
     setTempValue("");
