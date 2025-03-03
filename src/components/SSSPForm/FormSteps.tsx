@@ -60,7 +60,7 @@ export const FormSteps = ({ totalSteps, currentStep, onStepChange }: FormStepsPr
                       >
                         {status === "completed" ? (
                           <div className="flex items-center">
-                            <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 cursor-pointer hover:from-primary/90 hover:to-primary/70 transition-all duration-300 shadow-md">
+                            <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-primary cursor-pointer hover:bg-primary/90 transition-all duration-300 shadow-md">
                               <svg
                                 className="h-4 w-4 text-white"
                                 viewBox="0 0 12 12"

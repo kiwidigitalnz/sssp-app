@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
@@ -20,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
 import type { SSSP } from "@/types/sssp";
 import { Button } from "@/components/ui/button";
-import { Activity, FileDown, Share, MoreHorizontal } from "lucide-react";
+import { Activity, FileDown, Share, MoreHorizontal, Save, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -270,13 +271,37 @@ export default function SSSPForm() {
           status={formData.status || "draft"}
           isNew={isNew}
           isLoading={isSaving}
-          onCancel={handleCancel}
-          onSave={handleSaveWithFeedback}
+          onCancel={null} // Remove cancel handler from header
+          onSave={null} // Remove save handler from header
           currentStep={currentStep}
           saveButtonText={saveButtonText}
         />
 
         <div className="flex items-center space-x-2">
+          {/* Cancel Button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleCancel}
+            className="gap-1"
+          >
+            <X className="h-4 w-4" />
+            Cancel
+          </Button>
+          
+          {/* Save Button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handleSaveWithFeedback(true)}
+            disabled={isSaving}
+            className="gap-1"
+          >
+            <Save className="h-4 w-4" />
+            {saveButtonText}
+          </Button>
+          
+          {/* Actions Button */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1">
