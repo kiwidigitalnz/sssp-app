@@ -13,8 +13,10 @@ import "./App.css";
 function App() {
   return (
     <div className="min-h-screen w-full bg-gray-50 flex flex-col">
-      <TopNav />
-      <main className="flex-1">
+      <div className="fixed-top-nav">
+        <TopNav />
+      </div>
+      <main className="flex-1 main-with-fixed-header">
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />

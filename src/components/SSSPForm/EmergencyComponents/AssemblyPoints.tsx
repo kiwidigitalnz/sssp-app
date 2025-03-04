@@ -7,7 +7,7 @@ import type { SectionComponentProps } from "@/types/sssp/ui";
 
 export const AssemblyPoints = ({ value, onChange }: SectionComponentProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mb-8"> {/* Added bottom margin for consistent spacing */}
       <div className="flex items-center gap-2 border-b pb-2">
         <Users className="h-5 w-5" />
         <h3 className="text-lg font-semibold">Assembly Points</h3>

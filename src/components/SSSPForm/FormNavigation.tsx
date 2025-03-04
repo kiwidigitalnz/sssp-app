@@ -90,10 +90,10 @@ export const FormNavigation = ({
 
   return (
     <TooltipProvider>
-      <div className="py-4">
+      <div className="py-3"> {/* Reduced vertical padding */}
         {/* Last Saved Indicator */}
         {lastSaved && (
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end mb-2"> {/* Reduced margin */}
             <Badge variant="outline" className="text-xs text-gray-500">
               Last saved: {lastSaved.toLocaleTimeString()}
             </Badge>
@@ -108,6 +108,7 @@ export const FormNavigation = ({
               onClick={handlePrev}
               disabled={isFirstStep}
               className="gap-1"
+              size="sm" {/* Changed to small size */}
             >
               <ChevronLeft className="h-4 w-4" />
               Back
@@ -136,6 +137,7 @@ export const FormNavigation = ({
                     saveForm(true);
                   }}
                   className="gap-1"
+                  size="sm" {/* Changed to small size */}
                 >
                   <Save className="h-4 w-4" />
                   Save
@@ -147,6 +149,7 @@ export const FormNavigation = ({
                 onClick={handleNext}
                 disabled={isLastStep || !isValid}
                 className="gap-1"
+                size="sm" {/* Changed to small size */}
               >
                 {getNextButtonText()}
                 {getNextButtonIcon()}
@@ -156,7 +159,7 @@ export const FormNavigation = ({
         </div>
 
         {/* Mobile progress indicator */}
-        <div className="block md:hidden mt-4">
+        <div className="block md:hidden mt-2"> {/* Reduced margin */}
           <div className="text-center text-sm text-gray-500">
             Step {currentStep + 1} of {totalSteps + 1}
           </div>

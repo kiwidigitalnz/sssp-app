@@ -7,7 +7,7 @@ import type { SectionComponentProps } from "@/types/sssp/ui";
 
 export const IncidentReporting = ({ value, onChange }: SectionComponentProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mb-12"> {/* Added extra bottom margin */}
       <div className="flex items-center gap-2 border-b pb-2">
         <BellRing className="h-5 w-5" />
         <h3 className="text-lg font-semibold">Incident Reporting</h3>

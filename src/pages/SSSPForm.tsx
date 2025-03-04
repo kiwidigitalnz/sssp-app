@@ -273,8 +273,8 @@ export default function SSSPForm() {
   }, [currentStep, formData, setFormData, isLoading]);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
-      <div className="sticky top-0 z-10 bg-gray-50 pt-2 pb-4">
+    <div className="container mx-auto px-4 py-4 max-w-6xl space-y-6">
+      <div className="sticky top-0 z-10 bg-gray-50 pt-2 pb-4 mb-4">
         <div className="flex justify-between items-center">
           <FormHeader
             id={id}
@@ -406,12 +406,14 @@ export default function SSSPForm() {
 
       {/* Apply the content-area class to ensure proper padding */}
       <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm space-y-6 mb-16 content-area">
-        <ScrollArea className="h-[calc(100vh-300px)] pr-4 overflow-y-auto">
-          {renderStepContent()}
-        </ScrollArea>
+        <div className="h-[calc(100vh-320px)]">
+          <ScrollArea className="h-full w-full pr-4 overflow-y-auto">
+            {renderStepContent()}
+          </ScrollArea>
+        </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t z-10">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t z-10 sticky-footer">
         <div className="container mx-auto max-w-6xl px-4">
           <FormNavigation
             currentStep={currentStep}

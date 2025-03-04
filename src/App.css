@@ -77,7 +77,7 @@ body, #root {
 
 /* Additional layout helpers */
 .content-area {
-  padding-bottom: 80px; /* Increased padding to ensure content doesn't get hidden behind the fixed navigation */
+  padding-bottom: 120px; /* Increased padding to ensure no content is hidden behind the fixed navigation */
 }
 
 /* Sticky elements */
@@ -95,4 +95,20 @@ body, #root {
   z-index: 10;
   background-color: hsl(var(--background));
   border-top: 1px solid hsl(var(--border));
+}
+
+/* Fixed top navigation */
+.fixed-top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background-color: white;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+/* Main content padding for fixed header */
+.main-with-fixed-header {
+  padding-top: 60px; /* Adjust based on your header height */
 }
