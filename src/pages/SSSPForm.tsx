@@ -404,8 +404,9 @@ export default function SSSPForm() {
         </DialogContent>
       </Dialog>
 
-      <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm space-y-6 mb-16">
-        <ScrollArea className="h-[calc(100vh-300px)] pr-4">
+      {/* Apply the content-area class to ensure proper padding */}
+      <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm space-y-6 mb-16 content-area">
+        <ScrollArea className="h-[calc(100vh-300px)] pr-4 overflow-y-auto">
           {renderStepContent()}
         </ScrollArea>
       </div>

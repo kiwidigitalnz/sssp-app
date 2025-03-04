@@ -77,7 +77,7 @@ body, #root {
 
 /* Additional layout helpers */
 .content-area {
-  padding-bottom: 70px; /* Ensure content doesn't get hidden behind the fixed navigation */
+  padding-bottom: 80px; /* Increased padding to ensure content doesn't get hidden behind the fixed navigation */
 }
 
 /* Sticky elements */
