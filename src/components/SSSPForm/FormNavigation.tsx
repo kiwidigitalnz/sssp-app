@@ -90,10 +90,12 @@ export const FormNavigation = ({
 
   return (
     <TooltipProvider>
-      <div className="py-3"> {/* Reduced vertical padding */}
+      {/* Reduced vertical padding */}
+      <div className="py-3">
         {/* Last Saved Indicator */}
         {lastSaved && (
-          <div className="flex justify-end mb-2"> {/* Reduced margin */}
+          {/* Reduced margin */}
+          <div className="flex justify-end mb-2">
             <Badge variant="outline" className="text-xs text-gray-500">
               Last saved: {lastSaved.toLocaleTimeString()}
             </Badge>
@@ -108,7 +110,8 @@ export const FormNavigation = ({
               onClick={handlePrev}
               disabled={isFirstStep}
               className="gap-1"
-              size="sm" {/* Changed to small size */}
+              /* Changed to small size */
+              size="sm"
             >
               <ChevronLeft className="h-4 w-4" />
               Back
@@ -137,7 +140,8 @@ export const FormNavigation = ({
                     saveForm(true);
                   }}
                   className="gap-1"
-                  size="sm" {/* Changed to small size */}
+                  /* Changed to small size */
+                  size="sm"
                 >
                   <Save className="h-4 w-4" />
                   Save
@@ -149,7 +153,8 @@ export const FormNavigation = ({
                 onClick={handleNext}
                 disabled={isLastStep || !isValid}
                 className="gap-1"
-                size="sm" {/* Changed to small size */}
+                /* Changed to small size */
+                size="sm"
               >
                 {getNextButtonText()}
                 {getNextButtonIcon()}
@@ -159,7 +164,8 @@ export const FormNavigation = ({
         </div>
 
         {/* Mobile progress indicator */}
-        <div className="block md:hidden mt-2"> {/* Reduced margin */}
+        {/* Reduced margin */}
+        <div className="block md:hidden mt-2">
           <div className="text-center text-sm text-gray-500">
             Step {currentStep + 1} of {totalSteps + 1}
           </div>
