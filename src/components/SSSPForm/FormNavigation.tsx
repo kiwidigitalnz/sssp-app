@@ -94,7 +94,7 @@ export const FormNavigation = ({
       <div className="py-3">
         {/* Last Saved Indicator */}
         {lastSaved && (
-          {/* Reduced margin */}
+          /* Reduced margin */
           <div className="flex justify-end mb-2">
             <Badge variant="outline" className="text-xs text-gray-500">
               Last saved: {lastSaved.toLocaleTimeString()}
