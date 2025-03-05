@@ -1,4 +1,3 @@
-
 import { PostgrestError, PostgrestResponse, PostgrestSingleResponse } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -131,4 +130,28 @@ export function safelyGetNestedProperty<T = any>(
   }
   
   return current as T;
+}
+
+// Helper to convert form data types to database-compatible types
+export function convertFormDataForSupabase<T extends object>(formData: T): any {
+  // Create a deep copy of the formData
+  const convertedData = { ...formData };
+  
+  // Process arrays to ensure they're compatible with Supabase's Json[] type
+  Object.keys(convertedData).forEach(key => {
+    const value = (convertedData as any)[key];
+    
+    // Convert array objects to plain objects if they have complex types
+    if (Array.isArray(value)) {
+      (convertedData as any)[key] = value.map(item => {
+        if (typeof item === 'object' && item !== null) {
+          // Convert to a simple object with no methods
+          return { ...item };
+        }
+        return item;
+      });
+    }
+  });
+  
+  return convertedData;
 }

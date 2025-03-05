@@ -1,6 +1,7 @@
 
 import { z } from "zod";
 import type { SSSP } from "./base";
+import type { Json } from "@/integrations/supabase/types";
 
 // Form-specific types
 export interface SSSPFormData extends Partial<SSSP> {
@@ -22,7 +23,7 @@ export interface SSSPFormData extends Partial<SSSP> {
   emergencyPlan?: string; // camelCase version
   emergency_plan?: string; // snake_case version
   emergencyContacts?: EmergencyContactFormData[]; // camelCase version
-  emergency_contacts?: EmergencyContactFormData[]; // snake_case version
+  emergency_contacts?: EmergencyContactFormData[] | Json[]; // snake_case version - now allows Json[] type
   assemblyPoints?: string; // camelCase version
   assembly_points?: string; // snake_case version
   emergencyEquipment?: string; // camelCase version
@@ -60,7 +61,9 @@ export interface HazardFormData {
 
 export type Hazard = HazardFormData;
 
+// Make emergency contact compatible with Json by ensuring it's a simple object
 export interface EmergencyContactFormData {
+  [key: string]: string | number | null | undefined; // Add index signature for Json compatibility
   name: string;
   role: string;
   phone: string;

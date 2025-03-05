@@ -5,6 +5,7 @@ import type { SSSP } from '@/types/sssp/base';
 import type { SSSPFormData } from '@/types/sssp/forms';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { logActivity, getFieldDisplayName, FieldChange } from "@/utils/activityLogging";
+import { convertFormDataForSupabase } from "@/utils/supabaseHelpers";
 
 const SAVE_DEBOUNCE_TIME = 2000; // 2 seconds
 const MINIMUM_SAVE_INTERVAL = 5000; // 5 seconds
@@ -376,12 +377,13 @@ export function useFormPersistence<T extends Partial<SSSPFormData>>(options: For
         if (!user) throw new Error("User not authenticated");
 
         const standardizedData = standardizeFieldNames(dataToSave);
-        console.log("Saving data to Supabase:", standardizedData);
+        const supabaseData = convertFormDataForSupabase(standardizedData);
+        console.log("Saving data to Supabase:", supabaseData);
 
         const { error } = await supabase
           .from('sssps')
           .update({
-            ...standardizedData,
+            ...supabaseData,
             modified_by: user.id
           })
           .eq('id', options.key);

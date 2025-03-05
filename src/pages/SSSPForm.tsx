@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
@@ -18,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
+import { convertFormDataForSupabase } from "@/utils/supabaseHelpers";
 import type { SSSPFormData } from "@/types/sssp/forms";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Save, X, Activity, FileDown, Share } from "lucide-react";
@@ -151,7 +153,8 @@ export default function SSSPForm() {
 
           console.log("Creating new SSSP with data:", formData);
 
-          const newSSSP = {
+          // Create a new SSSP object with properly converted data for Supabase
+          const newSSSP = convertFormDataForSupabase({
             ...formData,
             created_by: user.id,
             modified_by: user.id,
@@ -159,7 +162,7 @@ export default function SSSPForm() {
             title: formData.title || formData.projectName || "Untitled SSSP",
             company_name: formData.company_name || "Unknown Company",
             status: formData.status || "draft"
-          };
+          });
 
           const { data, error } = await supabase
             .from("sssps")
