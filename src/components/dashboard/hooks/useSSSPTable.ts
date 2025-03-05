@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -32,47 +31,70 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
 
-  const { data: sharedUsers = {}, refetch: refetchSharedUsers } = useQuery({
-    queryKey: ['shared-users', selectedSSSP?.id],
+  const { data: sharedUsers = {}, refetch: refetchSharedUsers, isLoading: isLoadingSharedUsers } = useQuery({
+    queryKey: ['shared-users', sssps.map(s => s.id).join(',')],
     queryFn: async () => {
-      if (!selectedSSSP) return {};
+      if (!sssps || sssps.length === 0) return {};
 
+      console.log("Fetching shared users for SSPSs:", sssps.map(s => s.id));
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Use regular from() and call the RPC function using SQL
-      const { data, error } = await supabase
-        .from('sssp_access')
-        .select(`
-          user_id,
-          access_level,
-          profiles:user_id (
-            email,
-            first_name,
-            last_name
-          )
-        `)
-        .eq('sssp_id', selectedSSSP.id);
+      const sspsIds = sssps.map(s => s.id);
+      
+      const result: Record<string, SharedUser[]> = {};
+      
+      const batchSize = 10;
+      for (let i = 0; i < sspsIds.length; i += batchSize) {
+        const batchIds = sspsIds.slice(i, i + batchSize);
+        
+        const { data, error } = await supabase
+          .from('sssp_access')
+          .select(`
+            sssp_id,
+            user_id,
+            access_level,
+            profiles:user_id (
+              id,
+              email,
+              first_name,
+              last_name
+            )
+          `)
+          .in('sssp_id', batchIds);
 
-      if (error) {
-        console.error('Error fetching shared users:', error);
-        return { [selectedSSSP.id]: [] };
+        if (error) {
+          console.error('Error fetching shared users for batch:', error);
+          continue;
+        }
+
+        if (data) {
+          for (const item of data) {
+            if (!result[item.sssp_id]) {
+              result[item.sssp_id] = [];
+            }
+            
+            const email = safelyGetNestedProperty(item?.profiles, ['email'], '');
+            
+            if (email) {
+              result[item.sssp_id].push({
+                email,
+                access_level: item.access_level,
+                status: 'active',
+                is_creator: item.user_id === user.id
+              });
+            }
+          }
+        }
       }
 
-      // Transform the data to match the SharedUser type with safe property access
-      const sharedUsersArray = Array.isArray(data) ? data.map(item => ({
-        // Use safelyGetNestedProperty to safely extract the email with a fallback
-        email: safelyGetNestedProperty(item?.profiles, ['email'], ''), 
-        access_level: item.access_level,
-        status: 'active',
-        is_creator: item.user_id === user.id
-      })) : [];
-      
-      return { [selectedSSSP.id]: sharedUsersArray };
+      console.log("Shared users result:", result);
+      return result;
     },
-    enabled: !!selectedSSSP && shareDialogOpen,
-    staleTime: 1000 * 60 * 10,
-    gcTime: 1000 * 60 * 10
+    enabled: sssps.length > 0,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000
   });
 
   const handleShare = useCallback(async (email: string, accessLevel: 'view' | 'edit') => {
@@ -131,7 +153,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         throw new Error("User not authenticated");
       }
 
-      // Use SQL directly instead of RPC
       const { data, error } = await supabase
         .from('sssps')
         .insert({
@@ -140,7 +161,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
           status: 'draft',
           created_by: user.id,
           modified_by: user.id,
-          // Clone all other fields from the original SSSP
           ...Object.fromEntries(
             Object.entries(sssp)
               .filter(([key]) => !['id', 'title', 'created_at', 'updated_at', 'created_by', 'modified_by', 'version', 'version_history'].includes(key))
@@ -151,7 +171,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       if (error) throw error;
 
-      // Fix type compatibility issue by using type assertion
       return data as unknown as SSSP;
     },
     onMutate: async (sssp) => {
@@ -231,7 +250,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
         }
       }, 'document');
 
-      // Use direct delete with cascade instead of RPC
       const { error } = await supabase
         .from('sssps')
         .delete()
@@ -283,7 +301,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Get the user_id for the email
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -292,7 +309,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
 
       if (profileError) throw profileError;
 
-      // Delete the access record
       const { error } = await supabase
         .from('sssp_access')
         .delete()
@@ -384,7 +400,6 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Update the status directly
       const { data, error } = await supabase
         .from('sssps')
         .update({ 
@@ -466,6 +481,7 @@ export function useSSSPTable(sssps: SSSP[], onRefresh: () => void) {
     handleRevokeAccess,
     handleResendInvite,
     handleSort,
-    handleStatusChange
+    handleStatusChange,
+    isLoadingSharedUsers
   };
 }

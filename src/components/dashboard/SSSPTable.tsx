@@ -1,6 +1,6 @@
 
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Users, ArrowUpDown } from "lucide-react";
+import { Users, ArrowUpDown, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { SSSP } from "@/types/sssp";
 import { SSSPActions } from "./SSSPActions";
@@ -11,6 +11,7 @@ import { SSSPTableFilters } from "./components/SSSPTableFilters";
 import { useSSSPTable } from "./hooks/useSSSPTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { hasLength } from "@/utils/supabaseHelpers";
+import { Button } from "@/components/ui/button";
 
 export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
     sortConfig,
     generatingPdfFor,
     sharedUsers,
+    isLoadingSharedUsers,
     handleShare,
     handleClone,
     handleDelete,
@@ -44,8 +46,8 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
   const filteredAndSortedSSSPs = sssps
     .filter((sssp) => {
       const matchesSearch = 
-        sssp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sssp.company_name.toLowerCase().includes(searchTerm.toLowerCase());
+        (sssp.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (sssp.company_name?.toLowerCase() || '').includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === "all" || sssp.status === statusFilter;
 
@@ -68,8 +70,14 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       if (!sortConfig) return 0;
 
       const { key, direction } = sortConfig;
-      const aValue = a[key];
-      const bValue = b[key];
+      let aValue = a[key] || '';
+      let bValue = b[key] || '';
+
+      // Handle date comparison for 'updated_at'
+      if (key === 'updated_at') {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      }
 
       if (aValue === bValue) return 0;
       if (direction === 'asc') {
@@ -101,6 +109,19 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Your SSSPs ({sssps.length})</h2>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => onRefresh()}
+          className="flex items-center gap-1"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </Button>
+      </div>
+      
       <SSSPTableFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -149,90 +170,103 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAndSortedSSSPs.map((sssp) => {
-              // Safely get shared users count using hasLength helper
-              const sharedUsersForSSSP = sharedUsers[sssp.id] || [];
-              const sharedUserCount = hasLength(sharedUsersForSSSP) ? sharedUsersForSSSP.length : 0;
-              
-              return (
-                <TableRow 
-                  key={sssp.id} 
-                  className="cursor-pointer hover:bg-gray-50/50 transition-colors border-b border-gray-200 last:border-0"
-                >
-                  <TableCell 
-                    onClick={() => navigate(`/sssp/${sssp.id}`)}
-                    className="py-4"
+            {filteredAndSortedSSSPs.length > 0 ? (
+              filteredAndSortedSSSPs.map((sssp) => {
+                // Safely get shared users count using hasLength helper
+                const sharedUsersForSSSP = sharedUsers[sssp.id] || [];
+                const sharedUserCount = hasLength(sharedUsersForSSSP) ? sharedUsersForSSSP.length : 0;
+                
+                return (
+                  <TableRow 
+                    key={sssp.id} 
+                    className="cursor-pointer hover:bg-gray-50/50 transition-colors border-b border-gray-200 last:border-0"
                   >
-                    <div className="font-medium text-gray-900">{sssp.title}</div>
-                  </TableCell>
-                  <TableCell 
-                    onClick={() => navigate(`/sssp/${sssp.id}`)}
-                    className="py-4 text-gray-600"
-                  >
-                    {sssp.company_name}
-                  </TableCell>
-                  <TableCell 
-                    className="py-4"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Select
-                      value={sssp.status}
-                      onValueChange={(value) => handleStatusChange(sssp, value)}
+                    <TableCell 
+                      onClick={() => navigate(`/sssp/${sssp.id}`)}
+                      className="py-4"
                     >
-                      <SelectTrigger className={`w-28 h-7 border-0 ${getStatusColor(sssp.status)}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="archived">Archived</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="py-4">
-                    {sharedUserCount > 0 ? (
-                      <div className="flex gap-1.5 items-center">
-                        <Users className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          {sharedUserCount} user{sharedUserCount !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-gray-500">Not shared</span>
-                    )}
-                  </TableCell>
-                  <TableCell 
-                    onClick={() => navigate(`/sssp/${sssp.id}`)}
-                    className="py-4 text-gray-600"
-                  >
-                    {new Date(sssp.updated_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="py-4">
-                    <SSSPActions
-                      sssp={sssp}
-                      onShare={(sssp) => {
-                        setSelectedSSSP(sssp);
-                        setShareDialogOpen(true);
-                      }}
-                      onClone={handleClone}
-                      onPrintToPDF={() => {}}
-                      isGeneratingPdf={generatingPdfFor === sssp.id}
-                      onDelete={(sssp) => {
-                        setSelectedSSSP(sssp);
-                        setDeleteDialogOpen(true);
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {filteredAndSortedSSSPs.length === 0 && (
+                      <div className="font-medium text-gray-900">{sssp.title || 'Untitled SSSP'}</div>
+                    </TableCell>
+                    <TableCell 
+                      onClick={() => navigate(`/sssp/${sssp.id}`)}
+                      className="py-4 text-gray-600"
+                    >
+                      {sssp.company_name || 'No company'}
+                    </TableCell>
+                    <TableCell 
+                      className="py-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Select
+                        value={sssp.status || 'draft'}
+                        onValueChange={(value) => handleStatusChange(sssp, value)}
+                      >
+                        <SelectTrigger className={`w-28 h-7 border-0 ${getStatusColor(sssp.status || 'draft')}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="published">Published</SelectItem>
+                          <SelectItem value="archived">Archived</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      {isLoadingSharedUsers ? (
+                        <span className="text-sm text-gray-500">Loading...</span>
+                      ) : sharedUserCount > 0 ? (
+                        <div className="flex gap-1.5 items-center">
+                          <Users className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-600">
+                            {sharedUserCount} user{sharedUserCount !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500">Not shared</span>
+                      )}
+                    </TableCell>
+                    <TableCell 
+                      onClick={() => navigate(`/sssp/${sssp.id}`)}
+                      className="py-4 text-gray-600"
+                    >
+                      {sssp.updated_at ? new Date(sssp.updated_at).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <SSSPActions
+                        sssp={sssp}
+                        onShare={(sssp) => {
+                          setSelectedSSSP(sssp);
+                          setShareDialogOpen(true);
+                        }}
+                        onClone={handleClone}
+                        onPrintToPDF={() => {}}
+                        isGeneratingPdf={generatingPdfFor === sssp.id}
+                        onDelete={(sssp) => {
+                          setSelectedSSSP(sssp);
+                          setDeleteDialogOpen(true);
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
               <TableRow>
-                <TableCell 
-                  colSpan={6} 
-                  className="text-center py-8 text-gray-500"
-                >
-                  <p className="text-gray-400">No SSSPs found matching your filters</p>
+                <TableCell colSpan={6} className="text-center py-10 text-gray-500">
+                  {sssps.length === 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-gray-400">No SSSPs found</p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => navigate('/create-sssp')}
+                        className="mt-2"
+                      >
+                        Create your first SSSP
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-400">No SSSPs match your current filters</p>
+                  )}
                 </TableCell>
               </TableRow>
             )}
