@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/SSSPForm/StatusBadge";
 import { FormBreadcrumb } from "./FormBreadcrumb";
 
@@ -9,7 +10,10 @@ interface FormHeaderProps {
   status: string;
   isNew: boolean;
   isLoading: boolean;
+  onCancel: () => void;
+  onSave: (showToast?: boolean) => Promise<void>;
   currentStep: number;
+  saveButtonText: string;
 }
 
 export function FormHeader({
@@ -18,7 +22,9 @@ export function FormHeader({
   status,
   isNew,
   isLoading,
-  currentStep,
+  onCancel,
+  onSave,
+  saveButtonText = "Save",
 }: FormHeaderProps) {
   return (
     <div className="space-y-4">
@@ -33,6 +39,22 @@ export function FormHeader({
             <div className="flex items-center gap-2 mt-1">
               <StatusBadge status={status} />
             </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => onSave(true)}
+              disabled={isLoading}
+            >
+              {saveButtonText}
+            </Button>
           </div>
         </div>
       </div>

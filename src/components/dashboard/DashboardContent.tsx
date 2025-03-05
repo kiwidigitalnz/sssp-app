@@ -5,8 +5,8 @@ import { SSSPTable } from "./SSSPTable";
 import { DashboardStats } from "./DashboardStats";
 import { WelcomeHeader } from "./WelcomeHeader";
 import type { SSSP } from "@/types/sssp";
+import type { Database } from "@/integrations/supabase/types";
 import { asUUID, safelyExtractData, safelyGetProperty, isSupabaseError } from "@/utils/supabaseHelpers";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // Helper function to create an empty monitoring review object
 const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> => ({
@@ -37,61 +37,36 @@ const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> =
 });
 
 export function DashboardContent() {
-  const { data: sssps = [], refetch, isLoading, isError } = useQuery({
+  const { data: sssps = [], refetch, isLoading } = useQuery({
     queryKey: ['sssps'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      console.log("Fetching SSPSs for user:", user.id);
+      // Use the materialized view for faster query performance
+      const { data: viewData, error: viewError } = await supabase
+        .from('mv_active_sssps')
+        .select('id');
 
-      // First get the user's SSPSs
-      const { data: userSssps, error: userSsspsError } = await supabase
+      if (viewError) throw viewError;
+      
+      // Get the IDs of all SSSPs from the materialized view
+      const sssp_ids = (viewData || []).map((item: any) => item.id);
+      
+      // If no SSSPs found, return an empty array
+      if (sssp_ids.length === 0) return [];
+      
+      // Query the full SSSP data in a single batch 
+      const { data: sssp_data, error: sssp_error } = await supabase
         .from('sssps')
         .select('*')
-        .eq('user_id', user.id)
+        .in('id', sssp_ids)
         .order('updated_at', { ascending: false });
       
-      if (userSsspsError) {
-        console.error("Error fetching user SSPSs:", userSsspsError);
-        throw userSsspsError;
-      }
-
-      console.log(`Found ${userSssps?.length || 0} SSPSs for user:`, user.id);
-      
-      // Also get SSPSs that have been shared with the user
-      const { data: sharedSsspsAccess, error: sharedSsspsError } = await supabase
-        .from('sssp_access')
-        .select('sssp_id')
-        .eq('user_id', user.id);
-      
-      if (sharedSsspsError) {
-        console.error("Error fetching shared SSPSs access:", sharedSsspsError);
-        // Don't throw here, we still want to return the user's SSPSs
-      }
-
-      let allSssps = userSssps || [];
-      
-      // If the user has shared SSPSs, fetch them
-      if (sharedSsspsAccess && sharedSsspsAccess.length > 0) {
-        const sharedSsspIds = sharedSsspsAccess.map(access => access.sssp_id);
-        console.log(`Found ${sharedSsspIds.length} shared SSPSs for user:`, user.id);
-        
-        const { data: sharedSssps, error: fetchSharedError } = await supabase
-          .from('sssps')
-          .select('*')
-          .in('id', sharedSsspIds)
-          .order('updated_at', { ascending: false });
-        
-        if (fetchSharedError) {
-          console.error("Error fetching shared SSPSs:", fetchSharedError);
-        } else if (sharedSssps) {
-          allSssps = [...allSssps, ...sharedSssps];
-        }
-      }
+      if (sssp_error) throw sssp_error;
 
       // Transform the data to match the SSSP type with null checks
-      const formattedSssps: SSSP[] = allSssps.map(sssp => {
+      const formattedSssps: SSSP[] = (sssp_data || []).map(sssp => {
         // Safely extract monitoring_review or create an empty one if it doesn't exist
         const monitoringReview = sssp.monitoring_review || createEmptyMonitoringReview();
         
@@ -126,13 +101,11 @@ export function DashboardContent() {
         };
       });
 
-      console.log(`Returning ${formattedSssps.length} total SSPSs`);
       return formattedSssps;
     },
-    staleTime: 30 * 1000, // Cache for 30 seconds
+    // Update from cacheTime to gcTime for React Query v4+
+    staleTime: 60 * 1000, // Cache for 1 minute
     gcTime: 3 * 60 * 1000, // Keep in cache for 3 minutes
-    refetchOnWindowFocus: true,
-    retry: 2,
   });
 
   return (
@@ -141,24 +114,7 @@ export function DashboardContent() {
       <div className="container mx-auto py-8">
         <DashboardStats sssps={sssps} />
         <div className="mt-8">
-          {isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-12 w-full rounded-md" />
-              <Skeleton className="h-64 w-full rounded-md" />
-            </div>
-          ) : isError ? (
-            <div className="p-6 text-center bg-white rounded-lg shadow-sm">
-              <p className="text-red-500">Error loading your SSSPs. Please try refreshing the page.</p>
-              <button 
-                onClick={() => refetch()}
-                className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : (
-            <SSSPTable sssps={sssps} onRefresh={refetch} />
-          )}
+          <SSSPTable sssps={sssps} onRefresh={refetch} />
         </div>
       </div>
     </>

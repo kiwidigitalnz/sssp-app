@@ -18,7 +18,7 @@ export const IncidentReporting = ({ value, onChange }: SectionComponentProps) =>
             Outline the incident reporting and notification process
           </p>
           <QuickFillButton
-            fieldId="incident_reporting"
+            fieldId="incidentReporting"
             fieldName="Incident Reporting"
             onSelect={(value) => onChange(value)}
           />
