@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { EditableField } from "./EditableField";
+import { SSSPFormData } from "@/types/sssp/forms";
 
 interface ProjectDetailsSectionProps {
-  data: any;
-  setFormData: (data: any) => void;
+  data: SSSPFormData;
+  setFormData: (data: SSSPFormData) => void;
 }
 
 export const ProjectDetailsSection = ({ data, setFormData }: ProjectDetailsSectionProps) => {
@@ -13,11 +14,11 @@ export const ProjectDetailsSection = ({ data, setFormData }: ProjectDetailsSecti
   const [tempValue, setTempValue] = useState<string>("");
 
   const fields = [
-    { key: "title", label: "Project Name" },
-    { key: "site_address", label: "Site Address" }, // Updated to use site_address
-    { key: "start_date", label: "Start Date", isDate: true },
-    { key: "end_date", label: "End Date", isDate: true },
-    { key: "description", label: "Project Description", isTextArea: true }
+    { key: "title", label: "Project Name", correspondingKey: "projectName" },
+    { key: "site_address", label: "Site Address", correspondingKey: "siteAddress" },
+    { key: "start_date", label: "Start Date", isDate: true, correspondingKey: "startDate" },
+    { key: "end_date", label: "End Date", isDate: true, correspondingKey: "endDate" },
+    { key: "description", label: "Project Description", isTextArea: true, correspondingKey: "projectDescription" }
   ];
 
   const handleEditClick = (key: string, value: any) => {
@@ -27,7 +28,14 @@ export const ProjectDetailsSection = ({ data, setFormData }: ProjectDetailsSecti
 
   const handleSaveEdit = (key: string) => {
     const updatedData = { ...data };
+    const field = fields.find(f => f.key === key);
+    
+    // Update both camelCase and snake_case versions
     updatedData[key] = tempValue;
+    if (field?.correspondingKey) {
+      updatedData[field.correspondingKey] = tempValue;
+    }
+    
     setFormData(updatedData);
     setEditingField(null);
     toast.success("Field updated successfully");

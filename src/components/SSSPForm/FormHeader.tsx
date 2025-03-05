@@ -1,6 +1,4 @@
-
 import React from "react";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/SSSPForm/StatusBadge";
 import { FormBreadcrumb } from "./FormBreadcrumb";
 
@@ -10,8 +8,8 @@ interface FormHeaderProps {
   status: string;
   isNew: boolean;
   isLoading: boolean;
-  onCancel: () => void;
-  onSave: (showToast?: boolean) => Promise<void>;
+  onCancel: (() => void) | null;
+  onSave: ((showToast?: boolean) => Promise<void>) | null;
   currentStep: number;
   saveButtonText: string;
 }
@@ -41,21 +39,7 @@ export function FormHeader({
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={onCancel}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => onSave(true)}
-              disabled={isLoading}
-            >
-              {saveButtonText}
-            </Button>
-          </div>
+          {/* Removed duplicate buttons from here */}
         </div>
       </div>
     </div>

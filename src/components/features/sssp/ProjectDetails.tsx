@@ -10,10 +10,11 @@ import { AddressSection } from "@/components/SSSPForm/sections/AddressSection";
 import { DateSection } from "@/components/SSSPForm/sections/DateSection";
 import { DescriptionSection } from "@/components/SSSPForm/sections/DescriptionSection";
 import { projectDetailsSchema, type ProjectDetailsFormData } from "@/components/SSSPForm/validation/projectDetailsSchema";
+import { SSSPFormData } from "@/types/sssp/forms";
 
 interface ProjectDetailsProps {
-  formData: any;
-  setFormData: (data: any) => void;
+  formData: SSSPFormData;
+  setFormData: (data: SSSPFormData) => void;
   isLoading?: boolean;
 }
 
@@ -28,48 +29,68 @@ export const ProjectDetails = ({ formData, setFormData, isLoading }: ProjectDeta
   } = useForm<ProjectDetailsFormData>({
     resolver: zodResolver(projectDetailsSchema),
     defaultValues: {
-      projectName: formData?.title || "",
-      siteAddress: formData?.site_address || "", // Updated to use site_address
-      startDate: formData?.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : "",
-      endDate: formData?.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : "",
-      projectDescription: formData?.description || ""
+      projectName: formData?.title || formData?.projectName || "",
+      siteAddress: formData?.site_address || formData?.siteAddress || "",
+      startDate: formData?.start_date || formData?.startDate 
+        ? new Date(formData.start_date || formData.startDate || "").toISOString().split('T')[0]
+        : "",
+      endDate: formData?.end_date || formData?.endDate
+        ? new Date(formData.end_date || formData.endDate || "").toISOString().split('T')[0]
+        : "",
+      projectDescription: formData?.description || formData?.projectDescription || ""
     }
   });
 
+  // Debug logged data
+  useEffect(() => {
+    console.log("ProjectDetails component formData:", formData);
+  }, [formData]);
+
   useEffect(() => {
     if (formData) {
-      setValue("projectName", formData.title || "");
-      setValue("siteAddress", formData.site_address || ""); // Updated to use site_address
-      setValue("startDate", formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : "");
-      setValue("endDate", formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : "");
-      setValue("projectDescription", formData.description || "");
+      setValue("projectName", formData.title || formData.projectName || "");
+      setValue("siteAddress", formData.site_address || formData.siteAddress || "");
+      setValue("startDate", (formData.start_date || formData.startDate)
+        ? new Date(formData.start_date || formData.startDate || "").toISOString().split('T')[0]
+        : "");
+      setValue("endDate", (formData.end_date || formData.endDate)
+        ? new Date(formData.end_date || formData.endDate || "").toISOString().split('T')[0]
+        : "");
+      setValue("projectDescription", formData.description || formData.projectDescription || "");
     }
   }, [formData, setValue]);
 
   const handleFieldChange = async (field: keyof ProjectDetailsFormData, value: string) => {
-    const updates: any = {
+    // Create a copy of formData to update
+    const updates: SSSPFormData = {
       ...formData,
     };
 
-    // Map form fields to database fields
+    // Map form fields to database fields - update both camelCase and snake_case versions
     switch (field) {
       case "projectName":
+        updates.projectName = value;
         updates.title = value;
         break;
       case "siteAddress":
-        updates.site_address = value; // Updated to use site_address
+        updates.siteAddress = value;
+        updates.site_address = value;
         break;
       case "startDate":
+        updates.startDate = value;
         updates.start_date = value;
         break;
       case "endDate":
+        updates.endDate = value;
         updates.end_date = value;
         break;
       case "projectDescription":
+        updates.projectDescription = value;
         updates.description = value;
         break;
     }
 
+    console.log("Updating ProjectDetails with:", updates);
     setFormData(updates);
     setValue(field, value);
     const result = await trigger(field);

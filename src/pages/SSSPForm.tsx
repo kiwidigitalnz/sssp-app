@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
@@ -20,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
 import type { SSSP } from "@/types/sssp";
 import { Button } from "@/components/ui/button";
-import { Activity, FileDown, Share, MoreHorizontal, Save, X } from "lucide-react";
+import { MoreHorizontal, Save, X, Activity, FileDown, Share } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,6 +79,11 @@ export default function SSSPForm() {
       status: "draft",
     },
   });
+
+  // Debug formData when it changes
+  useEffect(() => {
+    console.log("Current form data:", formData);
+  }, [formData]);
 
   useEffect(() => {
     if (id) {
@@ -147,6 +153,7 @@ export default function SSSPForm() {
 
           console.log("Creating new SSSP with data:", formData);
 
+          // Make sure we're not losing the title when creating new SSSP
           const newSSSP = {
             ...formData,
             created_by: user.id,
@@ -190,7 +197,17 @@ export default function SSSPForm() {
           });
         }
       } else {
+        // Make sure title is preserved when saving existing SSSP
         console.log("Saving existing SSSP with data:", formData);
+        
+        // Make sure we're preserving existing data, especially the title
+        if (!formData.title && formData.projectName) {
+          setFormData({
+            ...formData,
+            title: formData.projectName
+          });
+        }
+        
         await save();
         
         if (showToast) {

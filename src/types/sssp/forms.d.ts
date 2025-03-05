@@ -1,20 +1,45 @@
-
 import { z } from "zod";
 import type { SSSP } from "./base";
 
 // Form-specific types
 export interface SSSPFormData extends Partial<SSSP> {
   isDraft?: boolean;
-  emergencyPlan?: string;
-  emergency_plan?: string; // Add snake_case version
-  emergencyContacts?: EmergencyContactFormData[];
-  emergency_contacts?: EmergencyContactFormData[]; // Add snake_case version
-  assemblyPoints?: string;
-  assembly_points?: string; // Add snake_case version
-  emergencyEquipment?: string;
-  emergency_equipment?: string; // Add snake_case version
-  incidentReporting?: string;
-  incident_reporting?: string; // Add snake_case version
+  
+  // Project details fields (both camelCase and snake_case)
+  projectName?: string; // camelCase version
+  title?: string; // snake_case version
+  siteAddress?: string; // camelCase version
+  site_address?: string; // snake_case version
+  projectDescription?: string; // camelCase version  
+  description?: string; // snake_case version
+  startDate?: string; // camelCase version
+  start_date?: string; // snake_case version
+  endDate?: string; // camelCase version
+  end_date?: string; // snake_case version
+  
+  // Emergency related fields (both camelCase and snake_case)
+  emergencyPlan?: string; // camelCase version
+  emergency_plan?: string; // snake_case version
+  emergencyContacts?: EmergencyContactFormData[]; // camelCase version
+  emergency_contacts?: EmergencyContactFormData[]; // snake_case version
+  assemblyPoints?: string; // camelCase version
+  assembly_points?: string; // snake_case version
+  emergencyEquipment?: string; // camelCase version
+  emergency_equipment?: string; // snake_case version
+  incidentReporting?: string; // camelCase version
+  incident_reporting?: string; // snake_case version
+  
+  // Company info fields (both camelCase and snake_case)
+  companyName?: string; // camelCase version
+  company_name?: string; // snake_case version
+  companyAddress?: string; // camelCase version  
+  company_address?: string; // snake_case version
+  companyContactName?: string; // camelCase version
+  company_contact_name?: string; // snake_case version
+  companyContactEmail?: string; // camelCase version
+  company_contact_email?: string; // snake_case version
+  companyContactPhone?: string; // camelCase version
+  company_contact_phone?: string; // snake_case version
 }
 
 export interface ProjectDetailsFormData {
