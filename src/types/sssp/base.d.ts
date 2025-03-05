@@ -4,9 +4,11 @@ export interface SSSP {
   id: string;
   title: string;
   description?: string;
+  projectName?: string; // Add projectName as an optional property
   company_name: string;
   company_address?: string;
   site_address?: string;
+  siteAddress?: string; // Add camelCase version
   company_contact_name?: string;
   company_contact_email?: string;
   company_contact_phone?: string;
@@ -79,7 +81,9 @@ export interface SSSP {
   created_at: string;
   updated_at: string;
   start_date?: string;
+  startDate?: string; // Add camelCase version
   end_date?: string;
+  endDate?: string; // Add camelCase version
   version: number;
   version_history?: any[];
   user_id?: string | null;
