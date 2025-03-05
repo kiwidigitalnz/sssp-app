@@ -70,13 +70,23 @@ export function SSSPTable({ sssps, onRefresh }: SSSPTableProps) {
       if (!sortConfig) return 0;
 
       const { key, direction } = sortConfig;
-      let aValue = a[key] || '';
-      let bValue = b[key] || '';
+      
+      // Fix for the typing issues - safely handle different value types
+      let aValue: any = a[key as keyof SSSP];
+      let bValue: any = b[key as keyof SSSP];
 
       // Handle date comparison for 'updated_at'
       if (key === 'updated_at') {
-        aValue = new Date(aValue).getTime();
-        bValue = new Date(bValue).getTime();
+        // Ensure we're working with valid date strings before creating Date objects
+        const aDate = typeof aValue === 'string' ? new Date(aValue).getTime() : 0;
+        const bDate = typeof bValue === 'string' ? new Date(bValue).getTime() : 0;
+        
+        aValue = aDate;
+        bValue = bDate;
+      } else {
+        // For non-date values, convert to string for comparison (or use empty string if undefined)
+        aValue = (aValue !== undefined && aValue !== null) ? String(aValue) : '';
+        bValue = (bValue !== undefined && bValue !== null) ? String(bValue) : '';
       }
 
       if (aValue === bValue) return 0;
