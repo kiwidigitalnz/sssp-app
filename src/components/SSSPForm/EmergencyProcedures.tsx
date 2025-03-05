@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,22 +51,27 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
             email: contact.email
           }));
 
-          setFormData({
+          const updatedFormData = {
             ...formData,
+            emergency_plan: data.emergency_plan || '',
+            emergency_contacts: emergencyContacts,
+            assembly_points: data.assembly_points || '',
+            emergency_equipment: data.emergency_equipment || '',
+            incident_reporting: data.incident_reporting || '',
             emergencyPlan: data.emergency_plan || '',
             emergencyContacts,
-            // Map from snake_case (DB) to camelCase (frontend)
             assemblyPoints: data.assembly_points || '',
             emergencyEquipment: data.emergency_equipment || '',
             incidentReporting: data.incident_reporting || ''
-          });
+          };
 
+          setFormData(updatedFormData);
           setContacts(emergencyContacts);
         }
       }
     };
 
-    if (!formData.emergencyPlan) {
+    if (!formData.emergencyPlan && !formData.emergency_plan) {
       fetchSSSPData();
     }
   }, [id]);
@@ -112,26 +116,50 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
     };
     const newContacts = [...contacts, newContact];
     setContacts(newContacts);
-    setFormData({ ...formData, emergencyContacts: newContacts });
+    setFormData({ 
+      ...formData, 
+      emergencyContacts: newContacts,
+      emergency_contacts: newContacts 
+    });
   };
 
   const updateContact = (index: number, field: keyof EmergencyContactFormData, value: string) => {
     const newContacts = [...contacts];
     newContacts[index] = { ...newContacts[index], [field]: value };
     setContacts(newContacts);
-    setFormData({ ...formData, emergencyContacts: newContacts });
+    setFormData({ 
+      ...formData, 
+      emergencyContacts: newContacts,
+      emergency_contacts: newContacts
+    });
   };
 
   const deleteContact = (index: number) => {
     const newContacts = contacts.filter((_, i) => i !== index);
     setContacts(newContacts);
-    setFormData({ ...formData, emergencyContacts: newContacts });
+    setFormData({ 
+      ...formData, 
+      emergencyContacts: newContacts,
+      emergency_contacts: newContacts
+    });
   };
 
   const addMultipleContacts = (selectedContacts: EmergencyContactFormData[]) => {
     const newContacts = [...contacts, ...selectedContacts];
     setContacts(newContacts);
-    setFormData({ ...formData, emergencyContacts: newContacts });
+    setFormData({ 
+      ...formData, 
+      emergencyContacts: newContacts,
+      emergency_contacts: newContacts
+    });
+  };
+
+  const updateField = (camelField: string, snakeField: string, value: string) => {
+    setFormData({ 
+      ...formData, 
+      [camelField]: value,
+      [snakeField]: value 
+    });
   };
 
   return (
@@ -181,23 +209,23 @@ export const EmergencyProcedures: React.FC<EmergencyProceduresProps> = ({
           </div>
 
           <EmergencyResponsePlan
-            value={formData.emergencyPlan || ""}
-            onChange={(value) => setFormData({ ...formData, emergencyPlan: value })}
+            value={formData.emergencyPlan || formData.emergency_plan || ""}
+            onChange={(value) => updateField('emergencyPlan', 'emergency_plan', value)}
           />
 
           <AssemblyPoints
-            value={formData.assemblyPoints || ""}
-            onChange={(value) => setFormData({ ...formData, assemblyPoints: value })}
+            value={formData.assemblyPoints || formData.assembly_points || ""}
+            onChange={(value) => updateField('assemblyPoints', 'assembly_points', value)}
           />
 
           <EmergencyEquipment
-            value={formData.emergencyEquipment || ""}
-            onChange={(value) => setFormData({ ...formData, emergencyEquipment: value })}
+            value={formData.emergencyEquipment || formData.emergency_equipment || ""}
+            onChange={(value) => updateField('emergencyEquipment', 'emergency_equipment', value)}
           />
 
           <IncidentReporting
-            value={formData.incidentReporting || ""}
-            onChange={(value) => setFormData({ ...formData, incidentReporting: value })}
+            value={formData.incidentReporting || formData.incident_reporting || ""}
+            onChange={(value) => updateField('incidentReporting', 'incident_reporting', value)}
           />
         </CardContent>
       </Card>

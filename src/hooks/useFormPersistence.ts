@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, retry } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -45,7 +44,7 @@ const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> =
 
 // Function to standardize field names for DB operations
 const standardizeFieldNames = (data: any) => {
-  const fieldMappings = {
+  const fieldMappings: Record<string, string> = {
     // Frontend camelCase to DB snake_case
     'emergencyPlan': 'emergency_plan',
     'assemblyPoints': 'assembly_points',
@@ -57,11 +56,18 @@ const standardizeFieldNames = (data: any) => {
   // Create a new object with standardized field names
   const result = { ...data };
   
-  // Convert camelCase to snake_case fields if they exist
+  // Convert camelCase to snake_case fields
   Object.entries(fieldMappings).forEach(([frontendKey, dbKey]) => {
-    if (frontendKey in result && !(dbKey in result)) {
+    // Check if the frontend key exists and the DB key doesn't already have a value
+    if (frontendKey in result) {
+      // Add or update the DB key with the frontend value
       result[dbKey] = result[frontendKey];
-      delete result[frontendKey];
+      
+      // Only delete the frontend key if it's different from the DB key
+      // This prevents removing data we need
+      if (frontendKey !== dbKey) {
+        delete result[frontendKey];
+      }
     }
   });
   
@@ -368,6 +374,8 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
 
         // Apply field name standardization before saving to the database
         const standardizedData = standardizeFieldNames(dataToSave);
+        
+        console.log("Saving standardized data to DB:", JSON.stringify(standardizedData, null, 2));
 
         const { error } = await supabase
           .from('sssps')
@@ -377,7 +385,10 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           })
           .eq('id', options.key);
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error saving to database:", error);
+          throw error;
+        }
 
         // Identify field changes with old and new values
         const fieldChanges = getFieldChanges(previousDataRef.current || {}, dataToSave);
