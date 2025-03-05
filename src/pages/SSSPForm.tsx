@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
@@ -19,7 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/utils/activityLogging";
-import type { SSSP } from "@/types/sssp";
+import type { SSSPFormData } from "@/types/sssp/forms";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Save, X, Activity, FileDown, Share } from "lucide-react";
 import {
@@ -69,7 +68,7 @@ export default function SSSPForm() {
     save,
     isLoading,
     error,
-  } = useFormPersistence({
+  } = useFormPersistence<SSSPFormData>({
     key: id || "new-sssp",
     initialData: {
       title: "",
@@ -80,7 +79,6 @@ export default function SSSPForm() {
     },
   });
 
-  // Debug formData when it changes
   useEffect(() => {
     console.log("Current form data:", formData);
   }, [formData]);
@@ -153,7 +151,6 @@ export default function SSSPForm() {
 
           console.log("Creating new SSSP with data:", formData);
 
-          // Make sure we're not losing the title when creating new SSSP
           const newSSSP = {
             ...formData,
             created_by: user.id,
@@ -166,7 +163,7 @@ export default function SSSPForm() {
 
           const { data, error } = await supabase
             .from("sssps")
-            .insert(newSSSP as any)
+            .insert(newSSSP)
             .select()
             .single();
 
@@ -197,10 +194,8 @@ export default function SSSPForm() {
           });
         }
       } else {
-        // Make sure title is preserved when saving existing SSSP
         console.log("Saving existing SSSP with data:", formData);
         
-        // Make sure we're preserving existing data, especially the title
         if (!formData.title && formData.projectName) {
           setFormData({
             ...formData,

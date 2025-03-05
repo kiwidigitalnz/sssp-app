@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, retry } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import type { SSSP } from '@/types/sssp';
+import type { SSSP } from '@/types/sssp/base';
+import type { SSSPFormData } from '@/types/sssp/forms';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { logActivity, getFieldDisplayName, FieldChange } from "@/utils/activityLogging";
 
-// Add debounce time constants
 const SAVE_DEBOUNCE_TIME = 2000; // 2 seconds
 const MINIMUM_SAVE_INTERVAL = 5000; // 5 seconds
 
@@ -14,7 +14,6 @@ export interface FormPersistenceOptions {
   initialData?: any;
 }
 
-// Helper function to create an empty monitoring review object for type safety
 const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> => ({
   review_schedule: {
     frequency: '',
@@ -43,7 +42,6 @@ const createEmptyMonitoringReview = (): NonNullable<SSSP['monitoring_review']> =
 });
 
 async function fetchSSSP(id: string) {
-  // Use the retry utility for better resilience
   return retry(async () => {
     const { data, error } = await supabase
       .from('sssps')
@@ -101,7 +99,7 @@ async function fetchSSSP(id: string) {
   });
 }
 
-export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersistenceOptions) {
+export function useFormPersistence<T extends Partial<SSSPFormData>>(options: FormPersistenceOptions) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const lastSavedRef = useRef<string | null>(null);
@@ -149,7 +147,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     }
   }, [data]);
 
-  // Function to identify what fields have changed with old and new values
   const getFieldChanges = (oldData: any, newData: any, prefix = ''): FieldChange[] => {
     if (!oldData || typeof oldData !== 'object' || !newData || typeof newData !== 'object') {
       if (oldData !== newData) {
@@ -163,10 +160,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       return [];
     }
 
-    // Special handling for arrays
     if (Array.isArray(newData)) {
-      // For simple tracking of array changes, just note that it changed
-      // For more complex tracking, we'd need to implement array diffing
       if (JSON.stringify(oldData) !== JSON.stringify(newData)) {
         return [{
           field: prefix.slice(0, -1),
@@ -178,11 +172,9 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       return [];
     }
 
-    // Track changes in objects by recursively checking properties
     return Object.keys(newData).reduce((changes, key) => {
       const newPath = prefix + key;
       
-      // Skip arrays with special handling
       if (Array.isArray(newData[key])) {
         if (JSON.stringify(oldData?.[key]) !== JSON.stringify(newData[key])) {
           changes.push({
@@ -195,7 +187,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
         return changes;
       }
       
-      // Recursively check nested objects
       if (
         typeof newData[key] === 'object' && 
         newData[key] !== null &&
@@ -209,7 +200,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
         ];
       }
       
-      // Check primitive values
       if (oldData?.[key] !== newData[key]) {
         changes.push({
           field: newPath,
@@ -223,13 +213,10 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     }, [] as FieldChange[]);
   };
 
-  // Function to standardize field names between camelCase and snake_case
   const standardizeFieldNames = (data: any): any => {
     if (!data || typeof data !== 'object') return data;
     
-    // Define field mappings between camelCase and snake_case
     const fieldMappings: Record<string, string> = {
-      // Emergency data fields
       'emergencyPlan': 'emergency_plan',
       'emergency_plan': 'emergency_plan',
       'emergencyContacts': 'emergency_contacts',
@@ -241,7 +228,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       'incidentReporting': 'incident_reporting',
       'incident_reporting': 'incident_reporting',
       
-      // Project details fields
       'projectName': 'title',
       'title': 'title',
       'projectDescription': 'description',
@@ -253,7 +239,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       'endDate': 'end_date',
       'end_date': 'end_date',
       
-      // Company info fields
       'company_name': 'company_name',
       'companyName': 'company_name',
       'company_address': 'company_address',
@@ -266,31 +251,23 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       'companyContactPhone': 'company_contact_phone'
     };
     
-    // Create a new object with standardized field names
     const result: Record<string, any> = {};
     
-    // Process each field in the data object
     Object.keys(data).forEach(key => {
-      // Check if the key is in our mapping
       const standardKey = fieldMappings[key] || key;
       
-      // If the value is an array, process each item in the array
       if (Array.isArray(data[key])) {
         result[standardKey] = data[key].map((item: any) => 
           typeof item === 'object' ? standardizeFieldNames(item) : item
         );
       } 
-      // If the value is an object (but not null), recursively standardize its fields
       else if (data[key] !== null && typeof data[key] === 'object') {
         result[standardKey] = standardizeFieldNames(data[key]);
       } 
-      // Otherwise, just copy the value as is
       else {
         result[standardKey] = data[key];
       }
       
-      // If the standardized key is different from the original key,
-      // also keep the value under the original key for frontend compatibility
       if (standardKey !== key && !result[key]) {
         result[key] = result[standardKey];
       }
@@ -299,9 +276,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     return result;
   };
 
-  // Identify which section a field belongs to
   const getSectionFromField = (field: string): string => {
-    // Map fields to sections
     const sectionMap: Record<string, string> = {
       title: 'Project Details',
       description: 'Project Details',
@@ -343,12 +318,10 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       monitoring_review: 'Monitoring & Review'
     };
 
-    // Check if the field has a direct match
     if (field in sectionMap) {
       return sectionMap[field];
     }
 
-    // Check for partial matches (for nested fields)
     for (const key in sectionMap) {
       if (field.startsWith(key)) {
         return sectionMap[key];
@@ -358,20 +331,16 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     return 'General';
   };
 
-  // Debounced save implementation to reduce database calls
   const debouncedSave = useCallback((dataToSave: T) => {
-    // Clear any existing timer
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
     }
 
-    // Check if it's too soon to save again
     const now = Date.now();
     const timeSinceLastSave = now - lastSaveTimeRef.current;
     
     if (timeSinceLastSave < MINIMUM_SAVE_INTERVAL) {
-      // Schedule a save for later
       const delayTime = MINIMUM_SAVE_INTERVAL - timeSinceLastSave;
       saveTimerRef.current = setTimeout(() => {
         mutation.mutate(dataToSave);
@@ -380,22 +349,18 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       return;
     }
     
-    // Schedule the debounced save
     saveTimerRef.current = setTimeout(() => {
       mutation.mutate(dataToSave);
       lastSaveTimeRef.current = Date.now();
     }, SAVE_DEBOUNCE_TIME);
   }, []);
 
-  // Enhanced form data setter with debounced saving
   const setFormDataWithSave = useCallback((updater: ((prev: T) => T) | T) => {
     setFormData(prev => {
-      // Get the new state
       const newState = typeof updater === 'function' 
         ? (updater as (prev: T) => T)(prev) 
         : updater;
       
-      // If we have a valid ID, debounce the save operation
       if (options.key.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/)) {
         debouncedSave(newState);
       }
@@ -410,7 +375,6 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("User not authenticated");
 
-        // Standardize field names before saving to database
         const standardizedData = standardizeFieldNames(dataToSave);
         console.log("Saving data to Supabase:", standardizedData);
 
@@ -424,15 +388,12 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
         
         if (error) throw error;
 
-        // Identify field changes with old and new values
         const fieldChanges = getFieldChanges(previousDataRef.current || {}, dataToSave);
         
-        // If no fields changed, don't log an activity
         if (fieldChanges.length === 0) {
           return dataToSave;
         }
         
-        // Group changes by section
         const changesBySection: Record<string, FieldChange[]> = {};
         fieldChanges.forEach(change => {
           const section = getSectionFromField(change.field);
@@ -442,9 +403,7 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           changesBySection[section].push(change);
         });
         
-        // Log an activity for each section that had changes
         for (const [section, changes] of Object.entries(changesBySection)) {
-          // Extract just the field names for backward compatibility
           const updatedFields = changes.map(change => change.field);
           
           await logActivity(options.key, 'updated', user.id, {
@@ -456,14 +415,12 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
           });
         }
 
-        // Update the reference to the current data
         previousDataRef.current = JSON.parse(JSON.stringify(dataToSave));
       }
       return dataToSave;
     },
     onSuccess: (newData) => {
       queryClient.setQueryData(['sssp', options.key], newData);
-      // Don't show toast for debounced saves to avoid too many notifications
     },
     onError: (error: Error) => {
       console.error('Error saving form data:', error);
@@ -485,18 +442,14 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
     }
   }, [options.key]);
 
-  // Immediate save function for user-triggered saves (with feedback)
   const immediateSave = useCallback((dataToSave?: T) => {
-    // Clear any pending debounced save
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
     }
     
-    // Update the last save timestamp
     lastSaveTimeRef.current = Date.now();
     
-    // Execute the save
     return mutation.mutateAsync(dataToSave || formData);
   }, [formData, mutation]);
 
