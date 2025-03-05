@@ -21,13 +21,12 @@ interface EmergencyProceduresSectionProps {
 
 export const EmergencyProceduresSection = ({ data, setFormData }: EmergencyProceduresSectionProps) => {
   const navigate = useNavigate();
-  // Use either camelCase or snake_case version, whichever is available
-  const emergencyContacts = data.emergencyContacts || data.emergency_contacts || [];
+  const emergencyContacts = data.emergencyContacts || [];
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
 
   const navigateToEmergencyProcedures = () => {
-    navigate(`/edit-sssp/${data.id || '32c7f60c-1756-4ff7-be14-4e0ac5c3297c'}/5`);
+    navigate(`/edit-sssp/32c7f60c-1756-4ff7-be14-4e0ac5c3297c/5`);
   };
 
   const handleEdit = (key: string, value: any) => {
@@ -36,23 +35,13 @@ export const EmergencyProceduresSection = ({ data, setFormData }: EmergencyProce
   };
 
   const handleSave = (key: string) => {
-    // Get the corresponding DB field name (snake_case)
-    const dbKeyMap: Record<string, string> = {
-      "emergencyPlan": "emergency_plan",
-      "assemblyPoints": "assembly_points",
-      "emergencyEquipment": "emergency_equipment",
-      "incidentReporting": "incident_reporting"
-    };
+    // Always save to the database field name format
+    const dbKey = key === "assemblyPoints" ? "assembly_points" : key;
     
-    const dbKey = dbKeyMap[key] || key;
-    
-    // Save both frontend and DB field names
     setFormData({
       ...data,
-      [key]: tempValue,
       [dbKey]: tempValue
     });
-    
     setEditingField(null);
     setTempValue("");
   };
@@ -62,32 +51,12 @@ export const EmergencyProceduresSection = ({ data, setFormData }: EmergencyProce
     setTempValue("");
   };
 
-  // Map of field information
+  // Map the database field names to frontend field names
   const fields = [
-    { 
-      key: "emergency_plan", 
-      frontendKey: "emergencyPlan", 
-      label: "Emergency Response Plan",
-      value: data.emergencyPlan || data.emergency_plan
-    },
-    { 
-      key: "assembly_points", 
-      frontendKey: "assemblyPoints", 
-      label: "Assembly Points",
-      value: data.assemblyPoints || data.assembly_points
-    },
-    { 
-      key: "emergency_equipment", 
-      frontendKey: "emergencyEquipment", 
-      label: "Emergency Equipment",
-      value: data.emergencyEquipment || data.emergency_equipment
-    },
-    { 
-      key: "incident_reporting", 
-      frontendKey: "incidentReporting", 
-      label: "Incident Reporting",
-      value: data.incidentReporting || data.incident_reporting
-    }
+    { key: "emergency_plan", frontendKey: "emergencyPlan", label: "Emergency Response Plan" },
+    { key: "assembly_points", frontendKey: "assemblyPoints", label: "Assembly Points" },
+    { key: "emergency_equipment", frontendKey: "emergencyEquipment", label: "Emergency Equipment" },
+    { key: "incident_reporting", frontendKey: "incidentReporting", label: "Incident Reporting" }
   ];
 
   return (
@@ -127,9 +96,9 @@ export const EmergencyProceduresSection = ({ data, setFormData }: EmergencyProce
         <div className="space-y-4">
           {fields.map((field) => (
             <EditableField
-              key={field.frontendKey}
+              key={field.key}
               label={field.label}
-              value={field.value || ""} 
+              value={data[field.frontendKey] || data[field.key]} // Try frontend key first, then fallback to DB key
               fieldKey={field.frontendKey}
               isEditing={editingField === field.frontendKey}
               tempValue={editingField === field.frontendKey ? tempValue : ""}

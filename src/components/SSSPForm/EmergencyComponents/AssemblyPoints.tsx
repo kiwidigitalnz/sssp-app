@@ -7,7 +7,7 @@ import type { SectionComponentProps } from "@/types/sssp/ui";
 
 export const AssemblyPoints = ({ value, onChange }: SectionComponentProps) => {
   return (
-    <div className="space-y-4 mb-8">
+    <div className="space-y-4">
       <div className="flex items-center gap-2 border-b pb-2">
         <Users className="h-5 w-5" />
         <h3 className="text-lg font-semibold">Assembly Points</h3>
@@ -18,7 +18,7 @@ export const AssemblyPoints = ({ value, onChange }: SectionComponentProps) => {
             Specify emergency assembly points and evacuation routes
           </p>
           <QuickFillButton
-            fieldId="assembly_points" // Changed from "assembly_points" to match database field
+            fieldId="assembly_points"
             fieldName="Assembly Points"
             onSelect={(value) => onChange(value)}
           />
