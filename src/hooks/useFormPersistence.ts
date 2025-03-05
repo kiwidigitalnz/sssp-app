@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, retry } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -185,11 +184,11 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       
       // Skip arrays with special handling
       if (Array.isArray(newData[key])) {
-        if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
+        if (JSON.stringify(oldData?.[key]) !== JSON.stringify(newData[key])) {
           changes.push({
             field: newPath,
             displayName: getFieldDisplayName(newPath),
-            oldValue: oldData[key],
+            oldValue: oldData?.[key],
             newValue: newData[key]
           });
         }
@@ -222,6 +221,82 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
       
       return changes;
     }, [] as FieldChange[]);
+  };
+
+  // Function to standardize field names between camelCase and snake_case
+  const standardizeFieldNames = (data: any): any => {
+    if (!data || typeof data !== 'object') return data;
+    
+    // Define field mappings between camelCase and snake_case
+    const fieldMappings: Record<string, string> = {
+      // Emergency data fields
+      'emergencyPlan': 'emergency_plan',
+      'emergency_plan': 'emergency_plan',
+      'emergencyContacts': 'emergency_contacts',
+      'emergency_contacts': 'emergency_contacts',
+      'assemblyPoints': 'assembly_points',
+      'assembly_points': 'assembly_points',
+      'emergencyEquipment': 'emergency_equipment',
+      'emergency_equipment': 'emergency_equipment',
+      'incidentReporting': 'incident_reporting',
+      'incident_reporting': 'incident_reporting',
+      
+      // Project details fields
+      'projectName': 'title',
+      'title': 'title',
+      'projectDescription': 'description',
+      'description': 'description',
+      'siteAddress': 'site_address',
+      'site_address': 'site_address',
+      'startDate': 'start_date',
+      'start_date': 'start_date',
+      'endDate': 'end_date',
+      'end_date': 'end_date',
+      
+      // Company info fields
+      'company_name': 'company_name',
+      'companyName': 'company_name',
+      'company_address': 'company_address',
+      'companyAddress': 'company_address',
+      'company_contact_name': 'company_contact_name',
+      'companyContactName': 'company_contact_name',
+      'company_contact_email': 'company_contact_email',
+      'companyContactEmail': 'company_contact_email',
+      'company_contact_phone': 'company_contact_phone',
+      'companyContactPhone': 'company_contact_phone'
+    };
+    
+    // Create a new object with standardized field names
+    const result: Record<string, any> = {};
+    
+    // Process each field in the data object
+    Object.keys(data).forEach(key => {
+      // Check if the key is in our mapping
+      const standardKey = fieldMappings[key] || key;
+      
+      // If the value is an array, process each item in the array
+      if (Array.isArray(data[key])) {
+        result[standardKey] = data[key].map((item: any) => 
+          typeof item === 'object' ? standardizeFieldNames(item) : item
+        );
+      } 
+      // If the value is an object (but not null), recursively standardize its fields
+      else if (data[key] !== null && typeof data[key] === 'object') {
+        result[standardKey] = standardizeFieldNames(data[key]);
+      } 
+      // Otherwise, just copy the value as is
+      else {
+        result[standardKey] = data[key];
+      }
+      
+      // If the standardized key is different from the original key,
+      // also keep the value under the original key for frontend compatibility
+      if (standardKey !== key && !result[key]) {
+        result[key] = result[standardKey];
+      }
+    });
+    
+    return result;
   };
 
   // Identify which section a field belongs to
@@ -335,10 +410,14 @@ export function useFormPersistence<T extends Partial<SSSP>>(options: FormPersist
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("User not authenticated");
 
+        // Standardize field names before saving to database
+        const standardizedData = standardizeFieldNames(dataToSave);
+        console.log("Saving data to Supabase:", standardizedData);
+
         const { error } = await supabase
           .from('sssps')
           .update({
-            ...dataToSave,
+            ...standardizedData,
             modified_by: user.id
           })
           .eq('id', options.key);

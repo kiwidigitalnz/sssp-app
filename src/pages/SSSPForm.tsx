@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
@@ -146,6 +145,8 @@ export default function SSSPForm() {
             return;
           }
 
+          console.log("Creating new SSSP with data:", formData);
+
           const newSSSP = {
             ...formData,
             created_by: user.id,
@@ -189,6 +190,7 @@ export default function SSSPForm() {
           });
         }
       } else {
+        console.log("Saving existing SSSP with data:", formData);
         await save();
         
         if (showToast) {
@@ -213,7 +215,6 @@ export default function SSSPForm() {
       return;
     }
     setActivityLogOpen(true);
-    // Close the dropdown menu if it's open
     setIsDropdownOpen(false);
   };
 
@@ -226,7 +227,6 @@ export default function SSSPForm() {
       title: "Export PDF",
       description: "PDF export functionality will be available soon.",
     });
-    // Close the dropdown menu
     setIsDropdownOpen(false);
   };
 
@@ -239,7 +239,6 @@ export default function SSSPForm() {
       });
       return;
     }
-    // Close the dropdown menu
     setIsDropdownOpen(false);
     navigate(`/share/${id}`);
   };
@@ -282,14 +281,13 @@ export default function SSSPForm() {
           status={formData.status || "draft"}
           isNew={isNew}
           isLoading={isSaving}
-          onCancel={null} // Remove cancel handler from header
-          onSave={null} // Remove save handler from header
+          onCancel={null}
+          onSave={null}
           currentStep={currentStep}
           saveButtonText={saveButtonText}
         />
 
         <div className="flex items-center space-x-2">
-          {/* Cancel Button */}
           <Button 
             variant="outline" 
             size="sm" 
@@ -300,7 +298,6 @@ export default function SSSPForm() {
             Cancel
           </Button>
           
-          {/* Save Button */}
           <Button 
             variant="outline" 
             size="sm" 
@@ -312,7 +309,6 @@ export default function SSSPForm() {
             {saveButtonText}
           </Button>
           
-          {/* Actions Button */}
           <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1">
@@ -376,11 +372,9 @@ export default function SSSPForm() {
         </div>
       </div>
 
-      {/* Activity Log Dialog - Fixed to prevent propagation issues */}
       <Dialog 
         open={activityLogOpen} 
         onOpenChange={(open) => {
-          // Only handle the close event here, open is handled by handleActivityLogOpen
           if (!open) {
             handleActivityLogClose();
           }

@@ -6,10 +6,15 @@ import type { SSSP } from "./base";
 export interface SSSPFormData extends Partial<SSSP> {
   isDraft?: boolean;
   emergencyPlan?: string;
+  emergency_plan?: string; // Add snake_case version
   emergencyContacts?: EmergencyContactFormData[];
+  emergency_contacts?: EmergencyContactFormData[]; // Add snake_case version
   assemblyPoints?: string;
+  assembly_points?: string; // Add snake_case version
   emergencyEquipment?: string;
+  emergency_equipment?: string; // Add snake_case version
   incidentReporting?: string;
+  incident_reporting?: string; // Add snake_case version
 }
 
 export interface ProjectDetailsFormData {
