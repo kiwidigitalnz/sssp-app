@@ -159,7 +159,7 @@ export default function SSSPForm() {
             created_by: user.id,
             modified_by: user.id,
             user_id: user.id,
-            title: formData.title || "Untitled SSSP",
+            title: formData.title || formData.projectName || "Untitled SSSP",
             company_name: formData.company_name || "Unknown Company",
             status: formData.status || "draft"
           };
